@@ -8,7 +8,7 @@ import { Button } from "@/components/brand/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/brand/card"
 import { Wrench } from "lucide-react"
 
-type Mode = "password" | "otp"
+type Mode = "password" | "otp" | "signup"
 type Step = "credentials" | "otp-sent"
 
 export default function LoginPage() {
@@ -19,6 +19,8 @@ export default function LoginPage() {
   const [step, setStep] = useState<Step>("credentials")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [fullName, setFullName] = useState("")
+  const [notice, setNotice] = useState<string | null>(null)
   const [phone, setPhone] = useState("")
   const [otp, setOtp] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -76,6 +78,29 @@ export default function LoginPage() {
     router.refresh()
   }
 
+  async function signUp(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    setNotice(null)
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName } },
+    })
+    setLoading(false)
+    if (error) {
+      setError(error.message)
+      return
+    }
+    if (data.session) {
+      router.push("/onboarding")
+      router.refresh()
+      return
+    }
+    setNotice("Check your email to confirm your account, then sign in.")
+  }
+
   const inputCls =
     "min-h-12 w-full rounded-lg border-2 border-border bg-surface px-4 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring"
 
@@ -90,8 +115,8 @@ export default function LoginPage() {
           <CardDescription>Sign in to your garage</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-6 grid grid-cols-2 gap-2 rounded-pill border-2 border-border bg-muted p-1">
-            {(["password", "otp"] as const).map((m) => (
+          <div className="mb-6 grid grid-cols-3 gap-2 rounded-pill border-2 border-border bg-muted p-1">
+            {(["password", "otp", "signup"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
@@ -99,17 +124,58 @@ export default function LoginPage() {
                   setMode(m)
                   setStep("credentials")
                   setError(null)
+                  setNotice(null)
                 }}
-                className={`min-h-10 rounded-pill px-4 text-sm font-bold uppercase tracking-wide transition-colors ${
+                className={`min-h-10 rounded-pill px-2 text-xs font-bold uppercase tracking-wide transition-colors ${
                   mode === m ? "bg-card text-foreground shadow-chunky-sm" : "text-muted-foreground"
                 }`}
               >
-                {m === "password" ? "Email" : "Phone OTP"}
+                {m === "password" ? "Sign in" : m === "otp" ? "Phone" : "Sign up"}
               </button>
             ))}
           </div>
 
-          {mode === "password" ? (
+          {mode === "signup" ? (
+            <form onSubmit={signUp} className="space-y-4">
+              <label className="block space-y-1.5">
+                <span className="text-sm font-bold">Full name</span>
+                <input
+                  type="text"
+                  required
+                  autoComplete="name"
+                  className={inputCls}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-sm font-bold">Email</span>
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  className={inputCls}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-sm font-bold">Password</span>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  className={inputCls}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </label>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Creating…" : "Create account"}
+              </Button>
+            </form>
+          ) : mode === "password" ? (
             <form onSubmit={signInWithPassword} className="space-y-4">
               <label className="block space-y-1.5">
                 <span className="text-sm font-bold">Email</span>
@@ -192,6 +258,11 @@ export default function LoginPage() {
             </form>
           )}
 
+          {notice && (
+            <p className="mt-4 rounded-lg border-2 border-success bg-success/10 px-4 py-2 text-sm font-semibold text-success">
+              {notice}
+            </p>
+          )}
           {error && (
             <p role="alert" className="mt-4 rounded-lg border-2 border-danger bg-danger/10 px-4 py-2 text-sm font-semibold text-danger">
               {error}
