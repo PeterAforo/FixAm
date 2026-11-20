@@ -4,6 +4,8 @@ import { Bricolage_Grotesque, Inter, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ThemeProvider } from "@/components/providers/theme-provider"
+import { NextIntlClientProvider } from "next-intl"
+import { getMessages } from "next-intl/server"
 import "./globals.css"
 
 const bricolage = Bricolage_Grotesque({
@@ -33,11 +35,12 @@ export const metadata: Metadata = {
     "Repairs, parts, vendors, reminders, renewals and money — one vibrant SaaS for Ghanaian garages.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: ReactNode
 }) {
+  const messages = await getMessages()
   return (
     <html
       lang="en-GH"
@@ -51,7 +54,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <NextIntlClientProvider messages={messages}>
+            {children}
+          </NextIntlClientProvider>
         </ThemeProvider>
         <Analytics />
         <SpeedInsights />
