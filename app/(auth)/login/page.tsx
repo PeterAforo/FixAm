@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/auth/supabase/client"
 import { normalizeGhPhone } from "@/lib/phone"
+import { postLoginDestination } from "@/lib/auth/destination"
 import { Button } from "@/components/brand/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/brand/card"
 import { Wrench } from "lucide-react"
@@ -36,7 +37,7 @@ export default function LoginPage() {
       setError(error.message)
       return
     }
-    router.push("/")
+    router.push(await postLoginDestination())
     router.refresh()
   }
 
@@ -74,7 +75,7 @@ export default function LoginPage() {
       setError(error.message)
       return
     }
-    router.push("/")
+    router.push(await postLoginDestination())
     router.refresh()
   }
 
@@ -94,7 +95,7 @@ export default function LoginPage() {
       return
     }
     if (data.session) {
-      router.push("/onboarding")
+      router.push(await postLoginDestination())
       router.refresh()
       return
     }

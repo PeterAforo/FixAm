@@ -1,6 +1,12 @@
 import Link from "next/link"
+import { redirect } from "next/navigation"
+import { getSessionUserId } from "@/lib/auth/ensure-user"
+import { postLoginDestination } from "@/lib/auth/destination"
 
-export default function MarketingHome() {
+export default async function MarketingHome() {
+  const userId = await getSessionUserId()
+  if (userId) redirect(await postLoginDestination())
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8 text-center">
       <p className="text-sm font-semibold uppercase tracking-widest text-primary">
