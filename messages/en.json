@@ -1,0 +1,27 @@
+{
+  "app": {
+    "name": "FixAm",
+    "tagline": "Your garage, minus the paperwork."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "jobs": "Jobs",
+    "customers": "Customers",
+    "vehicles": "Vehicles",
+    "parts": "Parts",
+    "vendors": "Vendors",
+    "invoices": "Invoices",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "loading": "Loading…",
+    "error": "Something went wrong. Try again."
+  }
+}

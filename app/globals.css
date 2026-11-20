@@ -1,0 +1,233 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ────────────────────────────────────────────────────────────────────
+   Pit Stop Pop — design tokens (specs/design-tokens.json)
+   Brand ramps are theme-independent; semantic colours switch between
+   light (front office) and .dark "workshop mode" (the floor).
+   ──────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Brand ramps */
+  --color-ignition-50: #fff1eb;
+  --color-ignition-100: #ffdccc;
+  --color-ignition-200: #ffb899;
+  --color-ignition-300: #ff9366;
+  --color-ignition-400: #ff7640;
+  --color-ignition-500: #ff5a1f;
+  --color-ignition-600: #e64510;
+  --color-ignition-700: #bf360b;
+  --color-ignition-800: #992a09;
+  --color-ignition-900: #7a2208;
+
+  --color-midnight-50: #eef1f8;
+  --color-midnight-100: #d3daeb;
+  --color-midnight-200: #a7b4d6;
+  --color-midnight-300: #6e81b5;
+  --color-midnight-400: #3d528c;
+  --color-midnight-500: #1e3266;
+  --color-midnight-600: #142650;
+  --color-midnight-700: #0b1b3f;
+  --color-midnight-800: #081430;
+  --color-midnight-900: #050d20;
+
+  --color-volt-50: #f8fde6;
+  --color-volt-100: #eefbbf;
+  --color-volt-200: #e1f88f;
+  --color-volt-300: #d4f65f;
+  --color-volt-400: #c6f432;
+  --color-volt-500: #a8d61a;
+  --color-volt-600: #84aa10;
+  --color-volt-700: #62800c;
+  --color-volt-800: #465c0a;
+  --color-volt-900: #2f3e07;
+
+  --color-turbo-50: #e6faf9;
+  --color-turbo-100: #bff2ef;
+  --color-turbo-200: #85e6e1;
+  --color-turbo-300: #45d9d1;
+  --color-turbo-400: #00c2b8;
+  --color-turbo-500: #00a39b;
+  --color-turbo-600: #00837c;
+  --color-turbo-700: #00655f;
+  --color-turbo-800: #004a46;
+  --color-turbo-900: #00322f;
+
+  --color-cream: #fff6ec;
+  --color-plate: #ffd43b;
+
+  /* Radius — spec: sm 8 / md 12 / lg 20 / xl 28 / pill */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-2xl: 28px;
+  --radius-3xl: 32px;
+  --radius-4xl: 36px;
+  --radius-pill: 9999px;
+
+  /* Chunky offset shadows (use current theme border colour) */
+  --shadow-chunky-sm: 3px 3px 0 0 var(--color-border);
+  --shadow-chunky: 5px 5px 0 0 var(--color-border);
+  --shadow-chunky-lg: 8px 8px 0 0 var(--color-border);
+  --shadow-soft: 0 8px 24px rgb(11 27 63 / 0.12);
+}
+
+@theme inline {
+  /* Semantic colours — resolve through per-theme CSS vars */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-destructive: var(--danger);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Sidebar (shadcn) */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Charts — categorical palette from spec */
+  --color-chart-1: #ff5a1f;
+  --color-chart-2: #00c2b8;
+  --color-chart-3: #c6f432;
+  --color-chart-4: #1e3266;
+  --color-chart-5: #ffb020;
+  --color-chart-6: #ff3b5c;
+
+  /* Typography — loaded via next/font in app/layout.tsx */
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-bricolage);
+  --font-mono: var(--font-jetbrains);
+}
+
+/* ── Light theme (front office) ─────────────────────────────────────── */
+:root {
+  --radius: 20px;
+
+  --background: #fff6ec;
+  --foreground: #0b1b3f;
+  --surface: #ffffff;
+  --surface-muted: #fbefe2;
+  --card: #ffffff;
+  --card-foreground: #0b1b3f;
+  --popover: #ffffff;
+  --popover-foreground: #0b1b3f;
+  --primary: #ff5a1f;
+  --primary-foreground: #ffffff;
+  --primary-hover: #e64510;
+  --secondary: #0b1b3f;
+  --secondary-foreground: #ffffff;
+  --muted: #fbefe2;
+  --muted-foreground: #4a5677;
+  --accent: #c6f432;
+  --accent-foreground: #0b1b3f;
+  --info: #00c2b8;
+  --info-foreground: #0b1b3f;
+  --success: #c6f432;
+  --success-foreground: #0b1b3f;
+  --warning: #ffb020;
+  --warning-foreground: #0b1b3f;
+  --danger: #ff3b5c;
+  --danger-foreground: #ffffff;
+  --border: #0b1b3f;
+  --border-subtle: #e8dccd;
+  --input: #e8dccd;
+  --ring: #00c2b8;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0b1b3f;
+  --sidebar-primary: #ff5a1f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #fbefe2;
+  --sidebar-accent-foreground: #0b1b3f;
+  --sidebar-border: #e8dccd;
+  --sidebar-ring: #00c2b8;
+}
+
+/* ── Dark "workshop mode" (the floor) ──────────────────────────────── */
+.dark {
+  --background: #050d20;
+  --foreground: #fff6ec;
+  --surface: #0b1b3f;
+  --surface-muted: #142650;
+  --card: #0b1b3f;
+  --card-foreground: #fff6ec;
+  --popover: #0b1b3f;
+  --popover-foreground: #fff6ec;
+  --primary: #ff7640;
+  --primary-foreground: #050d20;
+  --primary-hover: #ff9366;
+  --secondary: #fff6ec;
+  --secondary-foreground: #050d20;
+  --muted: #142650;
+  --muted-foreground: #a7b4d6;
+  --accent: #c6f432;
+  --accent-foreground: #050d20;
+  --info: #45d9d1;
+  --info-foreground: #050d20;
+  --success: #c6f432;
+  --success-foreground: #050d20;
+  --warning: #ffc24d;
+  --warning-foreground: #050d20;
+  --danger: #ff5c77;
+  --danger-foreground: #050d20;
+  --border: #3d528c;
+  --border-subtle: #1e3266;
+  --input: #3d528c;
+  --ring: #c6f432;
+
+  --sidebar: #0b1b3f;
+  --sidebar-foreground: #fff6ec;
+  --sidebar-primary: #ff7640;
+  --sidebar-primary-foreground: #050d20;
+  --sidebar-accent: #142650;
+  --sidebar-accent-foreground: #fff6ec;
+  --sidebar-border: #1e3266;
+  --sidebar-ring: #c6f432;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-variant-numeric: tabular-nums;
+  }
+  html {
+    @apply font-sans;
+  }
+}
