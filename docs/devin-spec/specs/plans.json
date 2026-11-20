@@ -1,0 +1,64 @@
+{
+  "$schema_version": "1.0",
+  "description": "Subscription plans seeded into the plans table. Prices are placeholders (price_monthly_ghs: null) until Peter sets them; store as pesewas when set. Platform Admin can edit plans in the admin console. Messages (SMS + WhatsApp) are included as a monthly allowance; push and email do not count against it.",
+  "currency": "GHS",
+  "billing": { "interval": "monthly", "provider": "paystack", "trial_days": 14, "grace_period_days": 7, "past_due_behaviour": "After grace period the garage becomes read-only (can view and take payments on existing invoices, cannot create jobs or send reminders) until payment succeeds." },
+  "message_units": { "sms_segment": 1, "whatsapp_utility": 1, "whatsapp_authentication": 1, "push": 0, "email": 0, "note": "Units abstract provider cost. A 2-segment SMS counts as 2 units." },
+  "features": {
+    "core_workshop": "Customers, vehicles, check-in, job cards, estimates, Kanban, mechanic mobile app, tracker, bookings",
+    "invoicing": "Invoices, receipts, payments, deposits, expenses, cash-up",
+    "reports_basic": "Daily and monthly sales, expenses and profit",
+    "reports_multi_branch": "Branch comparison and combined reports",
+    "inventory": "Parts catalogue, stock, POS, purchase orders",
+    "marketplace": "Vendor marketplace ordering",
+    "auto_reorder": "Automatic reorder from preferred vendors",
+    "reminders": "Reminder engine for oil, service, insurance, DVLA",
+    "agent_renewals": "Insurance and DVLA agent renewal workflow",
+    "payment_plans": "Instalment payment plans",
+    "credit_accounts": "Customer credit accounts and statements",
+    "fleet_accounts": "Fleet customers and fleet manager portal",
+    "online_catalogue": "Customer-facing online parts catalogue",
+    "gamification": "Mechanic streaks, badges and leaderboard",
+    "custom_branding": "Custom colours on documents and customer pages",
+    "priority_support": "Priority WhatsApp support"
+  },
+  "plans": [
+    {
+      "code": "starter",
+      "name": "Starter",
+      "tagline": "For small garages going digital",
+      "price_monthly_ghs": null,
+      "max_branches": 1,
+      "max_staff": 5,
+      "message_allowance": 300,
+      "features": ["core_workshop", "invoicing", "reports_basic", "inventory", "marketplace", "reminders", "payment_plans", "gamification"]
+    },
+    {
+      "code": "growth",
+      "name": "Growth",
+      "tagline": "For busy garages that want recurring revenue",
+      "price_monthly_ghs": null,
+      "max_branches": 3,
+      "max_staff": 15,
+      "message_allowance": 1000,
+      "features": ["core_workshop", "invoicing", "reports_basic", "reports_multi_branch", "inventory", "marketplace", "auto_reorder", "reminders", "agent_renewals", "payment_plans", "credit_accounts", "online_catalogue", "gamification", "custom_branding"],
+      "highlight": true
+    },
+    {
+      "code": "pro",
+      "name": "Pro",
+      "tagline": "For multi-branch garages and fleets",
+      "price_monthly_ghs": null,
+      "max_branches": null,
+      "max_staff": null,
+      "message_allowance": 2500,
+      "features": ["core_workshop", "invoicing", "reports_basic", "reports_multi_branch", "inventory", "marketplace", "auto_reorder", "reminders", "agent_renewals", "payment_plans", "credit_accounts", "fleet_accounts", "online_catalogue", "gamification", "custom_branding", "priority_support"]
+    }
+  ],
+  "addon_bundles": [
+    { "code": "msg_250", "name": "250 extra messages", "units": 250, "price_ghs": null },
+    { "code": "msg_1000", "name": "1,000 extra messages", "units": 1000, "price_ghs": null }
+  ],
+  "pilot": { "plan_code": "pro", "is_complimentary": true, "note": "Pilot garage subscription created with is_complimentary = true; no Paystack subscription required." },
+  "open_decisions": ["Monthly prices per plan in GHS", "Allowance sizes once real per-message costs are known", "Annual billing discount"]
+}

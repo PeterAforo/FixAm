@@ -1,0 +1,89 @@
+{
+  "$schema_version": "1.0",
+  "description": "Screens, routes, who sees them, and the key UI on each. Style everything with design-tokens.json (Pit Stop Pop). Every list has an illustrated empty state, skeleton loading, and error state with retry. Every screen works at 360px.",
+  "navigation": {
+    "staff": [
+      { "label": "Dashboard", "icon": "gauge", "route": "/g/[garageSlug]", "roles": ["owner", "manager", "service_advisor", "accountant", "storekeeper"] },
+      { "label": "Job board", "icon": "kanban-square", "route": "/g/[garageSlug]/jobs", "roles": ["owner", "manager", "service_advisor"] },
+      { "label": "My jobs", "icon": "wrench", "route": "/g/[garageSlug]/my-jobs", "roles": ["mechanic"] },
+      { "label": "Bookings", "icon": "calendar", "route": "/g/[garageSlug]/bookings", "roles": ["owner", "manager", "service_advisor"] },
+      { "label": "Vehicles", "icon": "car", "route": "/g/[garageSlug]/vehicles", "roles": ["owner", "manager", "service_advisor", "mechanic", "accountant"] },
+      { "label": "Customers", "icon": "users", "route": "/g/[garageSlug]/customers", "roles": ["owner", "manager", "service_advisor", "accountant"] },
+      { "label": "Parts & stock", "icon": "package", "route": "/g/[garageSlug]/parts", "roles": ["owner", "manager", "storekeeper", "service_advisor"] },
+      { "label": "POS", "icon": "scan-barcode", "route": "/g/[garageSlug]/pos", "roles": ["owner", "manager", "storekeeper", "service_advisor"] },
+      { "label": "Marketplace", "icon": "store", "route": "/g/[garageSlug]/marketplace", "roles": ["owner", "manager", "storekeeper"] },
+      { "label": "Reminders", "icon": "bell-ring", "route": "/g/[garageSlug]/reminders", "roles": ["owner", "manager", "service_advisor"] },
+      { "label": "Renewals", "icon": "shield-check", "route": "/g/[garageSlug]/renewals", "roles": ["owner", "manager", "service_advisor"] },
+      { "label": "Money", "icon": "wallet", "route": "/g/[garageSlug]/money", "roles": ["owner", "manager", "service_advisor", "accountant"], "children": ["invoices", "payments", "payment-plans", "credit-accounts", "expenses", "cash-up"] },
+      { "label": "Reports", "icon": "bar-chart-3", "route": "/g/[garageSlug]/reports", "roles": ["owner", "manager", "accountant", "service_advisor"] },
+      { "label": "My stats", "icon": "trophy", "route": "/g/[garageSlug]/my-stats", "roles": ["mechanic"] },
+      { "label": "Settings", "icon": "settings", "route": "/g/[garageSlug]/settings", "roles": ["owner", "manager"] }
+    ],
+    "mobile_bottom_bar": {
+      "service_advisor": ["Job board", "Bookings", "+ Check in", "Vehicles", "Money"],
+      "mechanic": ["My jobs", "Vehicles", "My stats"],
+      "owner": ["Dashboard", "Job board", "+ Check in", "Money", "Reports"],
+      "storekeeper": ["Parts & stock", "POS", "Marketplace"]
+    },
+    "global": ["Command palette (Cmd/Ctrl+K and search icon)", "Notifications bell", "Branch switcher", "Theme toggle (light / workshop)", "Quick action '+ Check in' FAB on mobile"]
+  },
+  "screens": [
+    { "id": "dashboard", "route": "/g/[garageSlug]", "roles": ["owner", "manager", "service_advisor", "accountant", "storekeeper"], "task": "P2-08",
+      "content": ["Greeting with garage name and date", "StatTiles: today's revenue, payments received, jobs in progress, cars ready for pickup", "Jobs-by-status mini Kanban counts (tap to filter board)", "Ready for pickup list with 'Send pay link' action", "Reminders due this week with conversion rate", "Low stock list (P3)", "Outstanding balances: unpaid invoices, instalments due, credit overdue", "7-day revenue sparkline", "Quick actions: Check in, New booking, Counter sale, Record expense"],
+      "role_variants": { "service_advisor": "No profit figures", "storekeeper": "Stock-focused tiles" } },
+
+    { "id": "job_board", "route": "/g/[garageSlug]/jobs", "task": "P1-06",
+      "content": ["Columns by job status with count badges", "Optional swimlanes by bay", "Job card: PlateChip, CarAvatar, make/model, customer, complaint snippet, assignee avatars, promised-time countdown (turns warning/danger), priority flag, balance chip when ready", "Filters: mechanic, priority, branch, overdue", "Drag-and-drop with validation", "Realtime"] },
+
+    { "id": "check_in", "route": "/g/[garageSlug]/check-in", "task": "P1-05", "layout": "Full-screen wizard, tablet-first",
+      "steps": ["1 Find vehicle by plate or customer by phone (or create)", "2 Odometer (number + optional photo) and fuel slider", "3 Walk-around photos (front, back, left, right, interior, damage close-ups)", "4 Complaint (text + voice note) and items left in car", "5 Service template(s), assign mechanic & bay, promised time", "6 Review + customer signature", "Done screen with confetti-lite and 'Tracker link sent ✅'"] },
+
+    { "id": "job_detail", "route": "/g/[garageSlug]/jobs/[jobId]", "task": "P1-05",
+      "content": ["Header: plate, vehicle, customer (call/WhatsApp buttons), status pill with next-step button", "Tabs: Overview, Findings, Estimate & items, Tasks & time, Media, Invoice & payments, Timeline", "Side panel: VehicleHealthCard, previous jobs, notes"] },
+
+    { "id": "my_jobs", "route": "/g/[garageSlug]/my-jobs", "roles": ["mechanic"], "task": "P1-07", "theme_default": "workshop dark",
+      "content": ["Today's jobs as big cards ordered by promised time", "Job view: checklist with large tick targets, per-task start/pause timer, '+ Finding' (photo/video/voice), 'Request part', 'Send to QC'", "Offline/sync indicator pill", "Streak flame and jobs-today counter at top"] },
+
+    { "id": "estimate_builder", "route": "/g/[garageSlug]/jobs/[jobId]/estimate", "task": "P1-08",
+      "content": ["Line items grouped by finding", "Add labour (hours × rate or flat), part (catalogue search with stock badge), sundry", "Discount per line within limit", "Live totals with tax breakdown", "Deposit required toggle", "Preview as customer", "Send via WhatsApp/SMS/email"] },
+
+    { "id": "vehicle_profile", "route": "/g/[garageSlug]/vehicles/[vehicleId]", "task": "P1-02",
+      "content": ["Hero: big CarAvatar tinted to vehicle colour, PlateChip, make/model/year", "VehicleHealthCard with rings: oil, insurance, DVLA, open issues", "Mileage card: last reading, ≈ km/day, confidence, predicted odometer, 'Record reading'", "Timeline: jobs, odometer readings, renewals, payments, documents", "Documents grid", "Owner(s) and transfer ownership", "Due items list with manual add"] },
+
+    { "id": "customers", "route": "/g/[garageSlug]/customers", "task": "P1-01", "content": ["Searchable table", "Customer profile: vehicles, jobs, invoices, balance, credit account, plans, messages log, preferences"] },
+
+    { "id": "bookings", "route": "/g/[garageSlug]/bookings", "task": "P1-11", "content": ["Day/week calendar by bay", "Booking drawer", "'Check in now' from booking"] },
+
+    { "id": "parts", "route": "/g/[garageSlug]/parts", "task": "P3-01", "content": ["Catalogue table with stock per branch, low-stock badges", "Part detail: stock levels, movements history, preferred vendor, compatible vehicles", "CSV import wizard", "Adjust / transfer dialogs", "Reorder suggestions tab"] },
+
+    { "id": "pos", "route": "/g/[garageSlug]/pos", "task": "P3-02", "layout": "Two-pane on tablet/desktop (search grid + cart), single pane on phone", "content": ["Search/scan", "Cart with quantity steppers", "Customer optional", "Pay: cash (change calculator), MoMo, card", "Receipt: print / SMS / WhatsApp"] },
+
+    { "id": "marketplace", "route": "/g/[garageSlug]/marketplace", "task": "P3-05", "content": ["Search with filters: category, make/model compatibility, vendor, delivery ETA, price", "Product cards with vendor rating and ETA", "Cart grouped by vendor with delivery fees", "Orders tab with status timeline", "Auto-reorder settings and drafts awaiting approval"] },
+
+    { "id": "reminders", "route": "/g/[garageSlug]/reminders", "task": "P4-01", "content": ["Tabs: Upcoming (by week), Sent, Failed, Converted", "Each row: customer, plate, type icon, effective due date, stage, channels with delivery ticks", "Manual send / pause / dismiss", "Templates editor with live preview and character/segment counter", "Message allowance meter"] },
+
+    { "id": "renewals", "route": "/g/[garageSlug]/renewals", "task": "P4-06", "content": ["Kanban by renewal_status, insurance and DVLA filter", "Renewal detail: documents checklist, quote form, payment status, staff tasks, upload new policy/certificate, customer-visible timeline"] },
+
+    { "id": "money", "route": "/g/[garageSlug]/money/*", "task": "P2-01..P2-06", "content": ["Invoices list with status chips and balance", "Invoice detail with PDF preview, record payment, send pay link, create plan, charge to credit account, credit note", "Payments list with method filters", "Payment plans with schedule progress bars", "Credit accounts with ageing donut", "Expenses with receipt thumbnails", "Cash-up screen"] },
+
+    { "id": "reports", "route": "/g/[garageSlug]/reports", "task": "P2-07", "content": ["Daily summary", "Monthly P&L-style report with comparison", "Outstanding balances", "Staff performance", "Export CSV/PDF"] },
+
+    { "id": "my_stats", "route": "/g/[garageSlug]/my-stats", "roles": ["mechanic"], "task": "P5-03", "content": ["Streak flame", "Jobs this week/month", "Hours logged", "Badges shelf", "Leaderboard (if enabled)"] },
+
+    { "id": "settings", "route": "/g/[garageSlug]/settings/*", "task": "P0-06", "content": ["Garage profile & branding", "Branches & bays", "Staff & roles", "Taxes & pricing", "Job templates", "Reminder schedule overrides & quiet hours", "Message templates", "Payments (Paystack, MoMo number)", "Subscription & message usage", "Insurance partner", "Celebrations and leaderboard toggles"] },
+
+    { "id": "magic_tracker", "route": "/t/[token] (purpose tracker)", "audience": "customer", "task": "P1-10", "content": ["Garage logo and colours", "Stepper with current stage animated", "Photos and notes", "Mechanic first name and ETA", "Approve estimate CTA when pending", "Pay CTA when ready", "Call / WhatsApp / Directions buttons"] },
+    { "id": "magic_estimate", "route": "/t/[token] (purpose estimate_approval)", "audience": "customer", "task": "P1-08", "content": ["Findings with photos and severity badges", "Per-line approve/decline toggles", "Running total", "Signature", "Pay deposit"] },
+    { "id": "magic_pay", "route": "/t/[token] (purpose invoice_pay)", "audience": "customer", "task": "P2-02", "content": ["Invoice summary", "Pay full or instalment", "MoMo (network + number) or card", "Success screen with confetti and receipt download"] },
+    { "id": "magic_mileage", "route": "/t/[token] (purpose mileage_update)", "audience": "customer", "task": "P4-03", "content": ["Big number input with km suffix", "Optional odometer photo", "Thank-you with predicted next service date"] },
+    { "id": "magic_renewal", "route": "/t/[token] (purpose renewal)", "audience": "customer", "task": "P4-06", "content": ["Stepper: details → documents → quote → pay → processing → done", "Document upload with camera", "Quote breakdown (official fee + service fee)"] },
+    { "id": "public_booking", "route": "/b/[garageSlug]", "audience": "public", "task": "P1-11", "content": ["Service picker cards", "Vehicle details", "Slot picker", "Phone confirm code", "Confirmation"] },
+
+    { "id": "portal_home", "route": "/portal", "audience": "customer", "task": "P4-07", "content": ["Vehicle health cards carousel", "Things due soon", "Active jobs with tracker", "Balances and pay", "Shop parts for my car (P3-07)"] },
+    { "id": "portal_vehicle", "route": "/portal/vehicles/[id]", "audience": "customer", "task": "P4-07", "content": ["History timeline", "Documents", "Due items", "Update mileage", "Renew with my garage"] },
+
+    { "id": "vendor_dashboard", "route": "/vendor", "audience": "vendor", "task": "P3-04", "content": ["Orders inbox with status actions", "Catalogue management + CSV import", "Sales chart", "Payouts", "Ratings", "Delivery zones and profile"] },
+
+    { "id": "admin", "route": "/admin", "audience": "platform_admin", "task": "P5-02", "content": ["Garages list/detail/suspend/impersonate", "Vendors approval queue", "Plans and bundles", "DVLA fee table", "Insurance partners", "Global templates and defaults", "Platform analytics: active garages, MRR, churn, messages, renewals"] }
+  ]
+}

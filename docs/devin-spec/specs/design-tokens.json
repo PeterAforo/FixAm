@@ -1,0 +1,143 @@
+{
+  "$schema_version": "1.0",
+  "name": "Pit Stop Pop",
+  "usage": "Expose every token as a CSS variable in app/globals.css (e.g. --color-primary) and map it into the Tailwind theme. Components use Tailwind classes that reference tokens, never raw hex values. All text/background pairs must meet WCAG AA.",
+  "color": {
+    "brand": {
+      "ignition": { "50": "#FFF1EB", "100": "#FFDCCC", "200": "#FFB899", "300": "#FF9366", "400": "#FF7640", "500": "#FF5A1F", "600": "#E64510", "700": "#BF360B", "800": "#992A09", "900": "#7A2208" },
+      "midnight": { "50": "#EEF1F8", "100": "#D3DAEB", "200": "#A7B4D6", "300": "#6E81B5", "400": "#3D528C", "500": "#1E3266", "600": "#142650", "700": "#0B1B3F", "800": "#081430", "900": "#050D20" },
+      "volt": { "50": "#F8FDE6", "100": "#EEFBBF", "200": "#E1F88F", "300": "#D4F65F", "400": "#C6F432", "500": "#A8D61A", "600": "#84AA10", "700": "#62800C", "800": "#465C0A", "900": "#2F3E07" },
+      "turbo": { "50": "#E6FAF9", "100": "#BFF2EF", "200": "#85E6E1", "300": "#45D9D1", "400": "#00C2B8", "500": "#00A39B", "600": "#00837C", "700": "#00655F", "800": "#004A46", "900": "#00322F" },
+      "cream": "#FFF6EC"
+    },
+    "semantic_light": {
+      "background": "#FFF6EC",
+      "surface": "#FFFFFF",
+      "surface-muted": "#FBEFE2",
+      "border": "#0B1B3F",
+      "border-subtle": "#E8DCCD",
+      "text": "#0B1B3F",
+      "text-muted": "#4A5677",
+      "primary": "#FF5A1F",
+      "primary-foreground": "#FFFFFF",
+      "primary-hover": "#E64510",
+      "secondary": "#0B1B3F",
+      "secondary-foreground": "#FFFFFF",
+      "accent": "#C6F432",
+      "accent-foreground": "#0B1B3F",
+      "info": "#00C2B8",
+      "info-foreground": "#0B1B3F",
+      "success": "#C6F432",
+      "success-foreground": "#0B1B3F",
+      "warning": "#FFB020",
+      "warning-foreground": "#0B1B3F",
+      "danger": "#FF3B5C",
+      "danger-foreground": "#FFFFFF",
+      "focus-ring": "#00C2B8"
+    },
+    "semantic_dark_workshop": {
+      "background": "#050D20",
+      "surface": "#0B1B3F",
+      "surface-muted": "#142650",
+      "border": "#3D528C",
+      "border-subtle": "#1E3266",
+      "text": "#FFF6EC",
+      "text-muted": "#A7B4D6",
+      "primary": "#FF7640",
+      "primary-foreground": "#050D20",
+      "primary-hover": "#FF9366",
+      "secondary": "#FFF6EC",
+      "secondary-foreground": "#050D20",
+      "accent": "#C6F432",
+      "accent-foreground": "#050D20",
+      "info": "#45D9D1",
+      "info-foreground": "#050D20",
+      "success": "#C6F432",
+      "success-foreground": "#050D20",
+      "warning": "#FFC24D",
+      "warning-foreground": "#050D20",
+      "danger": "#FF5C77",
+      "danger-foreground": "#050D20",
+      "focus-ring": "#C6F432"
+    },
+    "status": {
+      "job": {
+        "booked": "midnight.300",
+        "checked_in": "turbo.400",
+        "diagnosing": "turbo.600",
+        "estimate_sent": "warning",
+        "approved": "volt.400",
+        "declined": "danger",
+        "in_progress": "ignition.500",
+        "waiting_parts": "warning",
+        "quality_check": "turbo.500",
+        "ready": "volt.400",
+        "delivered": "midnight.500",
+        "closed": "midnight.200"
+      },
+      "due_item": { "ok": "volt.400", "due_soon": "warning", "due": "ignition.500", "overdue": "danger", "unknown": "midnight.200" },
+      "payment": { "unpaid": "danger", "partial": "warning", "paid": "volt.400", "refunded": "midnight.300" }
+    },
+    "chart_categorical": ["#FF5A1F", "#00C2B8", "#C6F432", "#1E3266", "#FFB020", "#FF3B5C"]
+  },
+  "typography": {
+    "fonts": {
+      "display": { "family": "Bricolage Grotesque", "source": "next/font/google", "weights": [600, 700, 800] },
+      "body": { "family": "Inter", "source": "next/font/google", "weights": [400, 500, 600, 700] },
+      "mono": { "family": "JetBrains Mono", "source": "next/font/google", "weights": [500], "use": "plate numbers, document numbers, codes" }
+    },
+    "scale": {
+      "xs": { "size": "12px", "line": "16px" },
+      "sm": { "size": "14px", "line": "20px" },
+      "base": { "size": "16px", "line": "24px" },
+      "lg": { "size": "18px", "line": "28px" },
+      "xl": { "size": "20px", "line": "28px" },
+      "2xl": { "size": "24px", "line": "32px", "font": "display" },
+      "3xl": { "size": "30px", "line": "36px", "font": "display" },
+      "4xl": { "size": "36px", "line": "40px", "font": "display" },
+      "5xl": { "size": "48px", "line": "52px", "font": "display" }
+    },
+    "numbers": "font-variant-numeric: tabular-nums for all money, quantities and mileage",
+    "plate_style": "mono, uppercase, letter-spacing 0.06em, rendered in a yellow/white plate chip"
+  },
+  "radius": { "sm": "8px", "md": "12px", "lg": "20px", "xl": "28px", "pill": "9999px", "default_card": "lg", "default_button": "pill", "default_input": "md" },
+  "border": { "width_default": "2px", "width_subtle": "1px" },
+  "shadow": {
+    "chunky-sm": "3px 3px 0 0 var(--color-border)",
+    "chunky": "5px 5px 0 0 var(--color-border)",
+    "chunky-lg": "8px 8px 0 0 var(--color-border)",
+    "soft": "0 8px 24px rgba(11,27,63,0.12)",
+    "press": "Buttons translate(2px,2px) and reduce chunky shadow on :active"
+  },
+  "spacing": { "base_unit": "4px", "touch_target_min": "48px", "page_padding_mobile": "16px", "page_padding_desktop": "32px", "card_padding": "20px", "grid_gap": "16px" },
+  "breakpoints": { "sm": "640px", "md": "768px", "lg": "1024px", "xl": "1280px", "2xl": "1536px" },
+  "motion": {
+    "duration": { "instant": 100, "fast": 160, "base": 240, "slow": 400, "celebration": 1200 },
+    "easing": { "standard": [0.2, 0, 0, 1], "spring": { "type": "spring", "stiffness": 420, "damping": 28 }, "bounce": { "type": "spring", "stiffness": 600, "damping": 15 } },
+    "patterns": {
+      "card_hover": "lift -2px and grow chunky shadow",
+      "status_change": "pill morphs colour + small bounce",
+      "kanban_drop": "spring settle + light haptic (navigator.vibrate(10) on mobile)",
+      "invoice_paid": "canvas-confetti burst in brand colours",
+      "job_ready": "Lottie engine-rev, 1.2s",
+      "list_enter": "stagger 30ms fade+slide 8px"
+    },
+    "reduced_motion": "Disable confetti, Lottie and springs; keep instant opacity changes only"
+  },
+  "illustration": {
+    "style": "Flat, rounded, thick 2.5px midnight outlines, brand fills, friendly car and mechanic characters",
+    "car_avatar": "SVG car silhouettes per body type (sedan, SUV, pickup, hatchback, van, bus, motorbike) tinted by the vehicle's colour field",
+    "empty_states": ["no-jobs (car on a lift, mechanic waving)", "no-vehicles", "no-parts (empty shelf)", "no-reminders (car with a sleeping clock)", "no-invoices", "no-orders (delivery van)"]
+  },
+  "components": {
+    "Button": { "variants": ["primary", "secondary", "accent", "ghost", "danger"], "sizes": ["sm 36px", "md 44px", "lg 52px"], "shape": "pill, 2px border, chunky-sm shadow" },
+    "Card": "surface bg, 2px border, radius lg, chunky shadow",
+    "StatusPill": "pill, status colour bg, bold xs uppercase text",
+    "PlateChip": "mono uppercase plate with yellow #FFD43B background and midnight border",
+    "VehicleHealthCard": "CarAvatar + four ring indicators (oil, insurance, DVLA, issues) using due_item colours, next due text",
+    "KanbanColumn": "rounded xl, surface-muted, sticky header with count badge",
+    "StatTile": "big display number, label, delta chip",
+    "MoneyText": "tabular, GH₵ prefix, negative in danger colour",
+    "Stepper": "horizontal on desktop, vertical on mobile, used by tracker and renewals"
+  }
+}

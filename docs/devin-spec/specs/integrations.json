@@ -1,0 +1,88 @@
+{
+  "$schema_version": "1.0",
+  "description": "Every external service sits behind an adapter in lib/integrations. Select implementations with env vars. Every adapter has a 'mock' implementation used locally and in tests (mock messages are viewable at /dev/messages; mock payments can be completed or failed from /dev/payments). Verify current API details against each provider's official documentation at implementation time; record any differences in docs/DECISIONS.md.",
+  "adapters": {
+    "MessagingProvider": {
+      "interface": {
+        "send(input: { channel: 'sms'|'whatsapp'|'email'|'push', to: string, templateKey: string, variables: Record<string,string>, rendered: { subject?: string, body: string, title?: string }, whatsappTemplateName?: string, whatsappParams?: string[], idempotencyKey: string }): Promise<{ providerMessageId: string, costUnits: number }>": "",
+        "parseStatusWebhook(req): Promise<{ providerMessageId, status: 'sent'|'delivered'|'read'|'failed', failedReason?, at }[]>": "",
+        "parseInboundWebhook(req): Promise<{ from: string, channel, text: string, at }[]>": ""
+      },
+      "implementations": {
+        "sms": { "options": ["hubtel", "arkesel", "mock"], "env_select": "MESSAGING_SMS_PROVIDER", "notes": "Use registered sender ID (SMS_SENDER_ID). Count segments (GSM-7 160 / UCS-2 70 chars) for cost units. Delivery reports via /api/webhooks/sms." },
+        "whatsapp": { "options": ["meta_cloud_api", "mock"], "notes": "Business-initiated messages must use approved templates (template_name + params). Free-form replies allowed inside the 24-hour customer service window. Verify webhook with WHATSAPP_VERIFY_TOKEN and X-Hub-Signature-256 using WHATSAPP_APP_SECRET. Webhook at /api/webhooks/whatsapp handles statuses and inbound messages (mileage replies)." },
+        "email": { "options": ["resend", "mock"], "notes": "React Email templates with garage branding. Track opens/clicks only via our own link redirects (/l/[id])." },
+        "push": { "options": ["web_push", "mock"], "notes": "VAPID keys; remove subscriptions that return 404/410." }
+      },
+      "link_tracking": "All links in messages are short links /l/[shortId] that record clicked_at on reminder_messages/message_log then redirect to the magic link."
+    },
+    "PaymentProvider": {
+      "implementation": { "options": ["paystack", "mock"] },
+      "interface": {
+        "initializeCardOrMomoCheckout({ amountPesewas, email?, phone, reference, metadata, subaccount?, splitCode? }) -> { authorizationUrl, reference }": "Hosted checkout supporting card and mobile money",
+        "chargeMobileMoney({ amountPesewas, phone, network: 'mtn'|'telecel'|'airteltigo', reference, metadata }) -> { status, displayText }": "Direct MoMo prompt to the customer's phone",
+        "verify(reference) -> { status, amountPesewas, channel, paidAt }": "Always verify server-side before marking paid",
+        "refund({ reference, amountPesewas }) -> { refundId, status }": "",
+        "createSubaccount({ businessName, settlementBank|momo, accountNumber, percentageCharge }) -> { subaccountCode }": "For vendors (and optionally garages)",
+        "createSubscription({ customerEmail|code, planCode }) -> { subscriptionCode }": "Garage SaaS billing",
+        "parseWebhook(req) -> event": "Verify x-paystack-signature (HMAC SHA512 of raw body with secret key)"
+      },
+      "webhook": { "route": "/api/webhooks/paystack", "events_handled": ["charge.success", "charge.failed", "refund.processed", "refund.failed", "subscription.create", "subscription.disable", "invoice.payment_failed", "invoice.update", "transfer.success", "transfer.failed"], "idempotency": "Insert into webhook_events (provider, event_id) first; skip if exists." },
+      "reference_format": "{doc_type}_{garageShort}_{uuidv7} e.g. inv_ab12_01HX...",
+      "currency": "GHS",
+      "metadata": "Always include garage_id, branch_id, entity_type (invoice|estimate_deposit|instalment|credit_account|vendor_order|subscription|message_bundle), entity_id"
+    },
+    "StorageProvider": {
+      "implementation": { "options": ["supabase_storage", "mock_local"] },
+      "buckets": {
+        "job-media": { "public": false, "max_mb": 50, "types": ["image/*", "video/mp4", "audio/*"], "path": "{garage_id}/{job_id}/{uuid}.{ext}" },
+        "documents": { "public": false, "max_mb": 15, "types": ["image/*", "application/pdf"], "path": "{garage_id}/{entity}/{entity_id}/{uuid}.{ext}" },
+        "generated-pdfs": { "public": false, "path": "{garage_id}/{doc_type}/{number}.pdf" },
+        "branding": { "public": true, "max_mb": 2, "types": ["image/png", "image/svg+xml", "image/jpeg", "image/webp"], "path": "{garage_id|vendor_id}/logo.{ext}" },
+        "vendor-products": { "public": true, "max_mb": 5, "types": ["image/*"] }
+      },
+      "rules": "Compress images client-side to max 1600px long edge, WebP, before upload. Serve private files via short-lived signed URLs (10 minutes)."
+    },
+    "InsuranceProvider": {
+      "implementation": { "options": ["manual", "mock"], "future": "Partner insurer API adapter" },
+      "interface": {
+        "requestQuote(renewal) -> { status: 'pending_manual'|'quoted', premiumPesewas?, details? }": "Manual: creates a staff task; staff enters the quote",
+        "issuePolicy(renewal, payment) -> { status: 'pending_manual'|'issued', policyNumber?, documents? }": "Manual: staff uploads policy and sticker",
+        "verifyPolicy(policyNumber) -> { valid, expiry? } | 'unsupported'": "Optional; 'unsupported' in manual mode"
+      }
+    },
+    "DvlaProvider": {
+      "implementation": { "options": ["manual", "mock"], "future": "Official DVLA integration if/when available" },
+      "interface": {
+        "quote(recordType, vehicle) -> { officialFeePesewas, source: 'fee_table' }": "Uses dvla_fees table",
+        "submit(renewal) -> { status: 'pending_manual' }": "Creates staff task",
+        "complete(renewal, { referenceNumber, issueDate, expiryDate, documents }) -> dvla_record": "Staff completes"
+      }
+    }
+  },
+  "inngest_functions": [
+    { "id": "messaging.send", "trigger": "event message/send.requested", "concurrency": "per garage 10", "retries": 4 },
+    { "id": "messaging.whatsapp-fallback", "trigger": "event message/whatsapp.sent (sleep 15m then check status)" },
+    { "id": "reminders.scan", "trigger": "cron '5 * * * *' TZ=Africa/Accra" },
+    { "id": "reminders.schedule-item", "trigger": "event due_item/upserted" },
+    { "id": "mileage.recalculate-vehicle", "trigger": "event vehicle/odometer.recorded" },
+    { "id": "mileage.nightly", "trigger": "cron '30 1 * * *' TZ=Africa/Accra" },
+    { "id": "mileage.nudge", "trigger": "cron '0 10 * * *' TZ=Africa/Accra" },
+    { "id": "pdf.generate", "trigger": "event pdf/requested", "retries": 3 },
+    { "id": "payments.reconcile", "trigger": "event payment/webhook.received" },
+    { "id": "payments.pending-sweeper", "trigger": "cron '*/15 * * * *' (verify pending Paystack references older than 10 minutes)" },
+    { "id": "instalments.status", "trigger": "cron '0 6 * * *' TZ=Africa/Accra" },
+    { "id": "credit.statements", "trigger": "cron '0 5 * * *' TZ=Africa/Accra (accounts whose statement_day is today)" },
+    { "id": "inventory.reorder-check", "trigger": "event stock/movement.recorded + cron '0 2 * * *'" },
+    { "id": "reports.daily-snapshot", "trigger": "cron '15 0 * * *' TZ=Africa/Accra (previous day)" },
+    { "id": "reports.monthly-snapshot", "trigger": "cron '30 0 1 * *' TZ=Africa/Accra" },
+    { "id": "gamification.nightly", "trigger": "cron '45 0 * * *' TZ=Africa/Accra" },
+    { "id": "subscriptions.usage-alerts", "trigger": "event message/logged (debounced)" },
+    { "id": "bookings.day-before", "trigger": "cron '0 17 * * *' TZ=Africa/Accra" }
+  ],
+  "domain_events": [
+    "job/status.changed", "estimate/sent", "estimate/approved", "invoice/issued", "payment/succeeded", "payment/failed",
+    "vehicle/odometer.recorded", "due_item/upserted", "due_item/completed", "renewal/status.changed",
+    "stock/movement.recorded", "vendor_order/status.changed", "booking/created", "message/send.requested", "message/logged"
+  ]
+}

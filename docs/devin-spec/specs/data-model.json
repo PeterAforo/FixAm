@@ -1,0 +1,403 @@
+{
+  "$schema_version": "1.0",
+  "notes": [
+    "Column type shorthand: uuid, text, int, bigint, numeric(p,s), bool, date, timestamptz, jsonb, enum:<name>, money (= bigint pesewas). 'pk' primary key, 'fk:<table>' foreign key, 'req' not null, 'uniq' unique, 'default:<v>'.",
+    "Every table also has created_at timestamptz req default:now() and updated_at timestamptz req default:now() unless noted. Business tables have deleted_at timestamptz (soft delete).",
+    "Tenant tables (tenant: true) carry garage_id uuid req fk:garages and are protected by RLS: a row is visible only if the current user has an active membership in that garage (and branch, where the role is branch-scoped). Platform admin bypasses via service role in admin server code only.",
+    "Customer-facing reads (portal, magic links) go through server code that checks customer ownership or the magic-link scope; customers never get direct table access through the anon key.",
+    "Implement in Drizzle with one schema file per domain under lib/db/schema/."
+  ],
+  "enums": {
+    "membership_role": ["owner", "manager", "service_advisor", "mechanic", "storekeeper", "accountant"],
+    "membership_status": ["invited", "active", "suspended"],
+    "customer_type": ["individual", "business", "fleet"],
+    "contact_channel": ["sms", "whatsapp", "email", "push"],
+    "vehicle_body_type": ["sedan", "hatchback", "suv", "pickup", "van", "bus", "truck", "motorbike", "other"],
+    "fuel_type": ["petrol", "diesel", "hybrid", "electric", "lpg", "cng"],
+    "transmission": ["manual", "automatic", "cvt", "other"],
+    "vehicle_usage": ["private", "commercial", "taxi", "ride_hailing", "fleet"],
+    "odometer_source": ["check_in", "service_record", "customer_update", "staff_update", "import"],
+    "odometer_status": ["valid", "flagged", "rejected"],
+    "document_type": ["insurance_policy", "insurance_sticker", "roadworthy_certificate", "vehicle_registration", "drivers_licence", "national_id", "vehicle_photo", "invoice_pdf", "receipt_pdf", "other"],
+    "booking_status": ["requested", "confirmed", "checked_in", "no_show", "cancelled"],
+    "job_status": ["booked", "checked_in", "diagnosing", "estimate_sent", "approved", "declined", "in_progress", "waiting_parts", "quality_check", "ready", "delivered", "closed", "cancelled"],
+    "job_priority": ["low", "normal", "high", "urgent"],
+    "job_item_type": ["labour", "part", "sundry", "service_fee"],
+    "finding_severity": ["urgent", "recommended", "can_wait"],
+    "approval_status": ["pending", "approved", "declined"],
+    "approval_method": ["magic_link", "portal", "on_behalf_phone", "on_behalf_in_person"],
+    "estimate_status": ["draft", "sent", "partially_approved", "approved", "declined", "expired", "superseded"],
+    "stock_movement_type": ["purchase_receipt", "job_issue", "job_return", "pos_sale", "pos_return", "transfer_out", "transfer_in", "adjustment", "vendor_return", "opening_balance"],
+    "valuation_method": ["weighted_average", "fifo"],
+    "po_status": ["draft", "pending_approval", "sent", "accepted", "partially_delivered", "delivered", "received", "cancelled"],
+    "vendor_status": ["pending", "approved", "suspended"],
+    "vendor_order_status": ["placed", "accepted", "rejected", "packed", "out_for_delivery", "delivered", "received", "cancelled", "returned"],
+    "vendor_order_origin": ["garage_manual", "garage_auto_reorder", "job_linked", "customer_to_garage"],
+    "insurance_policy_type": ["third_party", "third_party_fire_theft", "comprehensive"],
+    "dvla_record_type": ["roadworthy", "registration_licence", "drivers_licence"],
+    "renewal_kind": ["insurance", "dvla"],
+    "renewal_status": ["requested", "documents_pending", "quote_pending", "quote_sent", "awaiting_payment", "paid", "processing", "completed", "cancelled", "failed"],
+    "due_item_type": ["oil_change", "general_service", "insurance", "roadworthy", "registration_licence", "drivers_licence", "instalment", "credit_statement", "custom"],
+    "due_item_status": ["scheduled", "due_soon", "due", "overdue", "completed", "dismissed"],
+    "message_status": ["queued", "suppressed_quiet_hours", "sent", "delivered", "read", "failed", "clicked"],
+    "invoice_status": ["draft", "issued", "partially_paid", "paid", "void", "written_off"],
+    "invoice_source": ["job", "pos_sale", "renewal", "vendor_fitting", "manual", "subscription"],
+    "payment_method": ["cash", "momo", "card", "bank_transfer", "cheque", "credit_account", "other"],
+    "payment_status": ["pending", "succeeded", "failed", "refunded", "partially_refunded"],
+    "payment_plan_status": ["active", "completed", "defaulted", "cancelled"],
+    "instalment_status": ["upcoming", "due", "paid", "overdue", "waived"],
+    "credit_account_status": ["active", "on_hold", "closed"],
+    "subscription_status": ["trialing", "active", "past_due", "cancelled", "paused"],
+    "notification_kind": ["booking_new", "estimate_approved", "estimate_declined", "part_arrived", "payment_received", "low_stock", "vendor_order_update", "renewal_update", "job_assigned", "qc_required", "system"]
+  },
+  "tables": {
+    "users": {
+      "tenant": false,
+      "columns": { "id": "uuid pk (= auth.users.id)", "full_name": "text req", "email": "text uniq", "phone": "text uniq (E.164)", "avatar_url": "text", "locale": "text default:'en-GH'", "is_platform_admin": "bool req default:false", "last_seen_at": "timestamptz" }
+    },
+    "garages": {
+      "tenant": false,
+      "columns": { "id": "uuid pk", "name": "text req", "slug": "text req uniq", "logo_url": "text", "phone": "text req", "email": "text", "address": "text", "city": "text", "region": "text", "gps_lat": "numeric(9,6)", "gps_lng": "numeric(9,6)", "business_reg_number": "text", "tin": "text", "brand_color": "text", "invoice_footer": "text", "terms": "text", "momo_merchant_number": "text", "paystack_subaccount_code": "text", "insurance_partner_id": "uuid fk:insurance_partners", "status": "text req default:'active'", "onboarding_completed_at": "timestamptz" }
+    },
+    "garage_settings": {
+      "tenant": true,
+      "columns": { "garage_id": "uuid pk fk:garages", "tax_rules": "jsonb req default:'[]' (list of {code,name,rate_bp,applies_to:[labour|part|sundry|service_fee],compound:bool,enabled:bool})", "prices_include_tax": "bool req default:false", "default_labour_rate": "money req default:0", "advisor_discount_limit_percent": "int req default:10", "deposit_rules": "jsonb default:'{}' (per job template or default percent)", "valuation_method": "enum:valuation_method default:'weighted_average'", "quiet_hours": "jsonb default:'{\"start\":\"21:00\",\"end\":\"07:00\"}'", "reminder_overrides": "jsonb default:'{}' (per due_item_type overrides of reminder-rules.json)", "default_km_per_day": "jsonb default:'{\"private\":40,\"commercial\":150,\"taxi\":180,\"ride_hailing\":200,\"fleet\":120}'", "celebrations_enabled": "bool default:true", "leaderboard_enabled": "bool default:true", "auto_reorder_enabled": "bool default:false", "auto_reorder_spend_limit": "money default:0", "late_fee_rule": "jsonb", "currency": "text req default:'GHS'" }
+    },
+    "branches": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req fk:garages", "name": "text req", "code": "text req (3-5 chars, used in document numbers)", "phone": "text", "address": "text", "gps_lat": "numeric(9,6)", "gps_lng": "numeric(9,6)", "opening_hours": "jsonb", "is_default": "bool default:false" },
+      "unique": [["garage_id", "code"]]
+    },
+    "bays": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "branch_id": "uuid req fk:branches", "name": "text req", "sort_order": "int default:0", "is_active": "bool default:true" }
+    },
+    "memberships": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "user_id": "uuid fk:users", "branch_id": "uuid fk:branches (null = all branches)", "role": "enum:membership_role req", "status": "enum:membership_status req default:'invited'", "invited_phone": "text", "invited_email": "text", "invite_token_hash": "text", "invited_by": "uuid fk:users", "hourly_cost": "money" },
+      "unique": [["garage_id", "user_id", "role", "branch_id"]]
+    },
+    "document_sequences": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "branch_id": "uuid fk:branches", "doc_type": "text req (INV|RCT|EST|PO|JOB|CN|REN)", "next_number": "bigint req default:1" },
+      "unique": [["garage_id", "branch_id", "doc_type"]],
+      "note": "Increment with SELECT ... FOR UPDATE inside the issuing transaction"
+    },
+    "customers": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "user_id": "uuid fk:users (linked portal account, nullable)", "type": "enum:customer_type req default:'individual'", "full_name": "text req", "company_name": "text", "phone": "text req (E.164)", "alt_phone": "text", "email": "text", "whatsapp_opt_in": "bool default:true", "marketing_opt_in": "bool default:false", "preferred_channels": "enum:contact_channel[] default:'{whatsapp,sms}'", "national_id_number": "text (encrypted at rest via pgcrypto)", "address": "text", "notes": "text", "tags": "text[]", "source": "text" },
+      "unique": [["garage_id", "phone"]],
+      "indexes": ["garage_id, full_name (trigram)", "garage_id, phone"]
+    },
+    "vehicles": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "plate_number": "text req", "plate_search": "text req (generated: upper, no spaces/hyphens)", "vin": "text", "make": "text req", "model": "text req", "year": "int", "color": "text", "color_hex": "text", "body_type": "enum:vehicle_body_type default:'sedan'", "fuel_type": "enum:fuel_type", "transmission": "enum:transmission", "engine_size": "text", "usage": "enum:vehicle_usage default:'private'", "current_owner_id": "uuid fk:customers", "last_odometer_km": "int", "last_odometer_at": "timestamptz", "km_per_day": "numeric(8,2)", "km_per_day_confidence": "text (high|medium|low)", "photo_url": "text", "notes": "text" },
+      "unique": [["garage_id", "plate_search"]],
+      "indexes": ["garage_id, plate_search", "garage_id, vin", "current_owner_id"]
+    },
+    "vehicle_ownerships": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "vehicle_id": "uuid req fk:vehicles", "customer_id": "uuid req fk:customers", "from_date": "date req", "to_date": "date", "is_primary": "bool default:true" }
+    },
+    "odometer_readings": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "vehicle_id": "uuid req fk:vehicles", "reading_km": "int req", "read_at": "timestamptz req", "source": "enum:odometer_source req", "status": "enum:odometer_status req default:'valid'", "flag_reason": "text", "recorded_by_user_id": "uuid fk:users", "recorded_by_customer_id": "uuid fk:customers", "job_id": "uuid fk:jobs", "photo_url": "text", "odometer_replaced": "bool default:false" },
+      "indexes": ["vehicle_id, read_at desc"]
+    },
+    "documents": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "vehicle_id": "uuid fk:vehicles", "customer_id": "uuid fk:customers", "job_id": "uuid fk:jobs", "renewal_request_id": "uuid fk:renewal_requests", "type": "enum:document_type req", "storage_path": "text req", "file_name": "text", "mime_type": "text", "size_bytes": "int", "expires_on": "date", "uploaded_by_user_id": "uuid", "uploaded_by_customer_id": "uuid" }
+    },
+    "insurance_partners": {
+      "tenant": false,
+      "columns": { "id": "uuid pk", "name": "text req", "nic_licence_number": "text", "contact_name": "text", "contact_phone": "text", "contact_email": "text", "commission_rule": "jsonb", "is_active": "bool default:true" }
+    },
+    "insurance_policies": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "vehicle_id": "uuid req fk:vehicles", "customer_id": "uuid fk:customers", "insurer_name": "text req", "partner_id": "uuid fk:insurance_partners", "policy_type": "enum:insurance_policy_type req", "policy_number": "text", "sticker_number": "text", "start_date": "date req", "end_date": "date req", "premium": "money", "renewal_request_id": "uuid fk:renewal_requests", "is_current": "bool default:true" },
+      "indexes": ["vehicle_id, end_date desc"]
+    },
+    "dvla_records": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "vehicle_id": "uuid fk:vehicles", "customer_id": "uuid fk:customers", "type": "enum:dvla_record_type req", "reference_number": "text", "issue_date": "date", "expiry_date": "date req", "renewal_request_id": "uuid fk:renewal_requests", "is_current": "bool default:true" }
+    },
+    "dvla_fees": {
+      "tenant": false,
+      "columns": { "id": "uuid pk", "record_type": "enum:dvla_record_type req", "vehicle_category": "text req", "description": "text", "amount": "money req", "effective_from": "date req", "effective_to": "date" },
+      "note": "Maintained by Platform Admin"
+    },
+    "bookings": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "branch_id": "uuid req", "customer_id": "uuid fk:customers", "vehicle_id": "uuid fk:vehicles", "guest_name": "text", "guest_phone": "text", "guest_plate": "text", "service_type": "text req", "job_template_id": "uuid fk:job_templates", "starts_at": "timestamptz req", "ends_at": "timestamptz req", "bay_id": "uuid fk:bays", "status": "enum:booking_status req default:'requested'", "notes": "text", "source": "text (public_page|reminder|staff|portal)", "due_item_id": "uuid fk:due_items", "job_id": "uuid fk:jobs" }
+    },
+    "job_templates": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "name": "text req", "description": "text", "default_items": "jsonb (list of job_item drafts)", "checklist": "jsonb (list of {label, required})", "estimated_minutes": "int", "deposit_percent": "int", "creates_due_item_type": "enum:due_item_type (e.g. oil_change)", "is_active": "bool default:true" }
+    },
+    "jobs": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "branch_id": "uuid req fk:branches", "number": "text req (JOB-...)", "vehicle_id": "uuid req fk:vehicles", "customer_id": "uuid req fk:customers", "booking_id": "uuid fk:bookings", "bay_id": "uuid fk:bays", "status": "enum:job_status req default:'checked_in'", "priority": "enum:job_priority default:'normal'", "complaint": "text", "check_in_odometer_km": "int", "check_in_fuel_level": "int (0-100)", "check_in_items": "text", "check_in_signature_path": "text", "promised_at": "timestamptz", "checked_in_at": "timestamptz", "ready_at": "timestamptz", "delivered_at": "timestamptz", "service_advisor_id": "uuid fk:users", "qc_signed_off_by": "uuid fk:users", "qc_signed_off_at": "timestamptz", "warranty_parent_job_id": "uuid fk:jobs", "is_warranty": "bool default:false", "renewal_request_id": "uuid fk:renewal_requests", "vendor_order_id": "uuid fk:vendor_orders", "tracker_token_hash": "text", "internal_notes": "text" },
+      "unique": [["garage_id", "number"]],
+      "indexes": ["garage_id, branch_id, status", "vehicle_id, created_at desc"]
+    },
+    "job_status_events": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "job_id": "uuid req fk:jobs", "from_status": "enum:job_status", "to_status": "enum:job_status req", "actor_user_id": "uuid", "note": "text", "customer_visible": "bool default:true" }
+    },
+    "job_assignments": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "job_id": "uuid req fk:jobs", "user_id": "uuid req fk:users", "is_lead": "bool default:false" }
+    },
+    "job_findings": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "job_id": "uuid req fk:jobs", "title": "text req", "description": "text", "severity": "enum:finding_severity req", "created_by": "uuid fk:users", "customer_visible": "bool default:true" }
+    },
+    "job_media": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "job_id": "uuid req fk:jobs", "finding_id": "uuid fk:job_findings", "kind": "text req (photo|video|voice)", "stage": "text (check_in|diagnosis|repair|qc|delivery)", "storage_path": "text req", "caption": "text", "customer_visible": "bool default:true", "uploaded_by": "uuid fk:users" }
+    },
+    "job_items": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "job_id": "uuid req fk:jobs", "estimate_id": "uuid fk:estimates", "finding_id": "uuid fk:job_findings", "type": "enum:job_item_type req", "description": "text req", "part_id": "uuid fk:parts", "quantity": "numeric(10,2) req default:1", "unit_price": "money req", "unit_cost": "money", "labour_hours": "numeric(6,2)", "discount_amount": "money default:0", "tax_codes": "text[]", "approval_status": "enum:approval_status default:'pending'", "is_issued_from_stock": "bool default:false", "sort_order": "int default:0" }
+    },
+    "job_tasks": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "job_id": "uuid req fk:jobs", "title": "text req", "assigned_to": "uuid fk:users", "is_done": "bool default:false", "done_at": "timestamptz", "checklist_item": "bool default:false", "required": "bool default:false", "sort_order": "int default:0" }
+    },
+    "time_logs": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "job_id": "uuid req fk:jobs", "job_task_id": "uuid fk:job_tasks", "user_id": "uuid req fk:users", "started_at": "timestamptz req", "ended_at": "timestamptz", "client_id": "text (offline queue idempotency key)" }
+    },
+    "estimates": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "job_id": "uuid req fk:jobs", "number": "text req (EST-...)", "version": "int req default:1", "status": "enum:estimate_status req default:'draft'", "subtotal": "money req default:0", "discount_total": "money req default:0", "tax_total": "money req default:0", "total": "money req default:0", "deposit_required": "money default:0", "valid_until": "date", "sent_at": "timestamptz", "token_hash": "text", "notes": "text" }
+    },
+    "approvals": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "estimate_id": "uuid req fk:estimates", "method": "enum:approval_method req", "approved_item_ids": "uuid[]", "declined_item_ids": "uuid[]", "approved_total": "money", "signature_path": "text", "customer_id": "uuid fk:customers", "on_behalf_user_id": "uuid fk:users", "on_behalf_reason": "text", "ip": "text", "user_agent": "text" }
+    },
+    "parts": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "sku": "text req", "name": "text req", "brand": "text", "category": "text", "description": "text", "compatible_vehicles": "jsonb (list of {make, model, year_from, year_to})", "barcode": "text", "unit": "text default:'pcs'", "cost_price": "money req default:0", "selling_price": "money req default:0", "tax_codes": "text[]", "photo_url": "text", "preferred_vendor_id": "uuid fk:vendors", "preferred_vendor_product_id": "uuid fk:vendor_products", "is_service_item": "bool default:false", "online_visible": "bool default:false", "is_active": "bool default:true" },
+      "unique": [["garage_id", "sku"]],
+      "indexes": ["garage_id, name (trigram)", "garage_id, barcode"]
+    },
+    "stock_levels": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "branch_id": "uuid req fk:branches", "part_id": "uuid req fk:parts", "quantity_on_hand": "numeric(12,2) req default:0", "quantity_reserved": "numeric(12,2) req default:0", "reorder_level": "numeric(12,2) default:0", "reorder_quantity": "numeric(12,2) default:0", "bin_location": "text", "average_cost": "money default:0" },
+      "unique": [["branch_id", "part_id"]]
+    },
+    "stock_movements": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "branch_id": "uuid req", "part_id": "uuid req fk:parts", "type": "enum:stock_movement_type req", "quantity": "numeric(12,2) req (positive in, negative out)", "unit_cost": "money", "reference_type": "text (job|pos_sale|purchase_order|transfer|adjustment)", "reference_id": "uuid", "reason": "text", "actor_user_id": "uuid fk:users" },
+      "note": "Append-only. stock_levels is updated in the same transaction."
+    },
+    "pos_sales": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "branch_id": "uuid req", "customer_id": "uuid fk:customers", "invoice_id": "uuid fk:invoices", "sold_by": "uuid fk:users", "channel": "text (counter|online)", "status": "text (open|completed|returned)" }
+    },
+    "vendors": {
+      "tenant": false,
+      "columns": { "id": "uuid pk", "business_name": "text req", "slug": "text uniq", "logo_url": "text", "phone": "text req", "email": "text", "address": "text", "city": "text", "region": "text", "gps_lat": "numeric(9,6)", "gps_lng": "numeric(9,6)", "delivery_zones": "jsonb (list of {region, city?, fee, eta_hours})", "categories": "text[]", "payout_method": "text (momo|bank)", "payout_details_encrypted": "text", "paystack_subaccount_code": "text", "commission_bp": "int default:0", "status": "enum:vendor_status req default:'pending'", "rating_avg": "numeric(3,2)", "rating_count": "int default:0" }
+    },
+    "vendor_members": {
+      "tenant": false,
+      "columns": { "id": "uuid pk", "vendor_id": "uuid req fk:vendors", "user_id": "uuid req fk:users", "role": "text req (vendor_owner|vendor_staff)" }
+    },
+    "vendor_products": {
+      "tenant": false,
+      "columns": { "id": "uuid pk", "vendor_id": "uuid req fk:vendors", "sku": "text req", "name": "text req", "brand": "text", "category": "text req", "description": "text", "compatible_vehicles": "jsonb", "unit": "text default:'pcs'", "price": "money req", "stock_status": "text (in_stock|low|out|on_order)", "quantity_available": "int", "min_order_qty": "int default:1", "lead_time_hours": "int", "photos": "text[]", "is_active": "bool default:true" },
+      "unique": [["vendor_id", "sku"]],
+      "indexes": ["category", "name (trigram)"]
+    },
+    "vendor_orders": {
+      "tenant": false,
+      "columns": { "id": "uuid pk", "number": "text req uniq (VO-...)", "vendor_id": "uuid req fk:vendors", "garage_id": "uuid req fk:garages (delivery destination)", "branch_id": "uuid fk:branches", "purchase_order_id": "uuid fk:purchase_orders", "origin": "enum:vendor_order_origin req", "ordered_by_user_id": "uuid fk:users", "ordered_by_customer_id": "uuid fk:customers", "job_id": "uuid fk:jobs", "vehicle_id": "uuid fk:vehicles", "status": "enum:vendor_order_status req default:'placed'", "subtotal": "money req", "delivery_fee": "money default:0", "commission_amount": "money default:0", "total": "money req", "payment_status": "enum:payment_status default:'pending'", "paystack_reference": "text", "expected_delivery_at": "timestamptz", "delivered_at": "timestamptz", "notes": "text" },
+      "rls_note": "Visible to: members of garage_id, members of vendor_id, the ordering customer, platform admin."
+    },
+    "vendor_order_items": {
+      "tenant": false,
+      "columns": { "id": "uuid pk", "vendor_order_id": "uuid req fk:vendor_orders", "vendor_product_id": "uuid req fk:vendor_products", "part_id": "uuid fk:parts (garage part it maps to)", "description": "text req", "quantity": "int req", "unit_price": "money req", "quantity_delivered": "int default:0", "quantity_received": "int default:0" }
+    },
+    "vendor_order_events": {
+      "tenant": false,
+      "columns": { "id": "uuid pk", "vendor_order_id": "uuid req fk:vendor_orders", "status": "enum:vendor_order_status req", "actor_user_id": "uuid", "note": "text" }
+    },
+    "vendor_reviews": {
+      "tenant": false,
+      "columns": { "id": "uuid pk", "vendor_id": "uuid req fk:vendors", "vendor_order_id": "uuid req uniq fk:vendor_orders", "garage_id": "uuid req", "rating": "int req (1-5)", "comment": "text" }
+    },
+    "purchase_orders": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "branch_id": "uuid req", "number": "text req (PO-...)", "vendor_id": "uuid fk:vendors (marketplace)", "external_supplier_name": "text (non-marketplace supplier)", "status": "enum:po_status req default:'draft'", "is_auto_generated": "bool default:false", "subtotal": "money req default:0", "total": "money req default:0", "approved_by": "uuid fk:users", "approved_at": "timestamptz", "expected_at": "timestamptz", "notes": "text" }
+    },
+    "purchase_order_items": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "purchase_order_id": "uuid req fk:purchase_orders", "part_id": "uuid req fk:parts", "vendor_product_id": "uuid fk:vendor_products", "quantity": "numeric(12,2) req", "unit_cost": "money req", "quantity_received": "numeric(12,2) default:0" }
+    },
+    "goods_receipts": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "branch_id": "uuid req", "purchase_order_id": "uuid fk:purchase_orders", "vendor_order_id": "uuid fk:vendor_orders", "received_by": "uuid req fk:users", "lines": "jsonb req (list of {part_id, quantity, unit_cost, condition})", "notes": "text" }
+    },
+    "renewal_requests": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "number": "text req (REN-...)", "kind": "enum:renewal_kind req", "dvla_record_type": "enum:dvla_record_type", "insurance_policy_type": "enum:insurance_policy_type", "vehicle_id": "uuid req fk:vehicles", "customer_id": "uuid req fk:customers", "due_item_id": "uuid fk:due_items", "status": "enum:renewal_status req default:'requested'", "partner_id": "uuid fk:insurance_partners", "official_fee": "money (DVLA fee or insurance premium)", "service_fee": "money", "total": "money", "quote_details": "jsonb", "invoice_id": "uuid fk:invoices", "assigned_to": "uuid fk:users", "completed_at": "timestamptz", "token_hash": "text", "required_documents": "text[] (document_type values)", "notes": "text" }
+    },
+    "renewal_events": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "renewal_request_id": "uuid req fk:renewal_requests", "status": "enum:renewal_status req", "actor_user_id": "uuid", "note": "text", "customer_visible": "bool default:true" }
+    },
+    "due_items": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "vehicle_id": "uuid fk:vehicles", "customer_id": "uuid req fk:customers", "type": "enum:due_item_type req", "title": "text", "due_date": "date", "due_mileage_km": "int", "predicted_due_date": "date", "effective_due_date": "date req (min of due_date and predicted_due_date)", "status": "enum:due_item_status req default:'scheduled'", "escalation_stage": "int req default:0", "next_reminder_at": "timestamptz", "source_type": "text (job|insurance_policy|dvla_record|instalment|credit_account|manual)", "source_id": "uuid", "completed_at": "timestamptz", "dismissed_reason": "text", "action_token_hash": "text" },
+      "indexes": ["garage_id, status, next_reminder_at", "vehicle_id, type, status"]
+    },
+    "reminder_messages": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "customer_id": "uuid req fk:customers", "due_item_ids": "uuid[] req", "channel": "enum:contact_channel req", "template_key": "text req", "rendered_body": "text req", "status": "enum:message_status req default:'queued'", "provider": "text", "provider_message_id": "text", "cost_units": "int default:1", "sent_at": "timestamptz", "delivered_at": "timestamptz", "read_at": "timestamptz", "clicked_at": "timestamptz", "failed_reason": "text", "converted_booking_id": "uuid", "converted_renewal_id": "uuid" }
+    },
+    "message_log": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "customer_id": "uuid", "user_id": "uuid", "channel": "enum:contact_channel req", "category": "text req (transactional|reminder|otp|marketing|staff)", "template_key": "text", "to": "text req", "status": "enum:message_status req", "provider_message_id": "text", "cost_units": "int default:1", "related_type": "text", "related_id": "uuid" },
+      "note": "Every outbound message (not just reminders) is logged here and counted against the plan allowance."
+    },
+    "message_templates": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid (null = platform default)", "key": "text req", "channel": "enum:contact_channel req", "subject": "text", "body": "text req", "whatsapp_template_name": "text", "is_active": "bool default:true" },
+      "unique": [["garage_id", "key", "channel"]]
+    },
+    "invoices": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "branch_id": "uuid req", "number": "text (assigned on issue: INV-...)", "source": "enum:invoice_source req", "source_id": "uuid", "customer_id": "uuid fk:customers", "vehicle_id": "uuid fk:vehicles", "status": "enum:invoice_status req default:'draft'", "issue_date": "date", "due_date": "date", "subtotal": "money req default:0", "discount_total": "money req default:0", "tax_total": "money req default:0", "total": "money req default:0", "amount_paid": "money req default:0", "balance_due": "money req default:0 (generated: total - amount_paid - credits)", "deposit_applied": "money default:0", "credit_account_id": "uuid fk:credit_accounts", "payment_plan_id": "uuid fk:payment_plans", "pdf_path": "text", "token_hash": "text", "notes": "text", "issued_by": "uuid fk:users", "issued_at": "timestamptz", "voided_by": "uuid", "voided_at": "timestamptz", "void_reason": "text" },
+      "unique": [["garage_id", "number"]],
+      "rule": "Lines and totals are frozen when status leaves 'draft'."
+    },
+    "invoice_lines": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "invoice_id": "uuid req fk:invoices", "type": "enum:job_item_type req", "description": "text req", "part_id": "uuid fk:parts", "job_item_id": "uuid fk:job_items", "quantity": "numeric(10,2) req", "unit_price": "money req", "discount_amount": "money default:0", "tax_breakdown": "jsonb (list of {code, rate_bp, amount})", "line_total": "money req", "sort_order": "int default:0" }
+    },
+    "payments": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "branch_id": "uuid req", "customer_id": "uuid fk:customers", "invoice_id": "uuid fk:invoices", "estimate_id": "uuid fk:estimates (deposit before invoice)", "instalment_id": "uuid fk:instalments", "credit_account_id": "uuid fk:credit_accounts (payment against account balance)", "method": "enum:payment_method req", "status": "enum:payment_status req default:'pending'", "amount": "money req", "momo_network": "text (mtn|telecel|airteltigo)", "payer_phone": "text", "paystack_reference": "text uniq", "external_reference": "text", "received_by": "uuid fk:users", "paid_at": "timestamptz", "receipt_number": "text (RCT-...)", "receipt_pdf_path": "text", "is_deposit": "bool default:false", "notes": "text" }
+    },
+    "payment_allocations": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "payment_id": "uuid req fk:payments", "invoice_id": "uuid req fk:invoices", "amount": "money req" },
+      "note": "Lets one payment (e.g. credit account settlement) cover several invoices."
+    },
+    "refunds": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "payment_id": "uuid req fk:payments", "amount": "money req", "reason": "text req", "method": "enum:payment_method req", "paystack_refund_id": "text", "processed_by": "uuid req fk:users" }
+    },
+    "credit_notes": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "number": "text req (CN-...)", "invoice_id": "uuid req fk:invoices", "amount": "money req", "reason": "text req", "lines": "jsonb", "issued_by": "uuid req fk:users" }
+    },
+    "payment_plans": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "invoice_id": "uuid req fk:invoices", "customer_id": "uuid req fk:customers", "total_amount": "money req", "down_payment": "money default:0", "instalment_count": "int req", "frequency": "text req (weekly|fortnightly|monthly|custom)", "start_date": "date req", "late_fee_rule": "jsonb", "status": "enum:payment_plan_status req default:'active'", "approved_by": "uuid fk:users" }
+    },
+    "instalments": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "payment_plan_id": "uuid req fk:payment_plans", "sequence": "int req", "due_date": "date req", "amount": "money req", "amount_paid": "money default:0", "late_fee": "money default:0", "status": "enum:instalment_status req default:'upcoming'" }
+    },
+    "credit_accounts": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "customer_id": "uuid req uniq fk:customers", "credit_limit": "money req", "payment_terms_days": "int req default:30", "balance": "money req default:0", "status": "enum:credit_account_status req default:'active'", "statement_day": "int default:1", "approved_by": "uuid fk:users" }
+    },
+    "credit_statements": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "credit_account_id": "uuid req fk:credit_accounts", "period_start": "date req", "period_end": "date req", "opening_balance": "money req", "charges": "money req", "payments": "money req", "closing_balance": "money req", "ageing": "jsonb ({current, d31_60, d61_90, d90_plus})", "pdf_path": "text", "sent_at": "timestamptz" }
+    },
+    "expense_categories": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "name": "text req", "is_default": "bool default:false" },
+      "seed": ["Rent", "Salaries & wages", "Utilities", "Fuel & transport", "Tools & equipment", "Parts purchases (non-stock)", "Consumables", "Marketing", "Repairs & maintenance", "Bank & MoMo charges", "Taxes & licences", "Other"]
+    },
+    "expenses": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "branch_id": "uuid", "category_id": "uuid req fk:expense_categories", "description": "text req", "amount": "money req", "paid_on": "date req", "method": "enum:payment_method", "vendor_name": "text", "receipt_path": "text", "recorded_by": "uuid req fk:users" }
+    },
+    "cash_ups": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "branch_id": "uuid req", "business_date": "date req", "expected_cash": "money req", "counted_cash": "money req", "difference": "money req", "expected_by_method": "jsonb", "notes": "text", "performed_by": "uuid req fk:users" },
+      "unique": [["branch_id", "business_date"]]
+    },
+    "report_snapshots": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "branch_id": "uuid", "period_type": "text req (day|month)", "period_start": "date req", "metrics": "jsonb req" },
+      "unique": [["garage_id", "branch_id", "period_type", "period_start"]]
+    },
+    "notifications": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "user_id": "uuid req fk:users", "kind": "enum:notification_kind req", "title": "text req", "body": "text", "link": "text", "read_at": "timestamptz" }
+    },
+    "push_subscriptions": {
+      "tenant": false,
+      "columns": { "id": "uuid pk", "user_id": "uuid fk:users", "customer_id": "uuid fk:customers", "endpoint": "text req uniq", "p256dh": "text req", "auth": "text req", "user_agent": "text" }
+    },
+    "magic_links": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "token_hash": "text req uniq", "purpose": "text req (tracker|estimate_approval|invoice_pay|mileage_update|renewal|booking|due_item_action)", "resource_type": "text req", "resource_id": "uuid req", "customer_id": "uuid fk:customers", "expires_at": "timestamptz req", "used_count": "int default:0", "max_uses": "int", "revoked_at": "timestamptz" }
+    },
+    "mechanic_stats": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "user_id": "uuid req fk:users", "period_start": "date req", "jobs_completed": "int default:0", "hours_logged": "numeric(8,2) default:0", "revenue_generated": "money default:0", "comebacks": "int default:0", "streak_days": "int default:0", "badges": "text[]" },
+      "unique": [["garage_id", "user_id", "period_start"]]
+    },
+    "plans": {
+      "tenant": false,
+      "columns": { "id": "uuid pk", "code": "text req uniq", "name": "text req", "price_monthly": "money req", "max_branches": "int (null = unlimited)", "max_staff": "int (null = unlimited)", "message_allowance": "int req", "features": "text[] req", "paystack_plan_code": "text", "is_active": "bool default:true" },
+      "seed_from": "specs/plans.json"
+    },
+    "subscriptions": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req uniq", "plan_id": "uuid req fk:plans", "status": "enum:subscription_status req default:'trialing'", "trial_ends_at": "timestamptz", "current_period_start": "timestamptz", "current_period_end": "timestamptz", "paystack_subscription_code": "text", "paystack_customer_code": "text", "is_complimentary": "bool default:false", "cancel_at_period_end": "bool default:false" }
+    },
+    "message_usage": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid req", "period_start": "date req", "allowance": "int req", "addon_units": "int default:0", "used_units": "int default:0", "alert_80_sent_at": "timestamptz", "alert_100_sent_at": "timestamptz" },
+      "unique": [["garage_id", "period_start"]]
+    },
+    "webhook_events": {
+      "tenant": false,
+      "columns": { "id": "uuid pk", "provider": "text req", "event_id": "text req", "type": "text", "payload": "jsonb req", "processed_at": "timestamptz", "error": "text" },
+      "unique": [["provider", "event_id"]]
+    },
+    "audit_logs": {
+      "tenant": true,
+      "columns": { "id": "uuid pk", "garage_id": "uuid (null for platform-level)", "actor_user_id": "uuid", "actor_customer_id": "uuid", "impersonated_by": "uuid", "action": "text req (e.g. invoice.issue)", "entity_type": "text req", "entity_id": "uuid", "before": "jsonb", "after": "jsonb", "ip": "text", "user_agent": "text" },
+      "note": "Insert-only; no updated_at; no deletes (revoke UPDATE/DELETE in RLS)."
+    }
+  },
+  "domain_rules": {
+    "job_status_transitions": {
+      "booked": ["checked_in", "cancelled"],
+      "checked_in": ["diagnosing", "estimate_sent", "in_progress", "cancelled"],
+      "diagnosing": ["estimate_sent", "cancelled"],
+      "estimate_sent": ["approved", "declined", "diagnosing"],
+      "approved": ["in_progress", "waiting_parts"],
+      "declined": ["ready", "estimate_sent", "closed"],
+      "in_progress": ["waiting_parts", "quality_check", "estimate_sent"],
+      "waiting_parts": ["in_progress"],
+      "quality_check": ["in_progress", "ready"],
+      "ready": ["delivered"],
+      "delivered": ["closed"],
+      "closed": [],
+      "cancelled": []
+    },
+    "job_side_effects": {
+      "checked_in": "Record odometer reading (required); recalc km_per_day; create tracker magic link; notify customer.",
+      "estimate_sent": "Create estimate magic link; send via preferred channels.",
+      "approved": "Reserve stock for approved part items; for out-of-stock items, suggest vendor order (job-linked).",
+      "quality_check": "Require all required checklist tasks done.",
+      "ready": "Require QC sign-off; generate draft invoice from approved items; notify customer with pay link; play job_ready animation.",
+      "delivered": "Require invoice issued and (paid OR on credit account OR payment plan); issue stock from reservation; create/refresh due items from job template (e.g. oil change); complete matching due items.",
+      "closed": "Lock job."
+    },
+    "tax_calculation": "For each line: base = quantity × unit_price − discount. Apply each enabled tax rule whose applies_to includes the line type. Non-compound taxes use base; compound taxes use base + previous taxes. Round each tax amount half-up to the nearest pesewa per line. If prices_include_tax, back out tax from the price. Rates stored in basis points (bp). Implement in lib/domain/tax.ts with exhaustive unit tests.",
+    "stock_valuation": "Weighted average by default: on receipt, new_avg = (qty_on_hand × avg + qty_in × unit_cost) / (qty_on_hand + qty_in). FIFO optional (cost layers) — implement weighted average first.",
+    "deposits": "Deposit payments link to estimate_id; when the invoice is issued, apply them as payment_allocations.",
+    "credit_account_balance": "balance increases when an invoice is charged to the account and decreases on payment allocation; block charging if balance + invoice.total > credit_limit unless user has credit_accounts.exceed_limit."
+  }
+}
