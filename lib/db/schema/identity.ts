@@ -131,9 +131,8 @@ export const memberships = pgTable(
     garageId: uuid("garage_id")
       .notNull()
       .references(() => garages.id),
-    userId: uuid("user_id")
-      .notNull()
-      .references(() => users.id),
+    // nullable until the invitee registers (invited_phone/invited_email set)
+    userId: uuid("user_id").references(() => users.id),
     branchId: uuid("branch_id").references(() => branches.id), // null = all branches
     role: membershipRoleEnum("role").notNull(),
     status: membershipStatusEnum("status").notNull().default("invited"),
