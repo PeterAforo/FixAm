@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
 import { cookies } from "next/headers"
+import { connection } from "next/server"
 import { desc, eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { branches, garages, notifications, users } from "@/lib/db/schema"
@@ -18,6 +19,7 @@ async function ShellLoader({
   params: Promise<{ garageSlug: string }>
   children: React.ReactNode
 }) {
+  await connection()
   const { garageSlug } = await params
 
   const supabase = await createClient()

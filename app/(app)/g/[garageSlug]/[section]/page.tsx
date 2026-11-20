@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation"
 import { Suspense } from "react"
+import { connection } from "next/server"
 import { eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { garages } from "@/lib/db/schema"
@@ -31,6 +32,7 @@ async function Section({
 }: {
   params: Promise<{ garageSlug: string; section: string }>
 }) {
+  await connection()
   const { garageSlug, section } = await params
   const label = SECTION_LABELS[section]
   if (!label) notFound()

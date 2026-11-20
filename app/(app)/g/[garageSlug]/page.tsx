@@ -1,7 +1,9 @@
 import Link from "next/link"
 import { Suspense } from "react"
+import { connection } from "next/server"
 
 async function GarageName({ params }: { params: Promise<{ garageSlug: string }> }) {
+  await connection()
   const { garageSlug } = await params
   return (
     <>

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
+import { connection } from "next/server"
 import { eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { branches, garages } from "@/lib/db/schema"
@@ -9,6 +10,7 @@ import { listStaff } from "@/lib/staff/actions"
 import { StaffPanel } from "./staff-panel"
 
 async function StaffLoader({ params }: { params: Promise<{ garageSlug: string }> }) {
+  await connection()
   const { garageSlug } = await params
   const userId = await getSessionUserId()
   if (!userId) redirect("/login")
