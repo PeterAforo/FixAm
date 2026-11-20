@@ -41,3 +41,10 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
   — requires network at build time; builds in offline environments should
   expect font fetch failures.
 - **`/design` is dev-only** (`notFound()` in production).
+
+## Database (Supabase project fpdjerqyaqhnjdcqlztc)
+
+- Project lives in eu-west-1 behind the aws-1 pooler; the direct db.* host is IPv6-only and unreachable from this machine, so DATABASE_URL uses the transaction pooler (6543) and DATABASE_URL_DIRECT the session pooler (5432), both with ?sslmode=require.
+- drizzle-kit migrate initially failed silently without sslmode; with it, migrations apply cleanly. scripts/apply-migrations.cjs remains as a manual fallback.
+- Plans seeded from specs/plans.json (starter/growth/pro); message_templates table lands with the reminders phase.
+

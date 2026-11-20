@@ -18,8 +18,8 @@ as $$
   select coalesce(
     (select auth.uid()),
     nullif(current_setting('request.jwt.claim.sub', true), '')::uuid,
-    nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub'
-  )::uuid
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')::uuid
+  )
 $$;
 
 create or replace function public.is_member(p_garage_id uuid)
