@@ -1,3 +1,11 @@
+import { NextResponse } from "next/server"
+import { verifyWhatsAppSignature } from "@/lib/integrations/webhooks"
+import {
+  markWebhookError,
+  markWebhookProcessed,
+  recordWebhookEvent,
+} from "@/lib/webhook-events"
+
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const mode = url.searchParams.get("hub.mode")
@@ -10,6 +18,50 @@ export async function GET(request: Request) {
   return new Response("Forbidden", { status: 403 })
 }
 
-export async function POST() {
-  return Response.json({ received: true })
+export async function POST(request: Request) {
+  const rawBody = await request.text()
+
+  const mockMode =
+    (process.env.MESSAGING_WHATSAPP_PROVIDER ?? "mock") === "mock"
+  if (
+    !mockMode &&
+    !verifyWhatsAppSignature(
+      rawBody,
+      request.headers.get("x-hub-signature-256"),
+      process.env.WHATSAPP_APP_SECRET
+    )
+  ) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
+  }
+
+  const payload = JSON.parse(rawBody) as {
+    entry?: Array<{
+      changes?: Array<{ value?: { messages?: unknown[]; statuses?: unknown[] } }>
+    }>
+  }
+
+  // Meta webhooks don't carry a single event id — derive one per payload.
+  const eventId = request.headers.get("x-request-id") ?? rawBody.slice(0, 64)
+  const recorded = await recordWebhookEvent({
+    provider: "whatsapp",
+    eventId,
+    type: "whatsapp.webhook",
+    payload,
+  })
+  if (recorded === "duplicate") {
+    return NextResponse.json({ received: true, duplicate: true })
+  }
+
+  try {
+    // Status updates + inbound messages (mileage replies) — wired in P4.
+    await markWebhookProcessed("whatsapp", eventId)
+    return NextResponse.json({ received: true })
+  } catch (e) {
+    await markWebhookError(
+      "whatsapp",
+      eventId,
+      e instanceof Error ? e.message : String(e)
+    )
+    return NextResponse.json({ error: "Processing failed" }, { status: 500 })
+  }
 }

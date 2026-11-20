@@ -50,3 +50,6 @@ next-env.d.ts
 
 # supabase local
 /.supabase/
+
+.dev-inbox/
+.dev-storage/
