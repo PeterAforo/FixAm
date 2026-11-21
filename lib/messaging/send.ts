@@ -52,10 +52,83 @@ const FALLBACKS: Partial<Record<MessageChannel, MessageChannel>> = {
   whatsapp: "sms",
 }
 
+// ---------------------------------------------------------------------------
+// DB-backed default deps — allowance meter + message_log, used when the caller
+// doesn't inject mocks. Keeps sendMessage pure for tests.
+// ---------------------------------------------------------------------------
+
+let dbDepsPromise: Promise<SendDeps> | null = null
+
+function categoryFor(templateKey: string): "transactional" | "reminder" | "otp" | "marketing" | "staff" {
+  if (templateKey === "otp") return "otp"
+  if (templateKey === "staff_invite") return "staff"
+  if (/due|remind|nudge|confirm|oil|insurance|roadworthy|registration|licence|instalment|credit|booking/.test(templateKey)) return "reminder"
+  if (/promo|offer|marketing/.test(templateKey)) return "marketing"
+  return "transactional"
+}
+
+function dbDeps(): Promise<SendDeps> {
+  dbDepsPromise ??= (async () => {
+    const { and, eq, sql } = await import("drizzle-orm")
+    const { db } = await import("@/lib/db")
+    const { messageLogs, messageUsage, plans, subscriptions } = await import("@/lib/db/schema")
+
+    const periodStart = () => new Date().toISOString().slice(0, 8) + "01"
+
+    async function ensureUsageRow(garageId: string) {
+      const ps = periodStart()
+      const [u] = await db().select().from(messageUsage)
+        .where(and(eq(messageUsage.garageId, garageId), eq(messageUsage.periodStart, ps))).limit(1)
+      if (u) return u
+      const [sub] = await db().select({ allowance: plans.messageAllowance })
+        .from(subscriptions).innerJoin(plans, eq(subscriptions.planId, plans.id))
+        .where(eq(subscriptions.garageId, garageId)).limit(1)
+      const allowance = sub?.allowance ?? 0
+      const [created] = await db().insert(messageUsage)
+        .values({ garageId, periodStart: ps, allowance, usedUnits: 0 })
+        .onConflictDoNothing()
+        .returning()
+      if (created) return created
+      const [again] = await db().select().from(messageUsage)
+        .where(and(eq(messageUsage.garageId, garageId), eq(messageUsage.periodStart, ps))).limit(1)
+      return again ?? null
+    }
+
+    return {
+      async checkAllowance(garageId, units) {
+        const u = await ensureUsageRow(garageId)
+        if (!u) return true // no plan row → don't block
+        return (u.usedUnits ?? 0) + units <= (u.allowance ?? 0) + (u.addonUnits ?? 0)
+      },
+      async logMessage(entry) {
+        const statusMap = { sent: "sent", failed: "failed", deferred: "queued" } as const
+        await db().insert(messageLogs).values({
+          garageId: entry.garageId,
+          channel: entry.channel,
+          category: categoryFor(entry.templateKey),
+          templateKey: entry.templateKey,
+          to: entry.to,
+          status: statusMap[entry.status],
+          providerMessageId: entry.providerMessageId ?? null,
+          costUnits: entry.costUnits,
+        })
+        if (entry.status === "sent") {
+          const ps = periodStart()
+          await db().update(messageUsage)
+            .set({ usedUnits: sql`${messageUsage.usedUnits} + ${entry.costUnits || 1}`, updatedAt: new Date() })
+            .where(and(eq(messageUsage.garageId, entry.garageId), eq(messageUsage.periodStart, ps)))
+        }
+      },
+    }
+  })()
+  return dbDepsPromise
+}
+
 export async function sendMessage(
   input: SendMessageInput,
   deps: SendDeps = {}
 ): Promise<SendResult> {
+  if (!deps.checkAllowance && !deps.logMessage) deps = await dbDeps()
   const quiet = input.quietHours ?? DEFAULT_QUIET_HOURS
   const now = new Date()
   const allowedAt = nextAllowedTime(now, quiet)

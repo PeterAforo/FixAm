@@ -88,6 +88,18 @@ export async function inviteStaff(rawInput: unknown): Promise<
   const garage = await db().select().from(garages).where(eq(garages.id, garageId)).limit(1)
   if (!garage[0]) return { ok: false, error: { code: "NOT_FOUND", message: "Garage not found" } }
 
+  // plan limits + subscription write gate
+  const { garageBilling, countActiveStaff, writeBlockReason } = await import("@/lib/billing/core")
+  const blocked = await writeBlockReason(garageId)
+  if (blocked) return { ok: false, error: { code: "FORBIDDEN", message: blocked } }
+  const billing = await garageBilling(garageId)
+  if (billing?.maxStaff != null) {
+    const staffCount = await countActiveStaff(garageId)
+    if (staffCount >= billing.maxStaff) {
+      return { ok: false, error: { code: "FORBIDDEN", message: `Your ${billing.planName ?? billing.planCode} plan allows ${billing.maxStaff} staff — upgrade to add more` } }
+    }
+  }
+
   const token = newInviteToken()
   const [row] = await db()
     .insert(memberships)

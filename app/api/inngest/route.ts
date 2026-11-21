@@ -8,8 +8,9 @@ import { creditStatementSweep } from "@/lib/inngest/functions/credit-statements"
 import { dailyReportSnapshots, monthlyReportSnapshots } from "@/lib/inngest/functions/report-snapshots"
 import { autoReorderNightly, autoReorderOnMovement } from "@/lib/inngest/functions/auto-reorder"
 import { mileageNudgeDaily, reminderScan } from "@/lib/inngest/functions/reminders"
+import { billingSweep } from "@/lib/inngest/functions/billing"
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [sendMessageFn, recalcMileageOnReading, recalcMileageNightly, bookingTomorrowReminders, instalmentSweep, creditStatementSweep, dailyReportSnapshots, monthlyReportSnapshots, autoReorderNightly, autoReorderOnMovement, reminderScan, mileageNudgeDaily],
+  functions: [sendMessageFn, recalcMileageOnReading, recalcMileageNightly, bookingTomorrowReminders, instalmentSweep, creditStatementSweep, dailyReportSnapshots, monthlyReportSnapshots, autoReorderNightly, autoReorderOnMovement, reminderScan, mileageNudgeDaily, billingSweep],
 })

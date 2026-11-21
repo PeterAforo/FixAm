@@ -164,6 +164,13 @@ export function action<TIn, TOut>(
       return fail({ code: "FORBIDDEN", message: "You don't have permission for this" })
     }
 
+    // 3b. Subscription gate — audited actions are mutations; lapsed garages are read-only
+    if (rest.audit && ctx.principal.kind === "staff") {
+      const { writeBlockReason } = await import("@/lib/billing/core")
+      const blocked = await writeBlockReason(ctx.garageId)
+      if (blocked) return fail({ code: "FORBIDDEN", message: blocked })
+    }
+
     // 4. Run handler + audit
     try {
       const output = await rest.handler(input, ctx)
