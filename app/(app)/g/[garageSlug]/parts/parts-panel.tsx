@@ -168,6 +168,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
           </p>
         </div>
         <div className="flex gap-2">
+          <a href={`/g/${garageSlug}/purchase-orders`} className="inline-flex min-h-10 items-center rounded-lg border-2 border-border bg-surface px-4 text-sm font-bold">Purchase orders →</a>
           <Button variant="secondary" onClick={() => setTab(tab === "import" ? "catalogue" : "import")}>
             {tab === "import" ? "Catalogue" : "Import CSV"}
           </Button>
