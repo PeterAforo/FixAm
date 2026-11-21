@@ -22,6 +22,20 @@
       "when": 1795202834121,
       "tag": "0002_shocking_medusa",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795216801663,
+      "tag": "0003_flawless_whizzer",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795221999377,
+      "tag": "0004_bumpy_dazzler",
+      "breakpoints": true
     }
   ]
 }
