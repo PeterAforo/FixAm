@@ -82,11 +82,12 @@ export function JobDetailPanel(props: {
   canMediaUpload: boolean
   canTasksUpdate: boolean
   currentUserId: string
+  trackerUrl: string | null
 }) {
   const {
     garageSlug, garageId, job, vehicle, customer, branchName, bayName,
     assignments, findings, items, tasks, media, events, nextStatuses,
-    canUpdate, canQcSignoff, canStatusUpdate, canMediaUpload, canTasksUpdate, currentUserId,
+    canUpdate, canQcSignoff, canStatusUpdate, canMediaUpload, canTasksUpdate, currentUserId, trackerUrl,
   } = props
 
   const router = useRouter()
@@ -243,6 +244,14 @@ export function JobDetailPanel(props: {
           </div>
         )}
       </header>
+
+      {trackerUrl && (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-info bg-info/10 px-4 py-3">
+          <p className="text-sm font-semibold">Customer tracker link:</p>
+          <code className="break-all text-xs">{trackerUrl}</code>
+          <Button size="sm" variant="secondary" onClick={() => navigator.clipboard.writeText(trackerUrl)}>Copy</Button>
+        </div>
+      )}
 
       {msg && <p className="rounded-lg border-2 border-danger bg-danger/10 px-4 py-2 text-sm font-semibold text-danger">{msg}</p>}
 

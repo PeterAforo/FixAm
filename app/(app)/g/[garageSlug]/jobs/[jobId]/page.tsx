@@ -26,11 +26,14 @@ import { nextStatuses } from "@/lib/jobs/transitions"
 
 async function JobLoader({
   params,
+  searchParams,
 }: {
   params: Promise<{ garageSlug: string; jobId: string }>
+  searchParams: Promise<{ tracker?: string }>
 }) {
   await connection()
   const { garageSlug, jobId } = await params
+  const { tracker } = await searchParams
 
   const userId = await getSessionUserId()
   if (!userId) redirect(`/login?next=/g/${garageSlug}/jobs/${jobId}`)
@@ -197,16 +200,23 @@ async function JobLoader({
       canMediaUpload={can(principal, "jobs.media.upload")}
       canTasksUpdate={can(principal, "jobs.tasks.update_own") || can(principal, "jobs.update")}
       currentUserId={userId}
+      trackerUrl={tracker ?? null}
     />
   )
 }
 
-export default function JobPage({ params }: { params: Promise<{ garageSlug: string; jobId: string }> }) {
+export default function JobPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ garageSlug: string; jobId: string }>
+  searchParams: Promise<{ tracker?: string }>
+}) {
   return (
     <div className="p-6 md:p-10">
       <div className="mx-auto max-w-6xl">
         <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-muted" />}>
-          <JobLoader params={params} />
+          <JobLoader params={params} searchParams={searchParams} />
         </Suspense>
       </div>
     </div>

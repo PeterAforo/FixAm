@@ -219,7 +219,10 @@ export function CheckInPanel({
         setFieldErrors(res.error.fieldErrors ?? {})
         return
       }
-      router.push(`/g/${garageSlug}/jobs/${res.data.jobId}`)
+      const url = res.data.trackerUrl
+        ? `/g/${garageSlug}/jobs/${res.data.jobId}?tracker=${encodeURIComponent(res.data.trackerUrl)}`
+        : `/g/${garageSlug}/jobs/${res.data.jobId}`
+      router.push(url)
     })
   }
 

@@ -1,4 +1,5 @@
 "use server"
+import { randomBytes, createHash } from "crypto"
 import { z } from "zod"
 import { and, desc, eq, isNull, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
@@ -87,7 +88,7 @@ async function storeSignature(dataUrl: string, garageId: string, jobId: string) 
   return key
 }
 
-export async function checkInJob(rawInput: unknown): Promise<ActionResult<{ jobId: string; number: string }>> {
+export async function checkInJob(rawInput: unknown): Promise<ActionResult<{ jobId: string; number: string; trackerUrl: string | null }>> {
   const userId = await getSessionUserId()
   if (!userId) return { ok: false, error: { code: "UNAUTHENTICATED", message: "Sign in first" } }
 
@@ -157,6 +158,8 @@ export async function checkInJob(rawInput: unknown): Promise<ActionResult<{ jobI
   const jobId = uuidv7()
   const number = await nextJobNumber(d.garageId, d.branchId)
   const signaturePath = d.signatureDataUrl ? await storeSignature(d.signatureDataUrl, d.garageId, jobId) : null
+  const trackerToken = randomBytes(24).toString("hex")
+  const trackerTokenHash = createHash("sha256").update(trackerToken).digest("hex")
 
   await db().insert(jobs).values({
     id: jobId,
@@ -180,6 +183,7 @@ export async function checkInJob(rawInput: unknown): Promise<ActionResult<{ jobI
     serviceAdvisorId: userId,
     warrantyParentJobId: d.warrantyParentJobId ?? null,
     isWarranty: Boolean(d.warrantyParentJobId),
+    trackerTokenHash,
   })
 
   // status event (creation → checked_in)
@@ -307,7 +311,36 @@ export async function checkInJob(rawInput: unknown): Promise<ActionResult<{ jobI
     after: { number, vehicleId: d.vehicleId, odometer: d.checkInOdometerKm },
   })
 
-  return { ok: true, data: { jobId, number } }
+  // send the live-tracker link to the customer (best-effort)
+  let trackerUrl: string | null = null
+  try {
+    const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+    trackerUrl = `${base}/t/${trackerToken}`
+    const [cust] = await db().select({ phone: customers.phone, fullName: customers.fullName }).from(customers).where(eq(customers.id, d.customerId)).limit(1)
+    const [gr] = await db().select({ name: garages.name }).from(garages).where(eq(garages.id, d.garageId)).limit(1)
+    const [veh] = await db().select({ plateNumber: vehicles.plateNumber, make: vehicles.make, model: vehicles.model }).from(vehicles).where(eq(vehicles.id, d.vehicleId)).limit(1)
+    if (cust?.phone) {
+      await sendMessage({
+        garageId: d.garageId,
+        channel: "whatsapp",
+        to: cust.phone,
+        templateKey: "check_in_tracker",
+        variables: {
+          customer_first_name: (cust.fullName ?? "there").split(" ")[0]!,
+          plate: veh?.plateNumber ?? "",
+          vehicle: veh ? `${veh.make} ${veh.model}` : "",
+          garage_name: gr?.name ?? "the garage",
+          job_number: number,
+          tracker_link: trackerUrl,
+        },
+        idempotencyKey: `tracker:${jobId}`,
+      })
+    }
+  } catch {
+    // link still returned to staff even if messaging fails
+  }
+
+  return { ok: true, data: { jobId, number, trackerUrl } }
 }
 
 // ---------------------------------------------------------------------------
