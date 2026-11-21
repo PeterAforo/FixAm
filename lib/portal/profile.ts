@@ -8,6 +8,14 @@ export async function getPortalProfile(phone: string) {
   return p ?? null
 }
 
+/** Resolve avatar_url (storage key or external URL) to a displayable URL. */
+export async function portalAvatarUrl(avatarUrl: string | null | undefined): Promise<string | null> {
+  if (!avatarUrl) return null
+  if (avatarUrl.startsWith("http") || avatarUrl.startsWith("/")) return avatarUrl
+  const { storageProvider } = await import("@/lib/integrations/storage")
+  return storageProvider().getSignedUrl(avatarUrl, 7 * 86_400)
+}
+
 export async function listPortalVehicles(phone: string) {
   return db()
     .select()

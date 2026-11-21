@@ -89,6 +89,8 @@ export function PortalDashboard({ phone, data, fleets = [], claimedVehicles = []
           <p className="text-sm text-muted-foreground">{phone} · {data.customers.length} garage{data.customers.length === 1 ? "" : "s"} linked</p>
         </div>
         <div className="flex gap-2">
+          <Link href="/portal/settings" className="rounded-lg border-2 border-border bg-card px-3 py-1.5 text-sm font-semibold hover:bg-surface-muted">Profile</Link>
+          <Link href="/garages" className="rounded-lg border-2 border-border bg-card px-3 py-1.5 text-sm font-semibold hover:bg-surface-muted">Find garages</Link>
           <Button variant="secondary" size="sm" onClick={logout} disabled={pending}>Sign out</Button>
         </div>
       </header>

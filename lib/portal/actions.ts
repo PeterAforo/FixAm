@@ -6,12 +6,14 @@ import { customers, portalOtps, garages } from "@/lib/db/schema"
 import { sendMessage } from "@/lib/messaging/send"
 import { portalPhone, sha256, setPortalSession, clearPortalSession } from "./session"
 import { getPortalPhone } from "./session"
+import { platformGarageId } from "./platform"
 import type { ActionResult } from "@/lib/actions"
 
 const OTP_TTL_MS = 10 * 60_000
 const MAX_ATTEMPTS = 5
 
-/** Step 1 — send a 6-digit OTP to the phone (must match a customer record). */
+/** Step 1 — send a 6-digit OTP. Open to any Ghana number: existing customers
+ * verify against their garage records, new users self-register afterwards. */
 export async function requestPortalOtp(rawInput: unknown): Promise<ActionResult<{ sent: true }>> {
   const parsed = z.object({ phone: z.string().min(9).max(20) }).safeParse(rawInput)
   if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Enter your Ghana phone number" } }
@@ -22,16 +24,15 @@ export async function requestPortalOtp(rawInput: unknown): Promise<ActionResult<
   const rl = await rateLimit(`portal-otp:${phone}`, 5, 3600)
   if (!rl.ok) return rateLimited(rl)
 
-  // find garages where this phone is a customer — OTP is sent via the first
-  const matches = await db().select({ garageId: customers.garageId })
+  // Prefer a garage the customer already belongs to for billing; fall back to
+  // the platform garage for self-registered users with no history yet.
+  const [match] = await db().select({ garageId: customers.garageId })
     .from(customers)
     .where(eq(customers.phone, phone))
-    .limit(5)
-  if (!matches.length) {
-    return { ok: false, error: { code: "NOT_FOUND", message: "No garage records found for this number yet" } }
-  }
+    .limit(1)
+  const garageId = match?.garageId ?? (await platformGarageId())
   const [garage] = await db().select({ name: garages.name }).from(garages)
-    .where(eq(garages.id, matches[0]!.garageId)).limit(1)
+    .where(eq(garages.id, garageId)).limit(1)
 
   const code = String(Math.floor(100000 + Math.random() * 900000))
   await db().insert(portalOtps).values({
@@ -46,7 +47,7 @@ export async function requestPortalOtp(rawInput: unknown): Promise<ActionResult<
 
   try {
     await sendMessage({
-      garageId: matches[0]!.garageId,
+      garageId,
       channel: "sms",
       to: phone,
       templateKey: "otp",
@@ -86,6 +87,39 @@ export async function verifyPortalOtp(rawInput: unknown): Promise<ActionResult<{
 
 export async function portalLogout(): Promise<ActionResult<{ ok: true }>> {
   await clearPortalSession()
+  return { ok: true, data: { ok: true as const } }
+}
+
+/** Password sign-in — identifier is a username or a Ghana phone number. */
+export async function portalPasswordLogin(rawInput: unknown): Promise<ActionResult<{ ok: true }>> {
+  const parsed = z.object({
+    identifier: z.string().min(3).max(120),
+    password: z.string().min(8).max(200),
+  }).safeParse(rawInput)
+  if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Enter your username/phone and password" } }
+
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`portal-login:${parsed.data.identifier.toLowerCase()}`, 10, 900)
+  if (!rl.ok) return rateLimited(rl)
+
+  const ident = parsed.data.identifier.trim()
+  const phoneGuess = portalPhone(ident)
+  const { portalProfiles } = await import("@/lib/db/schema")
+  const { or, ilike } = await import("drizzle-orm")
+
+  const lookup = [ilike(portalProfiles.username, ident)]
+  if (phoneGuess) lookup.push(eq(portalProfiles.phone, phoneGuess))
+  const [profile] = await db().select({ phone: portalProfiles.phone, passwordHash: portalProfiles.passwordHash })
+    .from(portalProfiles)
+    .where(or(...lookup))
+    .limit(1)
+
+  const { verifyPortalPassword } = await import("./password")
+  if (!profile || !verifyPortalPassword(parsed.data.password, profile.passwordHash)) {
+    return { ok: false, error: { code: "UNAUTHENTICATED", message: "Incorrect username or password" } }
+  }
+
+  await setPortalSession(profile.phone)
   return { ok: true, data: { ok: true as const } }
 }
 

@@ -32,9 +32,14 @@ export const portalSessions = pgTable(
 /** portal_profiles — self-registered customer accounts keyed by phone (platform table) */
 export const portalProfiles = pgTable("portal_profiles", {
   phone: text("phone").primaryKey(), // E.164
+  username: text("username").unique(),
+  passwordHash: text("password_hash"),
   fullName: text("full_name").notNull(),
   email: text("email"),
-  avatarUrl: text("avatar_url"),
+  avatarUrl: text("avatar_url"), // storage key or external URL
+  address: text("address"),
+  city: text("city"),
+  region: text("region"),
   marketingOptIn: boolean("marketing_opt_in").notNull().default(false),
   termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }),
   ...timestamps,
