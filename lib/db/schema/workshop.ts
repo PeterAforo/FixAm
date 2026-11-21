@@ -101,6 +101,7 @@ export const jobs = pgTable(
       .notNull()
       .references(() => customers.id),
     bookingId: uuid("booking_id").references(() => bookings.id),
+    jobTemplateId: uuid("job_template_id").references(() => jobTemplates.id),
     bayId: uuid("bay_id").references(() => bays.id),
     status: jobStatusEnum("status").notNull().default("checked_in"),
     priority: jobPriorityEnum("priority").default("normal"),
