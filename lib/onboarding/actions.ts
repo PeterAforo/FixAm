@@ -28,6 +28,8 @@ const onboardingSchema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   address: z.string().max(300).optional().or(z.literal("")),
   city: z.string().max(80).optional().or(z.literal("")),
+  gpsLat: z.number().min(-90).max(90).optional().nullable(),
+  gpsLng: z.number().min(-180).max(180).optional().nullable(),
   branchName: z.string().min(2).max(80).default("Main branch"),
   branchCode: z.string().min(2).max(5).default("MAIN"),
   defaultLabourRate: z.number().int().min(0).default(0), // pesewas
@@ -120,6 +122,8 @@ export async function createGarage(
         email: input.email || null,
         address: input.address || null,
         city: input.city || null,
+        gpsLat: input.gpsLat != null ? String(input.gpsLat) : null,
+        gpsLng: input.gpsLng != null ? String(input.gpsLng) : null,
         status: "active",
         onboardingCompletedAt: new Date(),
       })

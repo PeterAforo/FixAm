@@ -46,6 +46,9 @@ export default function OnboardingPage() {
   const [email, setEmail] = useState("")
   const [address, setAddress] = useState("")
   const [city, setCity] = useState("")
+  const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null)
+  const [gpsError, setGpsError] = useState<string | null>(null)
+  const [gpsLoading, setGpsLoading] = useState(false)
 
   const [branchName, setBranchName] = useState("Main branch")
   const [branchCode, setBranchCode] = useState("MAIN")
@@ -83,6 +86,8 @@ export default function OnboardingPage() {
       email,
       address,
       city,
+      gpsLat: gps?.lat ?? null,
+      gpsLng: gps?.lng ?? null,
       branchName,
       branchCode,
       defaultLabourRate: Number(parseGHS(labourRate || "0")),
@@ -179,6 +184,46 @@ export default function OnboardingPage() {
                   <span className={labelText}>City</span>
                   <input className={inputCls} value={city} onChange={(e) => setCity(e.target.value)} placeholder="Accra" />
                 </label>
+              </div>
+              <div className="rounded-xl border-2 border-border bg-surface-muted/50 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className={labelText}>Garage location</p>
+                    <p className="text-xs text-muted-foreground">
+                      {gps
+                        ? `📍 ${gps.lat.toFixed(5)}, ${gps.lng.toFixed(5)} — is this your garage's location? Customers use it to find you.`
+                        : "Add your GPS location so customers can find your garage on the map."}
+                    </p>
+                    {gpsError && <p className="mt-1 text-xs font-semibold text-danger">{gpsError}</p>}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    disabled={gpsLoading}
+                    onClick={() => {
+                      if (!navigator.geolocation) {
+                        setGpsError("Location is not supported on this device — enter the address instead.")
+                        return
+                      }
+                      setGpsLoading(true)
+                      setGpsError(null)
+                      navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                          setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+                          setGpsLoading(false)
+                        },
+                        () => {
+                          setGpsError("Could not get your location — check browser permissions.")
+                          setGpsLoading(false)
+                        },
+                        { enableHighAccuracy: true, timeout: 10000 }
+                      )
+                    }}
+                  >
+                    {gpsLoading ? "Locating…" : gps ? "Update location" : "Use current location"}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
