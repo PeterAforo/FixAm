@@ -71,6 +71,13 @@
       "when": 1795233491774,
       "tag": "0009_outgoing_cobalt_man",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795234850202,
+      "tag": "0010_mechanic-stats",
+      "breakpoints": true
     }
   ]
 }
