@@ -246,7 +246,11 @@ export async function initiatePublicInvoicePayment(rawInput: unknown): Promise<
   if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Invalid input" } }
   const d = parsed.data
 
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
   const { createHash } = await import("crypto")
+  const rl = await rateLimit(`pubpay:${createHash("sha256").update(d.token).digest("hex").slice(0, 16)}`, 10, 3600)
+  if (!rl.ok) return rateLimited(rl)
+
   const tokenHash = createHash("sha256").update(d.token).digest("hex")
   const [inv] = await db().select().from(invoices).where(eq(invoices.tokenHash, tokenHash)).limit(1)
   if (!inv || !["issued", "partially_paid"].includes(inv.status) || Number(inv.balanceDue) <= 0) {

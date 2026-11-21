@@ -336,6 +336,10 @@ export async function respondToEstimate(rawInput: unknown): Promise<ActionResult
   if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Check the form" } }
   const d = parsed.data
 
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`est-respond:${sha256(d.token)}`, 30, 3600)
+  if (!rl.ok) return rateLimited(rl)
+
   const est = await estimateByToken(d.token)
   if (!est) return { ok: false, error: { code: "NOT_FOUND", message: "Link expired or invalid" } }
   if (!["sent", "partially_approved"].includes(est.status)) {

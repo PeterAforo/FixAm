@@ -123,3 +123,32 @@ export const auditLogs = pgTable(
   ]
 )
 
+
+/** Fixed-window rate limit counters for public endpoints. */
+export const rateLimits = pgTable("rate_limits", {
+  key: text("key").primaryKey(),
+  count: integer("count").notNull().default(0),
+  resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+})
+
+/** Data subject requests (export / deletion) — Ghana Data Protection Act 843. */
+export const privacyRequests = pgTable(
+  "privacy_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    garageId: uuid("garage_id"),
+    customerId: uuid("customer_id"),
+    phone: text("phone"),
+    email: text("email"),
+    type: text("type").notNull(), // export|delete
+    status: text("status").notNull().default("requested"), // requested|completed|rejected
+    payload: jsonb("payload"), // export bundle for completed exports
+    requestedBy: text("requested_by").notNull().default("customer"), // customer|admin
+    handledBy: uuid("handled_by"),
+    handledAt: timestamp("handled_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("privacy_requests_status_idx").on(t.status, t.createdAt)]
+)

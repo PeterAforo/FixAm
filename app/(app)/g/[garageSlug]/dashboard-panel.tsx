@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill, statusTone } from "@/components/brand/status-pill"
 import { formatGHS } from "@/lib/money"
 import { getInvoicePayLink } from "@/lib/money/actions"
+import { HelpTips } from "@/components/help-tips"
 import type { DashboardData } from "@/lib/dashboard"
 
 const STATUS_ORDER = [
@@ -90,6 +91,8 @@ export function DashboardPanel(props: {
           ))}
         </div>
       </div>
+
+      <HelpTips />
 
       {canSeeMoney && (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

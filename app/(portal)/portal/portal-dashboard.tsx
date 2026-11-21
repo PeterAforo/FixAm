@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill } from "@/components/brand/status-pill"
 import { VehicleHealthCard } from "@/components/brand/vehicle-health-card"
 import { portalLogout, portalApproveFleetEstimates, updatePortalPreferences } from "@/lib/portal/actions"
+import { requestDataExport, requestDataDeletion } from "@/lib/privacy/actions"
 
 const gh = (n: number | null) => (n != null ? `GH₵ ${(n / 100).toLocaleString("en-GH", { minimumFractionDigits: 2 })}` : "—")
 const fmtDate = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("en-GH", { day: "numeric", month: "short", year: "numeric" }) : "—")
@@ -295,6 +296,27 @@ export function PortalDashboard({ phone, data, fleets = [] }: { phone: string; d
           </label>
           <Button size="sm" onClick={savePrefs} disabled={pending || channels.length === 0}>Save preferences</Button>
           <InstallPrompt />
+        </CardContent></Card>
+      </section>
+
+      {/* Privacy (Data Protection Act 843) */}
+      <section className="mt-8">
+        <h2 className="font-display text-lg font-bold">Your data</h2>
+        <Card className="mt-3"><CardContent className="space-y-3 p-4 text-sm">
+          <p className="text-muted-foreground">Under Ghana&apos;s Data Protection Act, 2012 (Act 843) you can request a copy of your data or have it deleted.</p>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="secondary" disabled={pending} onClick={() => startTransition(async () => {
+              const res = await requestDataExport()
+              setMsg(res.ok ? "Export requested — the platform team will send your data." : res.error.message)
+            })}>Request data export</Button>
+            <Button size="sm" variant="danger" disabled={pending} onClick={() => {
+              if (!confirm("This will permanently anonymise your customer records. Continue?")) return
+              startTransition(async () => {
+                const res = await requestDataDeletion()
+                setMsg(res.ok ? "Deletion requested — records will be anonymised after review." : res.error.message)
+              })
+            }}>Request data deletion</Button>
+          </div>
         </CardContent></Card>
       </section>
     </main>

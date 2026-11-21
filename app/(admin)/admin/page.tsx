@@ -3,6 +3,7 @@ import { AdminVendorsSection } from "./admin-vendors-section"
 import { AdminDvlaFeesSection } from "./admin-dvla-fees-section"
 import { AdminGaragesSection } from "./admin-garages-section"
 import { AdminPartnersSection } from "./admin-partners-section"
+import { AdminPrivacySection } from "./admin-privacy-section"
 
 export default function AdminPage() {
   return (
@@ -15,6 +16,9 @@ export default function AdminPage() {
       </Suspense>
       <Suspense fallback={null}>
         <AdminPartnersSection />
+      </Suspense>
+      <Suspense fallback={null}>
+        <AdminPrivacySection />
       </Suspense>
       <Suspense fallback={null}>
         <AdminVendorsSection />

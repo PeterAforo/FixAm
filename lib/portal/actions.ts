@@ -11,14 +11,18 @@ import type { ActionResult } from "@/lib/actions"
 const OTP_TTL_MS = 10 * 60_000
 const MAX_ATTEMPTS = 5
 
-/** Step 1 Ã¢â‚¬â€ send a 6-digit OTP to the phone (must match a customer record). */
+/** Step 1 — send a 6-digit OTP to the phone (must match a customer record). */
 export async function requestPortalOtp(rawInput: unknown): Promise<ActionResult<{ sent: true }>> {
   const parsed = z.object({ phone: z.string().min(9).max(20) }).safeParse(rawInput)
   if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Enter your Ghana phone number" } }
   const phone = portalPhone(parsed.data.phone)
   if (!phone) return { ok: false, error: { code: "VALIDATION", message: "Enter a valid Ghana phone number (e.g. 024 000 0000)" } }
 
-  // find garages where this phone is a customer Ã¢â‚¬â€ OTP is sent via the first
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`portal-otp:${phone}`, 5, 3600)
+  if (!rl.ok) return rateLimited(rl)
+
+  // find garages where this phone is a customer — OTP is sent via the first
   const matches = await db().select({ garageId: customers.garageId })
     .from(customers)
     .where(eq(customers.phone, phone))
@@ -55,16 +59,20 @@ export async function requestPortalOtp(rawInput: unknown): Promise<ActionResult<
   return { ok: true, data: { sent: true as const } }
 }
 
-/** Step 2 Ã¢â‚¬â€ verify the OTP and open a portal session. */
+/** Step 2 — verify the OTP and open a portal session. */
 export async function verifyPortalOtp(rawInput: unknown): Promise<ActionResult<{ ok: true }>> {
   const parsed = z.object({ phone: z.string().min(9).max(20), code: z.string().regex(/^\d{6}$/) }).safeParse(rawInput)
   if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Enter the 6-digit code" } }
   const phone = portalPhone(parsed.data.phone)
   if (!phone) return { ok: false, error: { code: "VALIDATION", message: "Invalid phone number" } }
 
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`portal-otp-verify:${phone}`, 10, 900)
+  if (!rl.ok) return rateLimited(rl)
+
   const [otp] = await db().select().from(portalOtps).where(eq(portalOtps.phone, phone)).limit(1)
   if (!otp || otp.expiresAt < new Date() || otp.attempts >= MAX_ATTEMPTS) {
-    return { ok: false, error: { code: "VALIDATION", message: "Code expired Ã¢â‚¬â€ request a new one" } }
+    return { ok: false, error: { code: "VALIDATION", message: "Code expired — request a new one" } }
   }
   if (otp.codeHash !== sha256(`${phone}:${parsed.data.code}`)) {
     await db().update(portalOtps).set({ attempts: otp.attempts + 1 }).where(eq(portalOtps.phone, phone))
@@ -148,7 +156,7 @@ export async function portalUpdateMileage(rawInput: unknown): Promise<ActionResu
 }
 
 /**
- * P5-04 â€” fleet manager bulk approval. Approves every pending estimate on
+ * P5-04 — fleet manager bulk approval. Approves every pending estimate on
  * vehicles owned by this portal user's fleet customer records.
  */
 export async function portalApproveFleetEstimates(rawInput: unknown): Promise<ActionResult<{ approved: number }>> {

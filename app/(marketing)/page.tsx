@@ -28,10 +28,16 @@ export default function MarketingHome() {
       </p>
       <div className="flex gap-3">
         <Link
-          href="/design"
+          href="/onboarding"
           className="rounded-full border-2 border-border bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-chunky-sm transition-transform active:translate-x-0.5 active:translate-y-0.5"
         >
-          Design system
+          Start free trial
+        </Link>
+        <Link
+          href="/pricing"
+          className="rounded-full border-2 border-border bg-secondary px-6 py-3 font-semibold text-secondary-foreground shadow-chunky-sm"
+        >
+          Pricing
         </Link>
         <Link
           href="/login"

@@ -341,6 +341,10 @@ export async function requestPublicBooking(rawInput: unknown): Promise<ActionRes
   if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Check the form" } }
   const d = parsed.data
 
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`pubbook:${d.garageId}:${d.guestPhone}`, 5, 3600)
+  if (!rl.ok) return rateLimited(rl)
+
   const [garage] = await db().select({ id: garages.id }).from(garages).where(and(eq(garages.id, d.garageId), eq(garages.status, "active"))).limit(1)
   if (!garage) return { ok: false, error: { code: "NOT_FOUND", message: "Garage not found" } }
 
@@ -420,6 +424,11 @@ export async function confirmPublicBooking(rawInput: unknown): Promise<ActionRes
 
   const [b] = await db().select().from(bookings).where(eq(bookings.id, d.bookingId)).limit(1)
   if (!b || b.source !== "public_page") return { ok: false, error: { code: "NOT_FOUND", message: "Booking not found" } }
+
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`pubbook-confirm:${d.bookingId}`, 10, 900)
+  if (!rl.ok) return rateLimited(rl)
+
   if (b.status !== "requested") return { ok: false, error: { code: "VALIDATION", message: "Booking already processed" } }
   if (!b.otpExpiresAt || b.otpExpiresAt < new Date()) {
     return { ok: false, error: { code: "VALIDATION", message: "Code expired — request a new booking" } }
