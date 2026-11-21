@@ -1,5 +1,5 @@
 import "server-only"
-import { and, eq, sql } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { stockLevels, stockMovements, stockMovementTypeEnum } from "@/lib/db/schema"
 import { uuidv7 } from "@/lib/id"
