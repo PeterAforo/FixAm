@@ -14,6 +14,7 @@ import {
   listInsurancePartners,
   upsertInsurancePolicy,
 } from "@/lib/insurance/actions"
+import { upsertDvlaRecord } from "@/lib/dvla/actions"
 import {
   recordLastOilChange,
   recordOdometer,
@@ -148,6 +149,9 @@ export function VehicleProfilePanel(props: {
   const [insForm, setInsForm] = useState({ insurerName: "", partnerId: "", policyType: "comprehensive", policyNumber: "", stickerNumber: "", startDate: "", endDate: "", premium: "" })
   const [insMsg, setInsMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [partners, setPartners] = useState<{ id: string; name: string }[]>([])
+  const [dvlaOpen, setDvlaOpen] = useState(false)
+  const [dvlaForm, setDvlaForm] = useState({ type: "roadworthy", referenceNumber: "", issueDate: "", expiryDate: "" })
+  const [dvlaMsg, setDvlaMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const [editOpen, setEditOpen] = useState(false)
 
@@ -273,6 +277,25 @@ export function VehicleProfilePanel(props: {
       if (!res.ok) { setInsMsg({ ok: false, text: res.error.message }); return }
       setInsMsg({ ok: true, text: "Policy saved — renewal reminder scheduled." })
       setInsOpen(false)
+      router.refresh()
+    })
+  }
+
+  function submitDvla(e: React.FormEvent) {
+    e.preventDefault()
+    if (!dvlaForm.expiryDate) { setDvlaMsg({ ok: false, text: "Expiry date is required" }); return }
+    setDvlaMsg(null)
+    startTransition(async () => {
+      const res = await upsertDvlaRecord({
+        garageId, vehicleId: vehicle.id,
+        type: dvlaForm.type,
+        referenceNumber: dvlaForm.referenceNumber || undefined,
+        issueDate: dvlaForm.issueDate || undefined,
+        expiryDate: dvlaForm.expiryDate,
+      })
+      if (!res.ok) { setDvlaMsg({ ok: false, text: res.error.message }); return }
+      setDvlaMsg({ ok: true, text: "Record saved — renewal reminder scheduled." })
+      setDvlaOpen(false)
       router.refresh()
     })
   }
@@ -717,7 +740,14 @@ export function VehicleProfilePanel(props: {
           {/* DVLA */}
           <Card>
             <CardContent className="p-5">
-              <h2 className="font-display text-lg font-bold">DVLA records</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-lg font-bold">DVLA records</h2>
+                {canUpdateVehicle && (
+                  <Button size="sm" variant="secondary" onClick={() => setDvlaOpen(!dvlaOpen)}>
+                    {dvlaOpen ? "Close" : "Add record"}
+                  </Button>
+                )}
+              </div>
               {dvla.length === 0 ? (
                 <p className="mt-2 text-sm text-muted-foreground">No records.</p>
               ) : (
@@ -733,6 +763,23 @@ export function VehicleProfilePanel(props: {
                   ))}
                 </ul>
               )}
+              {dvlaOpen && canUpdateVehicle && (
+                <form onSubmit={submitDvla} className="mt-4 grid gap-2 sm:grid-cols-2">
+                  <select className={inputCls} value={dvlaForm.type} onChange={(e) => setDvlaForm({ ...dvlaForm, type: e.target.value })}>
+                    <option value="roadworthy">Roadworthy certificate</option>
+                    <option value="registration_licence">Registration / licence</option>
+                    <option value="drivers_licence">Driver's licence</option>
+                  </select>
+                  <input className={inputCls} placeholder="Reference number" value={dvlaForm.referenceNumber} onChange={(e) => setDvlaForm({ ...dvlaForm, referenceNumber: e.target.value })} />
+                  <div><label className={labelCls}>Issue date</label><input className={inputCls} type="date" value={dvlaForm.issueDate} onChange={(e) => setDvlaForm({ ...dvlaForm, issueDate: e.target.value })} /></div>
+                  <div><label className={labelCls}>Expiry *</label><input className={inputCls} type="date" required value={dvlaForm.expiryDate} onChange={(e) => setDvlaForm({ ...dvlaForm, expiryDate: e.target.value })} /></div>
+                  <div className="flex items-end gap-2 sm:col-span-2">
+                    <Button type="submit" disabled={pending}>Save record</Button>
+                    {dvlaMsg && <p className={`text-sm font-semibold ${dvlaMsg.ok ? "text-success" : "text-warning"}`}>{dvlaMsg.text}</p>}
+                  </div>
+                </form>
+              )}
+              {!dvlaOpen && dvlaMsg && <p className={`mt-2 text-sm font-semibold ${dvlaMsg.ok ? "text-success" : "text-warning"}`}>{dvlaMsg.text}</p>}
             </CardContent>
           </Card>
 

@@ -127,8 +127,10 @@ function ReminderCard(props: {
 
         {mode === "idle" && (
           <div className="mt-4 flex flex-wrap gap-2">
-            {action === "book_now" && (
-              <Button onClick={() => setMode("book")}>Book now</Button>
+            {(action === "book_now" || item.type === "roadworthy") && (
+              <Button onClick={() => setMode("book")}>
+                {item.type === "roadworthy" ? "Book pre-inspection" : "Book now"}
+              </Button>
             )}
             {(action === "book_now" || item.type === "oil_change" || item.type === "general_service") && (
               <Button variant="secondary" onClick={() => setMode("mileage")}>Update mileage</Button>
