@@ -416,3 +416,33 @@ export async function listInvoicesPage(rawInput: unknown): Promise<
     })),
   }
 }
+
+export async function getInvoicePayLink(rawInput: unknown): Promise<ActionResult<{ url: string }>> {
+  const userId = await getSessionUserId()
+  if (!userId) return { ok: false, error: { code: "UNAUTHENTICATED", message: "Sign in first" } }
+  const parsed = z.object({ garageId: z.string().uuid(), invoiceId: z.string().uuid() }).safeParse(rawInput)
+  if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Invalid input" } }
+  const d = parsed.data
+
+  const ctx = await requireMembership(userId, d.garageId)
+  if (!ctx) return { ok: false, error: { code: "FORBIDDEN", message: "Not a member" } }
+  if (!can(ctx.principal, "invoices.view")) return { ok: false, error: { code: "FORBIDDEN", message: "No permission" } }
+
+  const [inv] = await db().select({ id: invoices.id, status: invoices.status, balanceDue: invoices.balanceDue })
+    .from(invoices)
+    .where(and(eq(invoices.id, d.invoiceId), eq(invoices.garageId, d.garageId))).limit(1)
+  if (!inv) return { ok: false, error: { code: "NOT_FOUND", message: "Invoice not found" } }
+  if (inv.status === "draft" || inv.status === "void" || inv.status === "written_off") {
+    return { ok: false, error: { code: "VALIDATION", message: "Invoice is not payable" } }
+  }
+  if (Number(inv.balanceDue) <= 0) {
+    return { ok: false, error: { code: "VALIDATION", message: "Nothing left to pay" } }
+  }
+
+  // raw token is never stored — rotate a fresh one so the link always works
+  const payToken = randomBytes(24).toString("hex")
+  await db().update(invoices).set({ tokenHash: sha256(payToken), updatedAt: new Date() }).where(eq(invoices.id, inv.id))
+
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+  return { ok: true, data: { url: `${base}/t/${payToken}` } }
+}
