@@ -8,6 +8,7 @@ import {
   documents,
   dueItems,
   garages,
+  insurancePartners,
   insurancePolicies,
   dvlaRecords,
   jobs,
@@ -118,11 +119,16 @@ async function VehicleLoader({
         )
       ),
     db()
-      .select()
+      .select({
+        policy: insurancePolicies,
+        partnerName: insurancePartners.name,
+      })
       .from(insurancePolicies)
+      .leftJoin(insurancePartners, eq(insurancePolicies.partnerId, insurancePartners.id))
       .where(and(eq(insurancePolicies.vehicleId, vehicle.id), eq(insurancePolicies.garageId, garage.id), eq(insurancePolicies.isCurrent, true)))
       .orderBy(desc(insurancePolicies.endDate))
-      .limit(3),
+      .limit(3)
+      .then((rows) => rows.map((r) => ({ ...r.policy, partnerName: r.partnerName }))),
     db()
       .select()
       .from(dvlaRecords)
@@ -286,9 +292,14 @@ async function VehicleLoader({
       insurance={insuranceRows.map((p) => ({
         id: p.id,
         insurerName: p.insurerName,
+        partnerName: p.partnerName,
         policyType: p.policyType,
         policyNumber: p.policyNumber,
+        stickerNumber: p.stickerNumber,
+        startDate: p.startDate,
         endDate: p.endDate,
+        premium: p.premium != null ? Number(p.premium) : null,
+        isCurrent: p.isCurrent ?? true,
       }))}
       dvla={dvlaRows.map((r) => ({
         id: r.id,

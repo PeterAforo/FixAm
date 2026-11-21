@@ -291,8 +291,15 @@ export async function runReminderScan(now = new Date()) {
       }).where(eq(dueItems.id, row.id))
     }
 
+    // Fresh items (never scheduled) establish their baseline stage without
+    // firing — thresholds already crossed at creation are consumed silently,
+    // so e.g. a policy saved 20 days out schedules the 14-day reminder next.
+    const freshBaseline =
+      prevStage === 0 && row.nextReminderAt == null &&
+      (esc.status === "scheduled" || esc.status === "due_soon")
+
     // a reminder fires exactly when the escalation stage advances
-    if (stageAdvanced && row.customerPhone) {
+    if (stageAdvanced && !freshBaseline && row.customerPhone) {
       dueForSend.push(row)
     }
   }

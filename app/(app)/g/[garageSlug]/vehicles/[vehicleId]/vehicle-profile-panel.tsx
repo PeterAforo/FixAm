@@ -11,6 +11,10 @@ import { StatusPill } from "@/components/brand/status-pill"
 import { VehicleHealthCard, type RingStatus } from "@/components/brand/vehicle-health-card"
 import type { VehicleType } from "@/components/brand/car-avatar"
 import {
+  listInsurancePartners,
+  upsertInsurancePolicy,
+} from "@/lib/insurance/actions"
+import {
   recordLastOilChange,
   recordOdometer,
   reviewOdometer,
@@ -97,7 +101,7 @@ export function VehicleProfilePanel(props: {
   readings: Reading[]
   documents: Doc[]
   dueItems: { id: string; type: string; title: string; effectiveDueDate: string; predictedDueDate: string | null; dueMileageKm: number | null; status: string }[]
-  insurance: { id: string; insurerName: string; policyType: string; policyNumber: string | null; endDate: string }[]
+  insurance: { id: string; insurerName: string; partnerName: string | null; policyType: string; policyNumber: string | null; stickerNumber: string | null; startDate: string; endDate: string; premium: number | null; isCurrent: boolean }[]
   dvla: { id: string; type: string; referenceNumber: string | null; expiryDate: string }[]
   jobs: { id: string; number: string; status: string; complaint: string | null; promisedAt: Date | string | null; createdAt: Date | string }[]
   timeline: { at: Date | string; kind: string; title: string; detail?: string; tone?: string }[]
@@ -140,6 +144,10 @@ export function VehicleProfilePanel(props: {
   const [oilOpen, setOilOpen] = useState(false)
   const [oilForm, setOilForm] = useState({ performedOn: "", odometerKm: "", oilGrade: "", oilBrand: "", oilQuantityMl: "", oilFilters: "" })
   const [oilMsg, setOilMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [insOpen, setInsOpen] = useState(false)
+  const [insForm, setInsForm] = useState({ insurerName: "", partnerId: "", policyType: "comprehensive", policyNumber: "", stickerNumber: "", startDate: "", endDate: "", premium: "" })
+  const [insMsg, setInsMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [partners, setPartners] = useState<{ id: string; name: string }[]>([])
   const fileRef = useRef<HTMLInputElement>(null)
   const [editOpen, setEditOpen] = useState(false)
 
@@ -233,6 +241,38 @@ export function VehicleProfilePanel(props: {
       setOilMsg({ ok: true, text: "Oil change recorded — next reminder scheduled." })
       setOilOpen(false)
       setOilForm({ performedOn: "", odometerKm: "", oilGrade: "", oilBrand: "", oilQuantityMl: "", oilFilters: "" })
+      router.refresh()
+    })
+  }
+
+  function openInsuranceForm() {
+    setInsOpen(true)
+    if (!partners.length) {
+      listInsurancePartners().then((rows) => setPartners(rows.map((p) => ({ id: p.id, name: p.name }))))
+    }
+  }
+
+  function submitInsurance(e: React.FormEvent) {
+    e.preventDefault()
+    if (!insForm.insurerName.trim() || !insForm.startDate || !insForm.endDate) {
+      setInsMsg({ ok: false, text: "Insurer and dates are required" })
+      return
+    }
+    setInsMsg(null)
+    startTransition(async () => {
+      const res = await upsertInsurancePolicy({
+        garageId, vehicleId: vehicle.id,
+        insurerName: insForm.insurerName.trim(),
+        partnerId: insForm.partnerId || undefined,
+        policyType: insForm.policyType as "third_party" | "third_party_fire_theft" | "comprehensive",
+        policyNumber: insForm.policyNumber || undefined,
+        stickerNumber: insForm.stickerNumber || undefined,
+        startDate: insForm.startDate, endDate: insForm.endDate,
+        premium: insForm.premium ? Math.round(Number(insForm.premium) * 100) : null,
+      })
+      if (!res.ok) { setInsMsg({ ok: false, text: res.error.message }); return }
+      setInsMsg({ ok: true, text: "Policy saved — renewal reminder scheduled." })
+      setInsOpen(false)
       router.refresh()
     })
   }
@@ -622,7 +662,14 @@ export function VehicleProfilePanel(props: {
           {/* Insurance */}
           <Card>
             <CardContent className="p-5">
-              <h2 className="font-display text-lg font-bold">Insurance</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-lg font-bold">Insurance</h2>
+                {canUpdateVehicle && (
+                  <Button size="sm" variant="secondary" onClick={() => (insOpen ? setInsOpen(false) : openInsuranceForm())}>
+                    {insOpen ? "Close" : insurance.length ? "Add policy" : "Add policy"}
+                  </Button>
+                )}
+              </div>
               {insurance.length === 0 ? (
                 <p className="mt-2 text-sm text-muted-foreground">No active policy.</p>
               ) : (
@@ -631,13 +678,39 @@ export function VehicleProfilePanel(props: {
                     <li key={p.id} className="rounded-lg border-2 border-border p-3">
                       <p className="font-semibold">{p.insurerName}</p>
                       <p className="text-xs text-muted-foreground">
-                        {p.policyType.replace(/_/g, " ")}{p.policyNumber ? ` · ${p.policyNumber}` : ""}
+                        {p.policyType.replace(/_/g, " ")}{p.partnerName ? ` · via ${p.partnerName}` : ""}
+                        {p.policyNumber ? ` · ${p.policyNumber}` : ""}
                       </p>
+                      {p.premium != null && <p className="text-xs text-muted-foreground">Premium GH₵ {(p.premium / 100).toLocaleString("en-GH")}</p>}
                       <p className="mt-1 text-xs">Expires {fmtDate(p.endDate)}</p>
                     </li>
                   ))}
                 </ul>
               )}
+              {insOpen && canUpdateVehicle && (
+                <form onSubmit={submitInsurance} className="mt-4 grid gap-2 sm:grid-cols-2">
+                  <input className={inputCls} placeholder="Insurer name *" value={insForm.insurerName} onChange={(e) => setInsForm({ ...insForm, insurerName: e.target.value })} />
+                  <select className={inputCls} value={insForm.partnerId} onChange={(e) => setInsForm({ ...insForm, partnerId: e.target.value })}>
+                    <option value="">Direct / no partner</option>
+                    {partners.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                  <select className={inputCls} value={insForm.policyType} onChange={(e) => setInsForm({ ...insForm, policyType: e.target.value })}>
+                    <option value="third_party">Third party</option>
+                    <option value="third_party_fire_theft">Third party, fire &amp; theft</option>
+                    <option value="comprehensive">Comprehensive</option>
+                  </select>
+                  <input className={inputCls} placeholder="Policy number" value={insForm.policyNumber} onChange={(e) => setInsForm({ ...insForm, policyNumber: e.target.value })} />
+                  <input className={inputCls} placeholder="Sticker number" value={insForm.stickerNumber} onChange={(e) => setInsForm({ ...insForm, stickerNumber: e.target.value })} />
+                  <input className={inputCls} type="number" min={0} step="0.01" placeholder="Premium GH₵" value={insForm.premium} onChange={(e) => setInsForm({ ...insForm, premium: e.target.value })} />
+                  <div><label className={labelCls}>Start *</label><input className={inputCls} type="date" required value={insForm.startDate} onChange={(e) => setInsForm({ ...insForm, startDate: e.target.value })} /></div>
+                  <div><label className={labelCls}>End *</label><input className={inputCls} type="date" required value={insForm.endDate} onChange={(e) => setInsForm({ ...insForm, endDate: e.target.value })} /></div>
+                  <div className="flex items-end gap-2 sm:col-span-2">
+                    <Button type="submit" disabled={pending}>Save policy</Button>
+                    {insMsg && <p className={`text-sm font-semibold ${insMsg.ok ? "text-success" : "text-warning"}`}>{insMsg.text}</p>}
+                  </div>
+                </form>
+              )}
+              {!insOpen && insMsg && <p className={`mt-2 text-sm font-semibold ${insMsg.ok ? "text-success" : "text-warning"}`}>{insMsg.text}</p>}
             </CardContent>
           </Card>
 
