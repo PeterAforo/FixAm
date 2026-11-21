@@ -5,6 +5,7 @@ import { db } from "@/lib/db"
 import {
   customers,
   documents,
+  dueItems,
   garageSettings,
   odometerReadings,
   vehicleOwnerships,
@@ -14,6 +15,7 @@ import { writeAuditLog, resolveMembership, type ActionResult } from "@/lib/actio
 import { getSessionUserId } from "@/lib/auth/ensure-user"
 import { can, type StaffRole } from "@/lib/auth/permissions"
 import { validateReading, type OdometerReading } from "@/lib/domain/mileage"
+import { computeServiceDueDates, intervalForOilGrade, OIL_GRADES } from "@/lib/domain/service"
 import { inngest } from "@/lib/inngest/client"
 import { uuidv7 } from "@/lib/id"
 import { plateSearchKey } from "./plate"
@@ -698,4 +700,106 @@ export async function searchVehiclesAndCustomers(rawInput: unknown): Promise<
       })),
     },
   }
+}
+
+// ---------------------------------------------------------------------------
+// Manual "last oil change" entry (P4-02) — for new customers with no job history
+// ---------------------------------------------------------------------------
+
+const oilChangeSchema = z.object({
+  garageId: z.string().uuid(),
+  vehicleId: z.string().uuid(),
+  performedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  odometerKm: z.number().int().min(0).max(2_000_000).optional().nullable(),
+  oilGrade: z.enum(OIL_GRADES as [string, ...string[]]).optional().or(z.literal("")),
+  oilBrand: z.string().max(80).optional().or(z.literal("")),
+  oilQuantityMl: z.number().int().min(0).max(50000).optional().nullable(),
+  oilFilters: z.string().max(300).optional().or(z.literal("")),
+})
+
+/** Record a past oil change: stores an odometer reading (if given), completes
+ *  any open oil_change due item, and schedules the next cycle. */
+export async function recordLastOilChange(rawInput: unknown): Promise<ActionResult<{ dueItemId: string }>> {
+  const userId = await getSessionUserId()
+  if (!userId) return { ok: false, error: { code: "UNAUTHENTICATED", message: "Sign in first" } }
+
+  const parsed = oilChangeSchema.safeParse(rawInput)
+  if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Check the highlighted fields" } }
+  const d = parsed.data
+
+  const ctx = await requireMembership(userId, d.garageId)
+  if (!ctx) return { ok: false, error: { code: "FORBIDDEN", message: "Not a member of this garage" } }
+  if (!can(ctx.principal, "vehicles.odometer.record")) {
+    return { ok: false, error: { code: "FORBIDDEN", message: "You can't record service history" } }
+  }
+
+  const vehicle = await getVehicle(d.garageId, d.vehicleId)
+  if (!vehicle) return { ok: false, error: { code: "NOT_FOUND", message: "Vehicle not found" } }
+  if (!vehicle.currentOwnerId) {
+    return { ok: false, error: { code: "VALIDATION", message: "Vehicle has no current owner" } }
+  }
+
+  const performedAt = new Date(`${d.performedOn}T12:00:00Z`)
+  const now = new Date()
+
+  // optional odometer reading at service time (source: service_record)
+  if (d.odometerKm != null) {
+    const readAt = performedAt
+    const history = await validReadings(d.garageId, d.vehicleId)
+    const status = validateReading({ km: d.odometerKm, at: readAt }, history)
+    await db().insert(odometerReadings).values({
+      garageId: d.garageId, vehicleId: d.vehicleId, readingKm: d.odometerKm,
+      readAt, source: "service_record", status,
+      flagReason: status === "flagged" ? "lower_or_implausible" : null,
+      recordedByUserId: userId,
+    })
+    if (status === "valid") {
+      await db().update(vehicles)
+        .set({ lastOdometerKm: d.odometerKm, lastOdometerAt: readAt, updatedAt: now })
+        .where(eq(vehicles.id, d.vehicleId))
+    }
+    await inngest.send({
+      name: "vehicle/odometer.recorded",
+      data: { garageId: d.garageId, vehicleId: d.vehicleId, status },
+    })
+  }
+
+  // complete any open oil_change items — this record IS the service
+  await db().update(dueItems).set({
+    status: "completed", completedAt: now, updatedAt: now,
+  }).where(and(
+    eq(dueItems.garageId, d.garageId),
+    eq(dueItems.vehicleId, d.vehicleId),
+    eq(dueItems.type, "oil_change"),
+    sql`${dueItems.status} IN ('scheduled','due_soon','due','overdue')`,
+  ))
+
+  const interval = intervalForOilGrade(d.oilGrade || null)
+  const kmPerDay = vehicle.kmPerDay != null ? Number(vehicle.kmPerDay) : null
+  const dates = computeServiceDueDates({
+    performedAt, odometerKm: d.odometerKm ?? null, interval, kmPerDay, now,
+  })
+
+  const gradeLabel = d.oilGrade ? d.oilGrade.replace(/_/g, " ") : "oil"
+  const [row] = await db().insert(dueItems).values({
+    garageId: d.garageId,
+    vehicleId: d.vehicleId,
+    customerId: vehicle.currentOwnerId,
+    type: "oil_change",
+    title: `Oil change due (${gradeLabel})`,
+    dueDate: dates.dueDate,
+    dueMileageKm: dates.dueMileageKm || null,
+    predictedDueDate: dates.predictedDueDate,
+    effectiveDueDate: dates.effectiveDueDate,
+    status: "scheduled",
+    sourceType: "manual",
+    sourceId: null,
+  }).returning({ id: dueItems.id })
+
+  await writeAuditLog({
+    garageId: d.garageId, actorUserId: userId, action: "vehicle.oil_change.record",
+    entityType: "vehicle", entityId: d.vehicleId,
+    after: { performedOn: d.performedOn, odometerKm: d.odometerKm, oilGrade: d.oilGrade, dueItemId: row!.id },
+  })
+  return { ok: true, data: { dueItemId: row!.id } }
 }

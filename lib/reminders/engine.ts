@@ -21,6 +21,10 @@ import {
 } from "@/lib/domain/reminders"
 import { sendMessage } from "@/lib/messaging/send"
 import { uuidv7 } from "@/lib/id"
+import { createHash, randomBytes } from "crypto"
+
+const sha256 = (s: string) => createHash("sha256").update(s).digest("hex")
+const APP_URL = () => process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
 
 const OPEN_STATUSES = ["scheduled", "due_soon", "due", "overdue"] as const
 
@@ -61,6 +65,11 @@ export type DueRow = typeof dueItems.$inferSelect & {
   plate: string | null
   make: string | null
   model: string | null
+  kmPerDayConfidence: string | null
+  kmPerDay: string | null
+  lastOdometerAt: Date | null
+  lastOdometerKm: number | null
+  vehicleUsage: string | null
 }
 
 export async function loadDueCandidates(): Promise<DueRow[]> {
@@ -75,6 +84,11 @@ export async function loadDueCandidates(): Promise<DueRow[]> {
       plate: vehicles.plateNumber,
       make: vehicles.make,
       model: vehicles.model,
+      kmPerDayConfidence: vehicles.kmPerDayConfidence,
+      kmPerDay: vehicles.kmPerDay,
+      lastOdometerAt: vehicles.lastOdometerAt,
+      lastOdometerKm: vehicles.lastOdometerKm,
+      vehicleUsage: vehicles.usage,
     })
     .from(dueItems)
     .innerJoin(customers, eq(dueItems.customerId, customers.id))
@@ -89,7 +103,26 @@ export async function loadDueCandidates(): Promise<DueRow[]> {
       customerPhone: r.customerPhone, customerName: r.customerName,
       customerEmail: r.customerEmail, preferredChannels: r.preferredChannels,
       plate: r.plate, make: r.make, model: r.model,
+      kmPerDayConfidence: r.kmPerDayConfidence, kmPerDay: r.kmPerDay,
+      lastOdometerAt: r.lastOdometerAt,
+      lastOdometerKm: r.lastOdometerKm, vehicleUsage: r.vehicleUsage,
     })))
+}
+
+const MILEAGE_BASED = new Set<DueItemType>(["oil_change", "general_service", "custom"])
+
+/** Spec: low-confidence + mileage-based item → send mileage_confirm before
+ *  the normal due-soon reminder, once per due item. */
+async function needsMileageConfirm(r: DueRow): Promise<boolean> {
+  if (!MILEAGE_BASED.has(r.type as DueItemType)) return false
+  if (r.dueMileageKm == null) return false
+  if (r.kmPerDayConfidence !== "low") return false
+  const prior = await db().select({ id: messageSends.id }).from(messageSends).where(and(
+    eq(messageSends.garageId, r.garageId),
+    eq(messageSends.templateKey, "mileage_confirm"),
+    sql`${messageSends.dueItemIds} @> ARRAY[${r.id}]::uuid[]`,
+  )).limit(1)
+  return !prior[0]
 }
 
 function templateVars(r: DueRow, garageName: string, actionUrl: string): Record<string, string> {
@@ -100,10 +133,21 @@ function templateVars(r: DueRow, garageName: string, actionUrl: string): Record<
     vehicle: [r.make, r.model, r.plate].filter(Boolean).join(" "),
     plate: r.plate ?? "",
     due_title: r.title,
+    items_list: r.title,
     due_date: r.effectiveDueDate ?? "",
     action_url: actionUrl,
     reminder_link: actionUrl,
+    action_link: actionUrl,
+    predicted_km: predictedKm(r),
   }
+}
+
+/** Approx current odometer for mileage templates (≈ X km). */
+function predictedKm(r: DueRow): string {
+  if (r.lastOdometerKm == null) return ""
+  const rate = r.kmPerDay != null ? Number(r.kmPerDay) : 0
+  const days = r.lastOdometerAt ? Math.max(0, (Date.now() - r.lastOdometerAt.getTime()) / 86_400_000) : 0
+  return String(Math.round(r.lastOdometerKm + rate * days))
 }
 
 /**
@@ -127,13 +171,22 @@ export async function sendForDueRows(rows: DueRow[], garageNameById?: Map<string
     const garageId = first.garageId
     const [garage] = await db().select({ slug: garages.slug, name: garages.name }).from(garages).where(eq(garages.id, garageId)).limit(1)
     const garageName = garageNameById?.get(garageId) ?? garage?.name ?? "FixAm"
-    const link = garage ? `/t/${first.actionTokenHash ?? ""}` : ""
+
+    // fresh action token per send — only the hash is persisted (bearer link)
+    const token = randomBytes(24).toString("hex")
+    const tokenHash = sha256(token)
+    await db().update(dueItems).set({ actionTokenHash: tokenHash, updatedAt: now })
+      .where(inArray(dueItems.id, items.map((i) => i.id)))
+    const link = `${APP_URL()}/t/${token}`
 
     const multi = items.length > 1
-    const templateKey = multi ? "combined_due" : (() => {
+    let templateKey = multi ? "combined_due" : (() => {
       const esc = escalationFor(items[0]!.type as DueItemType, effectiveDueDate(items[0]!) ?? items[0]!.effectiveDueDate, new Date())
       return esc?.templateKey ?? "custom_due"
     })()
+
+    // low-confidence vehicles: first reminder asks for a mileage reading first
+    if (!multi && (await needsMileageConfirm(first))) templateKey = "mileage_confirm"
 
     const over = await overAllowance(garageId)
     if (over) {
@@ -160,12 +213,20 @@ export async function sendForDueRows(rows: DueRow[], garageNameById?: Map<string
       continue
     }
 
+    const itemList = items.map((i) => i.title).join(", ")
     const variables: Record<string, string> = multi
       ? {
           customer_first_name: (first.customerName ?? "").split(" ")[0] || "there",
+          customer_name: first.customerName ?? "",
           garage_name: garageName,
+          plate: first.plate ?? "",
+          vehicle: [first.make, first.model, first.plate].filter(Boolean).join(" "),
+          items_list: itemList,
           due_items: items.map((i) => `• ${i.title} (${i.effectiveDueDate ?? "soon"})`).join("\n"),
+          due_title: itemList,
+          due_date: items.map((i) => i.effectiveDueDate).filter(Boolean).sort()[0] ?? "",
           action_url: link,
+          action_link: link,
           reminder_link: link,
         }
       : templateVars(first, garageName, link)
@@ -266,4 +327,101 @@ export async function closeDueItem(dueItemId: string, outcome: "completed" | "di
     status: outcome, completedAt: outcome === "completed" ? new Date() : null,
     dismissedReason: reason ?? null, nextReminderAt: null, updatedAt: new Date(),
   }).where(eq(dueItems.id, dueItemId))
+}
+
+// ---------------------------------------------------------------------------
+// Mileage nudge (spec: daily 10:00 Africa/Accra, max 1 per 90 days per item)
+// ---------------------------------------------------------------------------
+
+const NUDGE_TYPES = ["oil_change", "general_service", "custom"] as const
+const NUDGE_STALE_DAYS = 45
+const NUDGE_MAX_PER_90D = 90 * 86_400_000
+
+export async function runMileageNudge(now = new Date()) {
+  const staleBefore = new Date(now.getTime() - NUDGE_STALE_DAYS * 86_400_000)
+  const nudgeWindowStart = new Date(now.getTime() - NUDGE_MAX_PER_90D)
+
+  const rows = await db()
+    .select({
+      item: dueItems,
+      customerPhone: customers.phone,
+      customerName: customers.fullName,
+      customerEmail: customers.email,
+      preferredChannels: customers.preferredChannels,
+      plate: vehicles.plateNumber,
+      make: vehicles.make,
+      model: vehicles.model,
+      kmPerDay: vehicles.kmPerDay,
+      lastOdometerAt: vehicles.lastOdometerAt,
+      lastOdometerKm: vehicles.lastOdometerKm,
+    })
+    .from(dueItems)
+    .innerJoin(customers, eq(dueItems.customerId, customers.id))
+    .innerJoin(vehicles, eq(dueItems.vehicleId, vehicles.id))
+    .where(and(
+      inArray(dueItems.type, [...NUDGE_TYPES]),
+      sql`${dueItems.dueMileageKm} IS NOT NULL`,
+      inArray(dueItems.status, [...OPEN_STATUSES]),
+      sql`(${vehicles.lastOdometerAt} IS NULL OR ${vehicles.lastOdometerAt} < ${staleBefore})`,
+      sql`${customers.deletedAt} IS NULL`,
+    ))
+
+  // exclude items nudged in the last 90 days
+  const recentNudges = await db().select({ dueItemIds: messageSends.dueItemIds }).from(messageSends)
+    .where(and(eq(messageSends.templateKey, "mileage_nudge"), sql`${messageSends.createdAt} > ${nudgeWindowStart}`))
+  const nudged = new Set(recentNudges.flatMap((n) => n.dueItemIds ?? []))
+  const eligible = rows.filter((r) => !nudged.has(r.item.id))
+  if (!eligible.length) return { scanned: rows.length, sent: 0 }
+
+  const garageIds = [...new Set(eligible.map((r) => r.item.garageId))]
+  const gs = await db().select({ id: garages.id, name: garages.name, slug: garages.slug }).from(garages)
+    .where(inArray(garages.id, garageIds))
+  const garageById = new Map(gs.map((g) => [g.id, g]))
+
+  let sent = 0
+  for (const r of eligible) {
+    const garage = garageById.get(r.item.garageId)
+    if (!garage || !r.customerPhone) continue
+    const over = await overAllowance(r.item.garageId)
+    const order = allowedChannels(channelOrder(r.preferredChannels as string[] | null), over)
+    const channel = order.find((c) => c === "email" ? !!r.customerEmail : !!r.customerPhone) ?? null
+    if (!channel) continue
+
+    const sendId = uuidv7()
+    const token = randomBytes(24).toString("hex")
+    await db().update(dueItems).set({ actionTokenHash: sha256(token), updatedAt: now })
+      .where(eq(dueItems.id, r.item.id))
+    const link = `${APP_URL()}/t/${token}`
+    const rate = r.kmPerDay != null ? Number(r.kmPerDay) : 0
+    const days = r.lastOdometerAt ? Math.max(0, (now.getTime() - r.lastOdometerAt.getTime()) / 86_400_000) : 0
+    const predictedKm = r.lastOdometerKm != null ? Math.round(r.lastOdometerKm + rate * days) : null
+
+    const res = await sendMessage({
+      garageId: r.item.garageId, channel: channel as never,
+      to: channel === "email" ? (r.customerEmail ?? "") : r.customerPhone,
+      templateKey: "mileage_nudge",
+      variables: {
+        customer_first_name: (r.customerName ?? "").split(" ")[0] || "there",
+        garage_name: garage.name,
+        plate: r.plate ?? "",
+        predicted_km: predictedKm != null ? predictedKm.toLocaleString("en-GH") : "",
+        action_url: link, reminder_link: link, action_link: link,
+        due_title: r.item.title, due_date: r.item.effectiveDueDate ?? "",
+      },
+      idempotencyKey: `nudge:${sendId}`,
+      fallbackChannel: channel === "whatsapp" ? "sms" : undefined,
+    }).catch(() => null)
+
+    await db().insert(messageSends).values({
+      id: sendId, garageId: r.item.garageId, customerId: r.item.customerId,
+      dueItemIds: [r.item.id], channel: channel as never,
+      templateKey: "mileage_nudge", renderedBody: "mileage_nudge",
+      status: res?.ok ? ("deferredTo" in res && res.deferredTo ? "suppressed_quiet_hours" : "sent") : "failed",
+      providerMessageId: res?.ok ? res.providerMessageId : null,
+      sentAt: res?.ok && !("deferredTo" in res && res.deferredTo) ? now : null,
+      failedReason: res?.ok ? null : "send failed",
+    })
+    if (res?.ok) sent++
+  }
+  return { scanned: rows.length, sent }
 }

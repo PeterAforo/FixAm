@@ -110,6 +110,10 @@ export const jobs = pgTable(
     priority: jobPriorityEnum("priority").default("normal"),
     complaint: text("complaint"),
     checkInOdometerKm: integer("check_in_odometer_km"),
+    oilGrade: text("oil_grade"), // mineral|semi_synthetic|fully_synthetic|diesel_commercial
+    oilBrand: text("oil_brand"),
+    oilQuantityMl: integer("oil_quantity_ml"),
+    oilFilters: text("oil_filters"), // comma-separated filter names replaced
     checkInFuelLevel: integer("check_in_fuel_level"), // 0-100
     checkInItems: text("check_in_items"),
     checkInSignaturePath: text("check_in_signature_path"),

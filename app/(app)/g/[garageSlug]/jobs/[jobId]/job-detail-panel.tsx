@@ -17,6 +17,7 @@ import {
   toggleJobTask,
   updateJobStatus,
   uploadJobMedia,
+  recordJobOilService,
 } from "@/lib/jobs/actions"
 import { createInvoiceFromJob } from "@/lib/money/actions"
 import type { JobStatus } from "@/lib/jobs/transitions"
@@ -54,6 +55,10 @@ export function JobDetailPanel(props: {
     priority: string
     complaint: string | null
     checkInOdometerKm: number | null
+    oilGrade: string | null
+    oilBrand: string | null
+    oilQuantityMl: number | null
+    oilFilters: string | null
     checkInFuelLevel: number | null
     checkInItems: string | null
     promisedAt: string | null
@@ -101,6 +106,12 @@ export function JobDetailPanel(props: {
   const [finding, setFinding] = useState({ title: "", description: "", severity: "recommended" })
   const [item, setItem] = useState({ type: "labour", description: "", quantity: "1", unitPrice: "", labourHours: "" })
   const [mediaStage, setMediaStage] = useState("diagnosis")
+  const [oilForm, setOilForm] = useState({
+    oilGrade: job.oilGrade ?? "",
+    oilBrand: job.oilBrand ?? "",
+    oilQuantityMl: job.oilQuantityMl != null ? String(job.oilQuantityMl) : "",
+    oilFilters: job.oilFilters ?? "",
+  })
   const fileRef = useRef<HTMLInputElement>(null)
 
   const subtotal = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0)
@@ -123,6 +134,20 @@ export function JobDetailPanel(props: {
     startTransition(async () => {
       await signOffQc({ garageId, jobId: job.id })
       router.refresh()
+    })
+  }
+
+  function saveOil(e: React.FormEvent) {
+    e.preventDefault()
+    startTransition(async () => {
+      const res = await recordJobOilService({
+        garageId, jobId: job.id,
+        oilGrade: oilForm.oilGrade, oilBrand: oilForm.oilBrand,
+        oilQuantityMl: oilForm.oilQuantityMl ? Number(oilForm.oilQuantityMl) : null,
+        oilFilters: oilForm.oilFilters,
+      })
+      if (res.ok) { setMsg("Oil service details saved"); router.refresh() }
+      else setMsg(res.error.message)
     })
   }
 
@@ -361,6 +386,38 @@ export function JobDetailPanel(props: {
                     <span>Subtotal</span><span>{ghs(subtotal)}</span>
                   </li>
                 </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="lg:col-span-2">
+            <CardContent className="p-5">
+              <h2 className="font-display text-lg font-bold">Oil &amp; service</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Recorded on delivery — sets the next oil-change interval (grade-based defaults).
+              </p>
+              {job.oilGrade || job.oilBrand || job.oilQuantityMl != null ? (
+                <dl className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+                  <div><dt className={labelCls}>Grade</dt><dd className="font-semibold capitalize">{job.oilGrade?.replace(/_/g, " ") ?? "—"}</dd></div>
+                  <div><dt className={labelCls}>Brand</dt><dd className="font-semibold">{job.oilBrand ?? "—"}</dd></div>
+                  <div><dt className={labelCls}>Quantity</dt><dd className="font-semibold">{job.oilQuantityMl != null ? `${job.oilQuantityMl} ml` : "—"}</dd></div>
+                  <div><dt className={labelCls}>Filters</dt><dd className="font-semibold">{job.oilFilters ?? "—"}</dd></div>
+                </dl>
+              ) : null}
+              {canUpdate && !["delivered", "closed", "cancelled"].includes(job.status) && (
+                <form onSubmit={saveOil} className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                  <select className={inputCls} value={oilForm.oilGrade} onChange={(e) => setOilForm({ ...oilForm, oilGrade: e.target.value })}>
+                    <option value="">Oil grade…</option>
+                    <option value="mineral">Mineral</option>
+                    <option value="semi_synthetic">Semi-synthetic</option>
+                    <option value="fully_synthetic">Fully synthetic</option>
+                    <option value="diesel_commercial">Diesel / commercial</option>
+                  </select>
+                  <input className={inputCls} placeholder="Brand" value={oilForm.oilBrand} onChange={(e) => setOilForm({ ...oilForm, oilBrand: e.target.value })} />
+                  <input className={inputCls} placeholder="Qty ml" inputMode="numeric" value={oilForm.oilQuantityMl} onChange={(e) => setOilForm({ ...oilForm, oilQuantityMl: e.target.value })} />
+                  <input className={inputCls} placeholder="Filters (e.g. oil, air)" value={oilForm.oilFilters} onChange={(e) => setOilForm({ ...oilForm, oilFilters: e.target.value })} />
+                  <Button type="submit" variant="secondary" disabled={pending}>Save</Button>
+                </form>
               )}
             </CardContent>
           </Card>

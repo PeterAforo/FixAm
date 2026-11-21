@@ -1,7 +1,7 @@
-import { and, eq } from "drizzle-orm"
+import { and, eq, inArray, isNotNull } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { odometerReadings, vehicles } from "@/lib/db/schema"
-import { computeKmPerDay, type OdometerReading } from "@/lib/domain/mileage"
+import { dueItems, odometerReadings, vehicles } from "@/lib/db/schema"
+import { computeKmPerDay, predictDueDate, type OdometerReading } from "@/lib/domain/mileage"
 import { inngest } from "../client"
 import { defaultKmPerDay } from "@/lib/vehicles/actions"
 
@@ -39,6 +39,35 @@ export async function recalculateVehicleMileage(garageId: string, vehicleId: str
       updatedAt: new Date(),
     })
     .where(eq(vehicles.id, vehicleId))
+
+  // refresh predicted/effective dates on open mileage-based due items
+  const lastValid = [...readings].sort((a, b) => b.at.getTime() - a.at.getTime())[0] ?? null
+  if (lastValid && kmPerDay > 0) {
+    const open = await db()
+      .select({ id: dueItems.id, dueDate: dueItems.dueDate, dueMileageKm: dueItems.dueMileageKm, predictedDueDate: dueItems.predictedDueDate, effectiveDueDate: dueItems.effectiveDueDate })
+      .from(dueItems)
+      .where(and(
+        eq(dueItems.vehicleId, vehicleId),
+        eq(dueItems.garageId, garageId),
+        inArray(dueItems.type, ["oil_change", "general_service", "custom"]),
+        isNotNull(dueItems.dueMileageKm),
+        inArray(dueItems.status, ["scheduled", "due_soon", "due", "overdue"]),
+      ))
+    const now = new Date()
+    for (const item of open) {
+      const p = predictDueDate(lastValid, item.dueMileageKm!, kmPerDay, now)
+      const predictedISO = p ? p.toISOString().slice(0, 10) : null
+      const candidates = [item.dueDate, predictedISO].filter((d): d is string => !!d)
+      const effective = candidates.length ? candidates.reduce((a, b) => (a < b ? a : b)) : null
+      if (effective && (predictedISO !== item.predictedDueDate || effective !== item.effectiveDueDate)) {
+        await db().update(dueItems).set({
+          predictedDueDate: predictedISO,
+          effectiveDueDate: effective,
+          updatedAt: now,
+        }).where(eq(dueItems.id, item.id))
+      }
+    }
+  }
 
   return { kmPerDay, confidence }
 }

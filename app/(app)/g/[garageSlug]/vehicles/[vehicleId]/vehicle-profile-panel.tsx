@@ -11,6 +11,7 @@ import { StatusPill } from "@/components/brand/status-pill"
 import { VehicleHealthCard, type RingStatus } from "@/components/brand/vehicle-health-card"
 import type { VehicleType } from "@/components/brand/car-avatar"
 import {
+  recordLastOilChange,
   recordOdometer,
   reviewOdometer,
   transferOwnership,
@@ -136,6 +137,9 @@ export function VehicleProfilePanel(props: {
   const [docType, setDocType] = useState<string>("other")
   const [docExpires, setDocExpires] = useState("")
   const [docMsg, setDocMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [oilOpen, setOilOpen] = useState(false)
+  const [oilForm, setOilForm] = useState({ performedOn: "", odometerKm: "", oilGrade: "", oilBrand: "", oilQuantityMl: "", oilFilters: "" })
+  const [oilMsg, setOilMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const [editOpen, setEditOpen] = useState(false)
 
@@ -200,6 +204,35 @@ export function VehicleProfilePanel(props: {
       setTransferMsg({ ok: true, text: "Ownership transferred." })
       setTransferTo("")
       setTransferDate("")
+      router.refresh()
+    })
+  }
+
+  function submitOilChange(e: React.FormEvent) {
+    e.preventDefault()
+    if (!oilForm.performedOn) {
+      setOilMsg({ ok: false, text: "Pick the service date" })
+      return
+    }
+    setOilMsg(null)
+    startTransition(async () => {
+      const res = await recordLastOilChange({
+        garageId,
+        vehicleId: vehicle.id,
+        performedOn: oilForm.performedOn,
+        odometerKm: oilForm.odometerKm ? Number(oilForm.odometerKm) : null,
+        oilGrade: oilForm.oilGrade,
+        oilBrand: oilForm.oilBrand,
+        oilQuantityMl: oilForm.oilQuantityMl ? Number(oilForm.oilQuantityMl) : null,
+        oilFilters: oilForm.oilFilters,
+      })
+      if (!res.ok) {
+        setOilMsg({ ok: false, text: res.error.message })
+        return
+      }
+      setOilMsg({ ok: true, text: "Oil change recorded — next reminder scheduled." })
+      setOilOpen(false)
+      setOilForm({ performedOn: "", odometerKm: "", oilGrade: "", oilBrand: "", oilQuantityMl: "", oilFilters: "" })
       router.refresh()
     })
   }
@@ -429,6 +462,59 @@ export function VehicleProfilePanel(props: {
               )}
             </CardContent>
           </Card>
+
+          {/* Record last oil change (manual entry) */}
+          {canRecordOdometer && (
+            <Card>
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display text-lg font-bold">Oil change</h2>
+                  <Button size="sm" variant="secondary" onClick={() => setOilOpen((v) => !v)}>
+                    {oilOpen ? "Close" : "Record last oil change"}
+                  </Button>
+                </div>
+                {oilOpen && (
+                  <form onSubmit={submitOilChange} className="mt-4 grid gap-2 sm:grid-cols-2">
+                    <div>
+                      <label className={labelCls}>Service date *</label>
+                      <input className={inputCls} type="date" required value={oilForm.performedOn} onChange={(e) => setOilForm({ ...oilForm, performedOn: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Odometer (km)</label>
+                      <input className={inputCls} type="number" min={0} placeholder={vehicle.lastOdometerKm?.toLocaleString() ?? "0"} value={oilForm.odometerKm} onChange={(e) => setOilForm({ ...oilForm, odometerKm: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Oil grade</label>
+                      <select className={inputCls} value={oilForm.oilGrade} onChange={(e) => setOilForm({ ...oilForm, oilGrade: e.target.value })}>
+                        <option value="">—</option>
+                        <option value="mineral">Mineral</option>
+                        <option value="semi_synthetic">Semi-synthetic</option>
+                        <option value="fully_synthetic">Fully synthetic</option>
+                        <option value="diesel_commercial">Diesel / commercial</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Brand</label>
+                      <input className={inputCls} value={oilForm.oilBrand} onChange={(e) => setOilForm({ ...oilForm, oilBrand: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Quantity (ml)</label>
+                      <input className={inputCls} type="number" min={0} value={oilForm.oilQuantityMl} onChange={(e) => setOilForm({ ...oilForm, oilQuantityMl: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Filters</label>
+                      <input className={inputCls} placeholder="oil, air…" value={oilForm.oilFilters} onChange={(e) => setOilForm({ ...oilForm, oilFilters: e.target.value })} />
+                    </div>
+                    <div className="flex items-end gap-2 sm:col-span-2">
+                      <Button type="submit" disabled={pending}>Save</Button>
+                      {oilMsg && <p className={`text-sm font-semibold ${oilMsg.ok ? "text-success" : "text-warning"}`}>{oilMsg.text}</p>}
+                    </div>
+                  </form>
+                )}
+                {!oilOpen && oilMsg && <p className={`mt-2 text-sm font-semibold ${oilMsg.ok ? "text-success" : "text-warning"}`}>{oilMsg.text}</p>}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Jobs */}
           <Card>

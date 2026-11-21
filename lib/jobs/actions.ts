@@ -37,6 +37,7 @@ import { canTransitionJob, type JobStatus } from "./transitions"
 import { buildInvoiceFromJob } from "@/lib/money/invoice-core"
 import { issueReservedStock } from "@/lib/parts/stock"
 import { closeDueItem } from "@/lib/reminders/engine"
+import { computeServiceDueDates, intervalForOilGrade, GENERAL_SERVICE_INTERVAL } from "@/lib/domain/service"
 import { storageProvider } from "@/lib/integrations/storage"
 
 const staffPrincipal = (role: StaffRole, garageId: string, branchId: string | null) =>
@@ -485,20 +486,30 @@ export async function updateJobStatus(rawInput: unknown): Promise<ActionResult<{
         .where(and(eq(dueItems.vehicleId, job.vehicleId), eq(dueItems.garageId, garageId), eq(dueItems.type, dueType), sql`${dueItems.status} IN ('scheduled','due_soon','due','overdue')`))
         .limit(1)
       if (!existing[0] && job.customerId) {
-        // default interval: oil_change 6mo/7500km semi-synthetic baseline
-        const months = dueType === "oil_change" ? 6 : 12
-        const km = dueType === "oil_change" ? 7500 : 15000
-        const due = new Date(now)
-        due.setMonth(due.getMonth() + months)
+        // interval defaults per reminder-rules.json (oil grade aware)
+        const interval = dueType === "oil_change"
+          ? intervalForOilGrade(job.oilGrade)
+          : GENERAL_SERVICE_INTERVAL
+        const [veh] = await db()
+          .select({ kmPerDay: vehicles.kmPerDay })
+          .from(vehicles).where(eq(vehicles.id, job.vehicleId)).limit(1)
+        const dates = computeServiceDueDates({
+          performedAt: now,
+          odometerKm: job.checkInOdometerKm,
+          interval,
+          kmPerDay: veh?.kmPerDay != null ? Number(veh.kmPerDay) : null,
+          now,
+        })
         await db().insert(dueItems).values({
           garageId,
           vehicleId: job.vehicleId,
           customerId: job.customerId,
           type: dueType,
           title: `${dueType.replace(/_/g, " ")} due`,
-          dueDate: due.toISOString().slice(0, 10),
-          dueMileageKm: (job.checkInOdometerKm ?? 0) + km,
-          effectiveDueDate: due.toISOString().slice(0, 10),
+          dueDate: dates.dueDate,
+          dueMileageKm: dates.dueMileageKm || null,
+          predictedDueDate: dates.predictedDueDate,
+          effectiveDueDate: dates.effectiveDueDate,
           status: "scheduled",
           sourceType: "job",
           sourceId: jobId,
@@ -604,6 +615,49 @@ export async function updateJobStatus(rawInput: unknown): Promise<ActionResult<{
   })
 
   return { ok: true, data: { jobId, status: toStatus } }
+}
+
+/** Record oil service details used for the next oil_change due item (P4-02). */
+export async function recordJobOilService(rawInput: unknown): Promise<ActionResult<{ jobId: string }>> {
+  const userId = await getSessionUserId()
+  if (!userId) return { ok: false, error: { code: "UNAUTHENTICATED", message: "Sign in first" } }
+  const schema = z.object({
+    garageId: z.string().uuid(),
+    jobId: z.string().uuid(),
+    oilGrade: z.string().max(40).optional().or(z.literal("")),
+    oilBrand: z.string().max(80).optional().or(z.literal("")),
+    oilQuantityMl: z.number().int().min(0).max(50000).optional().nullable(),
+    oilFilters: z.string().max(300).optional().or(z.literal("")),
+  })
+  const parsed = schema.safeParse(rawInput)
+  if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Invalid input" } }
+  const d = parsed.data
+
+  const ctx = await requireMembership(userId, d.garageId)
+  if (!ctx) return { ok: false, error: { code: "FORBIDDEN", message: "Not a member" } }
+  if (!can(ctx.principal, "jobs.update")) {
+    return { ok: false, error: { code: "FORBIDDEN", message: "Can't update job details" } }
+  }
+  const job = await getJob(d.garageId, d.jobId)
+  if (!job) return { ok: false, error: { code: "NOT_FOUND", message: "Job not found" } }
+  if (["delivered", "closed", "cancelled"].includes(job.status)) {
+    return { ok: false, error: { code: "VALIDATION", message: "Job already closed" } }
+  }
+
+  await db().update(jobs).set({
+    oilGrade: d.oilGrade || null,
+    oilBrand: d.oilBrand || null,
+    oilQuantityMl: d.oilQuantityMl ?? null,
+    oilFilters: d.oilFilters || null,
+    updatedAt: new Date(),
+  }).where(eq(jobs.id, d.jobId))
+
+  await writeAuditLog({
+    garageId: d.garageId, actorUserId: userId, action: "job.oil_service.record",
+    entityType: "job", entityId: d.jobId,
+    after: { oilGrade: d.oilGrade, oilBrand: d.oilBrand, oilQuantityMl: d.oilQuantityMl },
+  })
+  return { ok: true, data: { jobId: d.jobId } }
 }
 
 /** QC sign-off — required before a job can move to ready. */
