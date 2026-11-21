@@ -26,6 +26,9 @@ async function BookingView({ params }: { params: Promise<{ garageSlug: string }>
           <p className="mt-1 text-sm text-muted-foreground">Pick a service, a day and a time — we&rsquo;ll confirm by SMS.</p>
         </header>
         <BookingForm garageId={info.garageId} garageName={info.garageName} garagePhone={info.garagePhone} branches={info.branches} services={info.services} />
+        <p className="mt-4 text-center text-sm">
+          <a href={`/o/${garageSlug}`} className="font-medium text-primary underline underline-offset-2">Order parts online →</a>
+        </p>
       </div>
     </main>
   )
