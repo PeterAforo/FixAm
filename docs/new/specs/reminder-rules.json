@@ -1,0 +1,157 @@
+{
+  "$schema_version": "1.0",
+  "description": "Configuration for the unified reminder engine and mileage prediction. Garages can override per type in garage_settings.reminder_overrides. Implement pure logic in lib/domain/reminders and lib/domain/mileage with unit tests; scheduling in Inngest.",
+  "engine": {
+    "scan_schedule": "Inngest cron every hour at minute 5 (Africa/Accra): find due_items where next_reminder_at <= now() and status in (scheduled, due_soon, due, overdue).",
+    "batching": "Group due items for the same customer whose reminders fall within the same 7-day window into one combined message (template key 'combined_due').",
+    "quiet_hours": { "start": "21:00", "end": "07:00", "timezone": "Africa/Accra", "behaviour": "Messages that would send inside quiet hours are rescheduled to the end of quiet hours (07:00) plus a random 0–60 minute jitter.", "exempt_categories": ["otp", "transactional"] },
+    "channel_routing": {
+      "order": "Use customer.preferred_channels in order. Default order: whatsapp, sms, push, email.",
+      "fallback": "If WhatsApp status is not 'delivered' within 15 minutes or fails, send SMS. Push and email are sent in addition if the customer has them enabled (they cost little).",
+      "max_paid_messages_per_reminder": 2,
+      "respect_opt_out": "If a customer replies STOP (SMS) or blocks WhatsApp, set the channel off and log consent change."
+    },
+    "allowance": "Before sending, check message_usage for the garage. If used_units >= allowance + addon_units, send only push and email, mark SMS/WhatsApp as 'suppressed_allowance', and notify the owner (once per period). Transactional messages (OTP, receipts) are always sent.",
+    "status_flow": "scheduled → due_soon (first escalation stage reached) → due (effective_due_date reached) → overdue (after effective_due_date) → completed | dismissed",
+    "actions": {
+      "book_now": "Opens /t/[token] booking flow pre-filled with vehicle and service; on booking, set reminder_messages.converted_booking_id and pause further reminders for that due item until the booking date + 1 day.",
+      "renew_with_garage": "Opens renewal flow; creates renewal_request; pauses reminders while renewal is in progress.",
+      "update_mileage": "Opens mileage form; creates odometer_reading (source customer_update); recalculates prediction.",
+      "pay_now": "Opens the invoice/instalment/statement pay page (/t/[token], purpose invoice_pay); completes the due item when the linked amount is fully paid.",
+      "already_done": "Customer selects reason (done elsewhere, sold vehicle, not needed) and optional new expiry date; marks due item completed or dismissed and schedules the next cycle if a new date is given."
+    },
+    "completion": "A due item completes automatically when: a job using a matching job template is delivered (oil_change, general_service); a new insurance_policy or dvla_record with a later expiry is saved; an instalment is paid; a credit statement is paid."
+  },
+  "due_item_types": {
+    "oil_change": {
+      "trigger": "date_and_mileage",
+      "created_by": "Delivery of a job whose template has creates_due_item_type = oil_change, or manual entry of a last oil change.",
+      "default_intervals": {
+        "mineral": { "months": 3, "km": 5000 },
+        "semi_synthetic": { "months": 6, "km": 7500 },
+        "fully_synthetic": { "months": 6, "km": 10000 },
+        "diesel_commercial": { "months": 3, "km": 5000 }
+      },
+      "escalation_days_before": [14, 7, 0],
+      "overdue_days_after": [3, 14],
+      "templates": { "due_soon": "oil_due_soon", "due": "oil_due", "overdue": "oil_overdue" },
+      "primary_action": "book_now",
+      "secondary_actions": ["update_mileage", "already_done"]
+    },
+    "general_service": {
+      "trigger": "date_and_mileage",
+      "default_intervals": { "standard": { "months": 12, "km": 15000 } },
+      "escalation_days_before": [14, 3],
+      "overdue_days_after": [7],
+      "templates": { "due_soon": "service_due_soon", "due": "service_due", "overdue": "service_overdue" },
+      "primary_action": "book_now",
+      "secondary_actions": ["update_mileage", "already_done"]
+    },
+    "insurance": {
+      "trigger": "date",
+      "created_by": "Saving an insurance_policy (due_date = end_date).",
+      "escalation_days_before": [30, 14, 7, 1, 0],
+      "overdue_days_after": [3, 7],
+      "templates": { "due_soon": "insurance_due_soon", "due": "insurance_due", "overdue": "insurance_overdue" },
+      "primary_action": "renew_with_garage",
+      "primary_action_requires_feature": "agent_renewals",
+      "secondary_actions": ["already_done"]
+    },
+    "roadworthy": {
+      "trigger": "date",
+      "created_by": "Saving a dvla_record of type roadworthy.",
+      "escalation_days_before": [30, 14, 7, 1, 0],
+      "overdue_days_after": [3, 7],
+      "templates": { "due_soon": "roadworthy_due_soon", "due": "roadworthy_due", "overdue": "roadworthy_overdue" },
+      "primary_action": "renew_with_garage",
+      "primary_action_requires_feature": "agent_renewals",
+      "secondary_actions": ["book_now", "already_done"],
+      "note": "book_now here books a pre-inspection check."
+    },
+    "registration_licence": {
+      "trigger": "date",
+      "escalation_days_before": [30, 14, 7, 1, 0],
+      "overdue_days_after": [3, 7],
+      "templates": { "due_soon": "registration_due_soon", "due": "registration_due", "overdue": "registration_overdue" },
+      "primary_action": "renew_with_garage",
+      "primary_action_requires_feature": "agent_renewals",
+      "secondary_actions": ["already_done"]
+    },
+    "drivers_licence": {
+      "trigger": "date",
+      "escalation_days_before": [30, 7, 0],
+      "overdue_days_after": [7],
+      "templates": { "due_soon": "drivers_licence_due_soon", "due": "drivers_licence_due", "overdue": "drivers_licence_overdue" },
+      "primary_action": "renew_with_garage",
+      "primary_action_requires_feature": "agent_renewals",
+      "secondary_actions": ["already_done"]
+    },
+    "instalment": {
+      "trigger": "date",
+      "created_by": "Each instalment in a payment plan.",
+      "escalation_days_before": [3, 0],
+      "overdue_days_after": [1, 3, 7],
+      "templates": { "due_soon": "instalment_due_soon", "due": "instalment_due", "overdue": "instalment_overdue" },
+      "primary_action": "pay_now",
+      "secondary_actions": []
+    },
+    "credit_statement": {
+      "trigger": "date",
+      "created_by": "Monthly statement generation for each credit account on statement_day.",
+      "escalation_days_before": [0],
+      "overdue_days_after": [7, 14, 30],
+      "templates": { "due_soon": "credit_statement_ready", "due": "credit_statement_ready", "overdue": "credit_statement_overdue" },
+      "primary_action": "pay_now",
+      "secondary_actions": []
+    },
+    "custom": {
+      "trigger": "date_or_mileage",
+      "escalation_days_before": [7, 0],
+      "overdue_days_after": [3],
+      "templates": { "due_soon": "custom_due_soon", "due": "custom_due", "overdue": "custom_overdue" },
+      "primary_action": "book_now",
+      "secondary_actions": ["already_done"]
+    }
+  },
+  "mileage_prediction": {
+    "implementation": "lib/domain/mileage.ts — pure functions: validateReading, computeKmPerDay, predictOdometer, predictDueDate, confidence. Recalculate on every new valid reading (Inngest event vehicle/odometer.recorded) and nightly for all vehicles with open mileage-based due items.",
+    "validation": {
+      "reject_if_lower_than_previous": true,
+      "unless": "odometer_replaced = true (then start a new series)",
+      "max_km_per_day": 1000,
+      "min_days_between_readings_for_rate": 7,
+      "flag_action": "Set status 'flagged', notify service advisor, exclude from rate until approved."
+    },
+    "rate_calculation": {
+      "method": "exponentially_weighted_average",
+      "min_valid_readings": 2,
+      "interval_rate": "(km_i - km_{i-1}) / max(1, days_i - days_{i-1})",
+      "weight": "w_i = 0.5 ^ (age_days_of_interval_end / half_life_days)",
+      "half_life_days": 90,
+      "max_intervals_considered": 12,
+      "result": "km_per_day = Σ(w_i × rate_i) / Σ(w_i), rounded to 2 decimals"
+    },
+    "fallback": "If fewer than min_valid_readings, use garage_settings.default_km_per_day[vehicle.usage]; confidence = low.",
+    "prediction": {
+      "predicted_odometer": "last_valid_km + km_per_day × days_since_last_valid_reading",
+      "predicted_due_date": "last_valid_reading_date + ceil((due_mileage_km - last_valid_km) / km_per_day) days; if already past, today",
+      "effective_due_date": "min(due_date, predicted_due_date) ignoring nulls"
+    },
+    "confidence": {
+      "high": "≥ 4 valid readings AND coefficient of variation of interval rates ≤ 0.35",
+      "medium": "≥ 2 valid readings",
+      "low": "fallback default rate"
+    },
+    "low_confidence_behaviour": "First reminder for a mileage-based item asks the customer to confirm current mileage (template 'mileage_confirm') before the due-soon reminder.",
+    "nudge": { "enabled_default": true, "days_without_reading": 45, "template": "mileage_nudge", "max_per_90_days": 1, "only_if": "vehicle has an open mileage-based due item" },
+    "display": "Vehicle profile shows: '≈ {km_per_day} km/day · next oil change around {effective_due_date} ({confidence} confidence)'."
+  },
+  "test_cases": [
+    { "name": "two readings 30 days apart", "readings": [["2026-01-01", 50000], ["2026-01-31", 51500]], "expect_km_per_day": 50, "expect_confidence": "medium" },
+    { "name": "lower reading rejected", "readings": [["2026-01-01", 50000], ["2026-02-01", 49000]], "expect_second_status": "flagged" },
+    { "name": "implausible jump flagged", "readings": [["2026-01-01", 50000], ["2026-01-08", 60000]], "expect_second_status": "flagged" },
+    { "name": "single reading uses fallback", "readings": [["2026-01-01", 50000]], "vehicle_usage": "private", "expect_km_per_day": 40, "expect_confidence": "low" },
+    { "name": "mileage beats date", "last_service": ["2026-01-01", 50000], "interval": { "months": 6, "km": 5000 }, "km_per_day": 100, "expect_effective_due_date": "2026-02-20" },
+    { "name": "date beats mileage", "last_service": ["2026-01-01", 50000], "interval": { "months": 3, "km": 10000 }, "km_per_day": 20, "expect_effective_due_date": "2026-04-01" }
+  ]
+}

@@ -1,0 +1,385 @@
+{
+  "$schema_version": "1.0",
+  "name": "FixAm — Premium UI/UX Specification",
+  "codename": "Pit Stop Pop · Premium",
+  "audience": "Devin (implementation). This file is the single source of truth for visual design, interaction, motion and UX copy. It supersedes the old specs/design-tokens.json.",
+  "how_to_use": [
+    "Implement the tokens in section 'tokens' as CSS variables in app/globals.css and expose them through the Tailwind theme (@theme). Never hardcode colours, radii, shadows or durations in components.",
+    "Build every component in 'components' with class-variance-authority (cva) variants on top of shadcn/ui primitives, in components/ui (primitives) and components/brand (FixAm-specific).",
+    "Put motion presets in lib/motion.ts and import them; never write ad-hoc spring values in components.",
+    "Maintain a living catalogue at /design (dev and preview only) showing every token, component, variant and state in light, dark and sunlight modes.",
+    "Each screen in 'surfaces' must implement all of its listed states (loading, empty, error, offline, success) before its task is considered done.",
+    "Add Playwright visual snapshots for /design and for each primary screen in light and dark mode."
+  ],
+
+  "vision": {
+    "one_liner": "Premium, calm and fast for the work; joyful at the moments that matter.",
+    "summary": "FixAm keeps its bold Ghanaian energy and Ignition Orange identity, executed with the restraint of a top-tier SaaS. Daily work screens are quiet, precise and dense where needed (Linear/Stripe). Money feels confident and delightful (Revolut/Monzo). Customers get live, glanceable status like tracking a ride (Uber/Bolt). Mechanics and customers get characterful encouragement and celebrations (Duolingo). Fun is concentrated in moments, never in the way of work.",
+    "reference_map": {
+      "linear_stripe": { "applies_to": ["staff web app shell", "tables", "job board", "settings", "admin", "command palette", "marketing site"], "borrow": ["keyboard-first speed", "crisp 1px hairlines and quiet surfaces", "precise typography and alignment", "instant optimistic UI", "subtle gradient accents on marketing"] },
+      "revolut_monzo": { "applies_to": ["invoices", "payments", "pay pages", "credit accounts", "instalments", "reports", "customer portal balances"], "borrow": ["big confident money numbers", "colourful cards", "satisfying payment success", "clear plan progress bars", "friendly transaction timelines"] },
+      "uber_bolt": { "applies_to": ["customer live tracker", "renewal tracker", "vendor order tracking", "bookings"], "borrow": ["bottom-sheet status over a hero visual", "one primary status line + ETA", "progress timeline", "contact actions always one tap away", "map for location and delivery"] },
+      "duolingo": { "applies_to": ["mechanic app", "customer portal", "onboarding", "empty states", "celebrations"], "borrow": ["mascot with personality", "streaks and badges", "encouraging microcopy", "celebration moments", "progress you can feel"] }
+    }
+  },
+
+  "principles": [
+    { "name": "Calm core, joyful moments", "rule": "Work screens use neutral surfaces and one accent. Colour, illustration and animation intensify only at milestones: job ready, payment received, streak kept, renewal done." },
+    { "name": "Speed is a feature", "rule": "Every interaction responds within 100ms (optimistic UI). Pages show skeletons, never spinners on blank screens. Keyboard shortcuts on desktop; one-thumb flows on mobile." },
+    { "name": "Status at a glance", "rule": "Any job, vehicle, invoice or renewal reveals its state in under one second via the status system: colour + icon + label, never colour alone." },
+    { "name": "Thumb-first, glove-proof", "rule": "Primary actions sit in the bottom 40% of mobile screens. Touch targets ≥ 48px (56px on mechanic screens)." },
+    { "name": "Money is sacred", "rule": "Amounts are large, tabular and unambiguous. Destructive or financial actions confirm with a clear summary. Never animate a number in a way that could be misread." },
+    { "name": "Built for Ghana", "rule": "Works on mid-range Android over patchy 3G/4G, in bright sunlight, with MoMo as the default payment. Low-data mode and offline states are first-class." },
+    { "name": "Respectful delight", "rule": "Every celebration and sound can be turned off; prefers-reduced-motion is always honoured; no confetti on anything involving debt, refunds or errors." }
+  ],
+
+  "tokens": {
+    "color": {
+      "brand": {
+        "ignition": { "50": "#FFF3ED", "100": "#FFE2D3", "200": "#FFC2A6", "300": "#FF9B70", "400": "#FF7A3D", "500": "#FF5A1F", "600": "#ED4410", "700": "#C4350C", "800": "#9C2B0E", "900": "#7E2610", "950": "#441005" },
+        "volt": { "300": "#DCFA7A", "400": "#C6F432", "500": "#A6D914", "600": "#7FA80C" },
+        "turbo": { "300": "#5FE3DA", "400": "#00C2B8", "500": "#00A39B", "600": "#008079" },
+        "sun": { "400": "#FFC53D", "500": "#FFB020", "600": "#E09200" },
+        "brake": { "400": "#FF6680", "500": "#FF3B5C", "600": "#E01E43" },
+        "violet": { "400": "#9B8CFF", "500": "#7C6CFF", "600": "#5E4DF0", "use": "Gamification and badges only" }
+      },
+      "neutral": {
+        "sand": { "0": "#FFFFFF", "25": "#FDFBF8", "50": "#FAF7F2", "100": "#F3EEE6", "200": "#E7E0D5", "300": "#D3CABC", "400": "#A79E91", "500": "#7D766C", "600": "#5B554D", "700": "#3F3B36", "800": "#2A2724", "900": "#1A1816" },
+        "carbon": { "50": "#E9ECF5", "100": "#C9D0E3", "200": "#9AA5C4", "300": "#6B78A0", "400": "#46527A", "500": "#2D375B", "600": "#1E2645", "700": "#151C36", "800": "#0F1529", "900": "#0A0F1E", "950": "#060914" }
+      },
+      "gradients": {
+        "ignite": "linear-gradient(135deg, #FF7A3D 0%, #FF5A1F 45%, #ED4410 100%)",
+        "ignite_glow": "radial-gradient(60% 60% at 50% 0%, rgba(255,90,31,0.35) 0%, rgba(255,90,31,0) 100%)",
+        "volt_success": "linear-gradient(135deg, #DCFA7A 0%, #C6F432 100%)",
+        "carbon_hero": "linear-gradient(180deg, #151C36 0%, #0A0F1E 100%)",
+        "card_money": ["linear-gradient(135deg,#FF7A3D,#ED4410)", "linear-gradient(135deg,#1E2645,#0A0F1E)", "linear-gradient(135deg,#00C2B8,#008079)", "linear-gradient(135deg,#9B8CFF,#5E4DF0)"],
+        "rule": "Gradients only on: primary CTA hover glow, money cards, hero sections, celebration surfaces, marketing. Never on body text or tables."
+      },
+      "themes": {
+        "light": {
+          "bg": "sand.50", "bg-subtle": "sand.100", "surface": "sand.0", "surface-raised": "sand.0", "surface-sunken": "sand.100", "overlay": "rgba(26,24,22,0.48)",
+          "border": "sand.200", "border-strong": "sand.300", "hairline": "rgba(26,24,22,0.08)",
+          "text": "sand.900", "text-secondary": "sand.600", "text-tertiary": "sand.500", "text-inverse": "sand.0",
+          "primary": "ignition.500", "primary-hover": "ignition.600", "primary-pressed": "ignition.700", "primary-subtle": "ignition.50", "on-primary": "#FFFFFF",
+          "success": "volt.500", "success-subtle": "#F4FCD9", "on-success": "carbon.900",
+          "info": "turbo.500", "info-subtle": "#E3F9F7",
+          "warning": "sun.500", "warning-subtle": "#FFF5DC", "on-warning": "carbon.900",
+          "danger": "brake.500", "danger-subtle": "#FFE8EC", "on-danger": "#FFFFFF",
+          "focus": "turbo.400"
+        },
+        "dark": {
+          "name": "Workshop",
+          "bg": "carbon.950", "bg-subtle": "carbon.900", "surface": "carbon.800", "surface-raised": "carbon.700", "surface-sunken": "carbon.900", "overlay": "rgba(6,9,20,0.64)",
+          "border": "carbon.600", "border-strong": "carbon.500", "hairline": "rgba(233,236,245,0.08)",
+          "text": "carbon.50", "text-secondary": "carbon.200", "text-tertiary": "carbon.300", "text-inverse": "carbon.950",
+          "primary": "ignition.400", "primary-hover": "ignition.300", "primary-pressed": "ignition.500", "primary-subtle": "rgba(255,122,61,0.14)", "on-primary": "carbon.950",
+          "success": "volt.400", "success-subtle": "rgba(198,244,50,0.12)", "on-success": "carbon.950",
+          "info": "turbo.300", "info-subtle": "rgba(0,194,184,0.14)",
+          "warning": "sun.400", "warning-subtle": "rgba(255,197,61,0.14)", "on-warning": "carbon.950",
+          "danger": "brake.400", "danger-subtle": "rgba(255,102,128,0.14)", "on-danger": "carbon.950",
+          "focus": "volt.400"
+        },
+        "sunlight": {
+          "name": "Sunlight (high contrast)",
+          "purpose": "Outdoor use in the yard; toggle in user menu and auto-suggested on mechanic screens when ambient light API is available.",
+          "overrides": { "bg": "#FFFFFF", "surface": "#FFFFFF", "border": "sand.700", "text": "#000000", "text-secondary": "sand.800", "primary": "ignition.700", "hairline": "rgba(0,0,0,0.24)" },
+          "rules": ["Minimum contrast 7:1 for text", "Borders 2px", "No translucent glass", "Font weight +100"]
+        }
+      },
+      "status": {
+        "rule": "Every status renders as StatusPill = icon + label + colour. Lists also show a 3px leading colour bar.",
+        "job": {
+          "booked": { "color": "carbon.300", "icon": "calendar-clock", "label": "Booked" },
+          "checked_in": { "color": "turbo.500", "icon": "log-in", "label": "Checked in" },
+          "diagnosing": { "color": "turbo.600", "icon": "scan-search", "label": "Diagnosing" },
+          "estimate_sent": { "color": "sun.500", "icon": "file-clock", "label": "Awaiting approval" },
+          "approved": { "color": "volt.500", "icon": "badge-check", "label": "Approved" },
+          "declined": { "color": "brake.500", "icon": "circle-x", "label": "Declined" },
+          "in_progress": { "color": "ignition.500", "icon": "wrench", "label": "In progress" },
+          "waiting_parts": { "color": "sun.600", "icon": "package-search", "label": "Waiting for parts" },
+          "quality_check": { "color": "violet.500", "icon": "shield-check", "label": "Quality check" },
+          "ready": { "color": "volt.400", "icon": "party-popper", "label": "Ready" },
+          "delivered": { "color": "carbon.500", "icon": "car", "label": "Delivered" },
+          "closed": { "color": "carbon.200", "icon": "archive", "label": "Closed" },
+          "cancelled": { "color": "sand.400", "icon": "ban", "label": "Cancelled" }
+        },
+        "due": { "ok": { "color": "volt.500", "icon": "check" }, "due_soon": { "color": "sun.500", "icon": "clock" }, "due": { "color": "ignition.500", "icon": "alarm-clock" }, "overdue": { "color": "brake.500", "icon": "triangle-alert" }, "unknown": { "color": "carbon.200", "icon": "help-circle" } },
+        "payment": { "unpaid": { "color": "brake.500", "label": "Unpaid" }, "partial": { "color": "sun.500", "label": "Part paid" }, "paid": { "color": "volt.500", "label": "Paid" }, "on_account": { "color": "turbo.500", "label": "On account" }, "on_plan": { "color": "violet.500", "label": "On plan" }, "refunded": { "color": "carbon.300", "label": "Refunded" } }
+      },
+      "data_viz": { "categorical": ["ignition.500", "turbo.500", "violet.500", "sun.500", "carbon.500", "volt.600"], "positive": "volt.600", "negative": "brake.500", "neutral": "carbon.300", "rule": "Follow the dataviz skill conventions; one highlighted series in ignition, others muted." }
+    },
+
+    "typography": {
+      "families": {
+        "display": { "name": "Bricolage Grotesque", "source": "next/font/google", "weights": [500, 600, 700], "use": "Page titles, hero numbers, celebration headlines, marketing", "settings": "letter-spacing -0.02em at ≥ 24px; opsz auto" },
+        "ui": { "name": "Geist Sans", "source": "geist package (next/font/local)", "weights": [400, 500, 600], "use": "All UI text, tables, forms" },
+        "mono": { "name": "Geist Mono", "source": "geist package", "weights": [500], "use": "Plate numbers, document numbers, codes, keyboard hints" }
+      },
+      "scale": {
+        "caption": { "size": 12, "line": 16, "weight": 500, "family": "ui" },
+        "label": { "size": 13, "line": 18, "weight": 500, "family": "ui" },
+        "body-sm": { "size": 14, "line": 20, "weight": 400, "family": "ui" },
+        "body": { "size": 15, "line": 22, "weight": 400, "family": "ui", "note": "16 on mobile to avoid iOS zoom in inputs" },
+        "body-lg": { "size": 17, "line": 26, "weight": 400, "family": "ui" },
+        "title-sm": { "size": 18, "line": 24, "weight": 600, "family": "ui" },
+        "title": { "size": 22, "line": 28, "weight": 600, "family": "display" },
+        "title-lg": { "size": 28, "line": 34, "weight": 600, "family": "display" },
+        "display": { "size": 40, "line": 44, "weight": 700, "family": "display" },
+        "display-xl": { "size": 56, "line": 60, "weight": 700, "family": "display", "use": "Money hero, celebration, marketing" }
+      },
+      "numbers": "font-variant-numeric: tabular-nums slashed-zero for all money, quantities, mileage, times. Currency symbol at 60% size, aligned to cap height (Revolut style) on hero amounts.",
+      "plate_chip": "Geist Mono 600, uppercase, letter-spacing 0.08em, on a Ghana-plate inspired chip: white bg, 1.5px carbon border, small left flag stripe (red/gold/green 3px each) — original styling, not an official plate reproduction."
+    },
+
+    "space": { "unit": 4, "scale": [0, 2, 4, 6, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128], "page_gutter": { "mobile": 16, "tablet": 24, "desktop": 32 }, "section_gap": { "mobile": 24, "desktop": 40 } },
+    "layout": {
+      "breakpoints": { "sm": 640, "md": 768, "lg": 1024, "xl": 1280, "2xl": 1536 },
+      "max_content_width": 1440,
+      "sidebar": { "expanded": 248, "collapsed": 64 },
+      "grid": "12 columns desktop / 8 tablet / 4 mobile, 24px gutters desktop, 16px mobile",
+      "density": { "comfortable": "row height 52px, default for most users", "compact": "row height 40px, toggle for desktop tables (owners, accountants, storekeepers)" }
+    },
+    "radius": { "xs": 6, "sm": 10, "md": 14, "lg": 20, "xl": 28, "pill": 9999, "defaults": { "button": "pill", "input": "md", "card": "lg", "sheet": "xl (top corners)", "pill": "pill", "avatar": "pill", "image": "md" } },
+    "elevation": {
+      "rule": "Premium depth = soft layered shadows + hairline borders. The old chunky offset shadow is retained only as the 'pop' accent for playful components (badges, celebration cards, mascot speech bubbles, empty-state cards).",
+      "levels": {
+        "0": "none",
+        "1": "0 1px 2px rgba(16,24,40,0.06), 0 0 0 1px var(--hairline)",
+        "2": "0 4px 12px -2px rgba(16,24,40,0.08), 0 2px 4px -2px rgba(16,24,40,0.04), 0 0 0 1px var(--hairline)",
+        "3": "0 12px 32px -8px rgba(16,24,40,0.16), 0 4px 8px -4px rgba(16,24,40,0.06), 0 0 0 1px var(--hairline)",
+        "4": "0 24px 64px -12px rgba(16,24,40,0.28), 0 0 0 1px var(--hairline)",
+        "pop": "4px 4px 0 0 var(--text)",
+        "glow-primary": "0 8px 24px -6px rgba(255,90,31,0.55)"
+      },
+      "dark_mode": "Shadows at 2× opacity plus a 1px top inner highlight rgba(255,255,255,0.04) on raised surfaces."
+    },
+    "glass": { "use": ["sticky top bars", "mobile bottom bar", "bottom sheets over imagery", "command palette"], "light": "background rgba(255,255,255,0.72); backdrop-filter: blur(20px) saturate(160%)", "dark": "background rgba(15,21,41,0.72); backdrop-filter: blur(20px) saturate(140%)", "fallback": "Solid surface when backdrop-filter unsupported, in low-data mode, or in sunlight mode" },
+    "iconography": { "library": "lucide-react", "stroke": 1.75, "sizes": [16, 20, 24, 32], "rule": "Icons in pills and buttons 16/20. Duotone treatment (primary-subtle fill + stroke) for feature icons in empty states and onboarding." },
+    "motion": {
+      "durations_ms": { "instant": 80, "fast": 140, "base": 220, "slow": 360, "page": 280, "celebration": 1400 },
+      "easing": { "standard": "cubic-bezier(0.2, 0, 0, 1)", "emphasized": "cubic-bezier(0.3, 0, 0, 1.2)", "exit": "cubic-bezier(0.4, 0, 1, 1)" },
+      "springs": { "snappy": { "stiffness": 500, "damping": 34 }, "gentle": { "stiffness": 260, "damping": 30 }, "bouncy": { "stiffness": 520, "damping": 18 }, "sheet": { "stiffness": 380, "damping": 36 } },
+      "choreography": [
+        "Page enter: content fades up 8px with 30ms stagger per section, max 6 staggered items",
+        "Route change: View Transitions API cross-fade (fallback: Framer Motion) with shared-element morph from list card to detail header (plate chip + car avatar)",
+        "Lists: new rows slide in from top with highlight flash (primary-subtle → transparent, 1.2s)",
+        "Kanban drop: card lifts (scale 1.03, elevation 3) while dragging; settles with 'snappy' spring; column count ticks",
+        "Status change: pill colour cross-fades and icon morphs; one gentle bounce",
+        "Bottom sheets: 'sheet' spring with drag-to-dismiss and velocity",
+        "Buttons: press scale 0.97 'snappy'; primary shows glow-primary on hover",
+        "Numbers: money uses digit roll only on positive confirmations (payment received); never on editing or debt",
+        "Skeleton shimmer 1.4s linear, low contrast"
+      ],
+      "reduced_motion": "Replace all movement with 120ms opacity; disable confetti, Lottie, digit roll, parallax and shared-element morphs.",
+      "haptics": "navigator.vibrate on Android: 8ms tap on kanban drop and checklist tick; [12,40,12] on payment success; never on errors more than once."
+    },
+    "sound": { "default": "off", "optional_pack": ["tick.mp3 (checklist)", "ka-ching.mp3 (payment received)", "rev.mp3 (job ready)"], "rules": "≤ 40KB each, preloaded lazily, toggle in profile, never on customer pages by default." }
+  },
+
+  "brand_elements": {
+    "logo_direction": "Wordmark 'FixAm' in Bricolage Grotesque 700 with a custom ligature where the 'x' doubles as a crossed wrench and spanner. Mark: rounded-square app icon in ignite gradient with the wrench-x in white. Provide SVG wordmark, mark, monochrome and favicon variants (original design).",
+    "mascot": {
+      "name": "Torq",
+      "concept": "An original, friendly round robot-wrench character: a rounded bolt-head body in Ignition Orange, big expressive eyes on a carbon visor, small spanner arms. Simple vector shapes so it renders crisply at 24px to 240px.",
+      "poses": ["wave (onboarding, empty states)", "thumbs_up (task done)", "celebrate (payment, job ready, streak)", "thinking (loading > 3s, diagnosing)", "sleeping (no reminders due)", "magnifier (search empty)", "toolbox (no parts)", "delivery (vendor orders)", "oops (error, gentle)", "cool_shades (streak 7+)"],
+      "implementation": "SVG React components with props pose, size, mood; idle blink animation (CSS, 4–7s random). Optional Lottie for celebrate and wave only.",
+      "rules": ["Never appears in financial confirmations, legal text or error states about money", "Max one Torq per screen", "Garages can turn Torq off for customer-facing pages (setting: mascot_on_customer_pages)"]
+    },
+    "car_avatars": "Original flat vector car illustrations per body type (sedan, hatchback, SUV, pickup, van, bus, truck, motorbike), three-quarter view, tinted from vehicle.color_hex with automatic shade/highlight, soft ground shadow. Used in cards (40px), headers (96px), tracker hero (240px).",
+    "illustration_style": "Flat shapes with soft gradients, 2px carbon outlines only on the mascot and avatars, warm sand backgrounds, small Ghana-inspired pattern accents (kente-inspired geometric stripes as subtle dividers, original pattern) used sparingly on marketing and celebration screens.",
+    "photography": "Real workshop photos from users are the hero on job and tracker screens; display in rounded md frames with a subtle inner border; tap to open a full-screen swipeable gallery with pinch-zoom."
+  },
+
+  "voice_and_copy": {
+    "tone": "Warm, confident, brief, a little playful. Ghanaian flavour without slang overload. Plain English for money, legal and errors.",
+    "rules": ["Sentence case everywhere", "Verbs on buttons: 'Send estimate', 'Check in car', 'Pay GH₵ 450'", "Show the amount on pay buttons", "Errors say what happened and what to do next", "Never blame the user"],
+    "examples": {
+      "empty_jobs": "No cars in the bay yet. Check one in and let's get to work.",
+      "job_ready_toast": "GR 1234-24 is ready! Abena has been told. 🎉",
+      "payment_success_customer": "Payment received. Thank you, Abena! Your receipt is on its way.",
+      "mechanic_streak": "5-day streak! Torq is impressed. Keep the spanners spinning.",
+      "offline": "You're offline. We'll save your work and sync when you're back.",
+      "reminder_cta": "FixAm it now",
+      "renewal_done": "All sorted — your insurance is renewed until 9 Dec 2027.",
+      "error_payment": "MoMo payment didn't go through. No money was taken. Try again or choose another method.",
+      "allowance_low": "You've used 80% of this month's messages. Top up to keep reminders flowing."
+    }
+  },
+
+  "components": {
+    "Button": { "variants": ["primary (ignite fill, glow on hover)", "secondary (surface + border)", "tonal (primary-subtle bg, primary text)", "ghost", "danger", "success (volt, celebration CTAs only)", "link"], "sizes": { "sm": 36, "md": 44, "lg": 52, "xl": 60 }, "states": ["default", "hover", "pressed", "focus-visible (2px focus ring offset 2)", "loading (inline spinner, label kept)", "disabled"], "extras": ["icon-left/right", "icon-only (tooltip required)", "keyboard hint chip on desktop (e.g. ⌘↵)"] },
+    "Input": { "types": ["text", "phone (GH +233 prefix chip, auto-format 024 123 4567)", "money (GH₵ prefix, tabular, right-aligned in tables)", "plate (uppercase, mono, auto-spacing GR 1234-24)", "odometer (km suffix, large numeric keypad)", "search (⌘K hint)", "textarea with voice-note button"], "states": ["default", "focus", "filled", "error (message below, icon)", "disabled", "read-only"], "label": "Always visible label above; helper text below; floating labels not used" },
+    "Select/Combobox": "Searchable, async, keyboard navigable; shows recent items first; create-new inline ('+ Add new customer \"Kojo\"').",
+    "DatePicker": "Calendar popover on desktop, native-feel bottom sheet on mobile; quick picks (Today, Tomorrow, +1 week, +1 month).",
+    "Card": { "variants": ["default (elevation 1)", "interactive (hover elevation 2, press 0.99)", "raised (elevation 2)", "money (gradient, white text, Revolut-style)", "pop (playful: 2px border + pop shadow)", "glass"], "padding": [16, 20, 24] },
+    "StatusPill": "Icon + label, sizes sm/md, subtle (tinted bg) and solid variants; colour from tokens.color.status.",
+    "PlateChip": "See typography.plate_chip; sizes sm/md/lg; copy-on-click on desktop.",
+    "CarAvatar": "See brand_elements.car_avatars; props bodyType, colorHex, size, showShadow.",
+    "VehicleHealthCard": "CarAvatar + four HealthRings (Oil, Insurance, DVLA, Issues) + 'FixAm Score' 0–100 + next-due line; tap ring opens detail sheet. Rings animate fill on first view (gentle spring).",
+    "HealthRing": "Circular progress with status colour, icon centre, label below, days-left text.",
+    "MoneyText": "Formats pesewas to GH₵; sizes body to display-xl; negative uses danger with minus sign (never brackets alone); optional 'hidden' mode with tap-to-reveal for privacy.",
+    "MoneyCard": "Gradient card with big amount, label, delta chip and sparkline (Revolut style).",
+    "StatTile": "Label, big display number, delta chip (▲ volt / ▼ brake), sparkline, link.",
+    "DataTable": "TanStack; sticky header; column resize, hide, reorder; row selection with bulk action bar sliding up from bottom; inline status pills; keyboard navigation (j/k, enter); density toggle; saved views; skeleton rows; empty state with Torq; mobile collapses to cards.",
+    "KanbanBoard": "Columns with sticky headers and counts, WIP soft limits (column tints warning when exceeded), swimlanes optional, drag with auto-scroll, card quick actions on hover (desktop) / long-press (mobile).",
+    "JobCard": "Plate chip, car avatar 40px, make/model, customer name, complaint snippet (1 line), assignee avatars, promised-time countdown chip (turns warning < 1h, danger overdue), priority flag, balance chip when ready, photo count.",
+    "Timeline": "Vertical activity feed with icons, actor avatars, relative times, grouped by day; customer-visible items marked with an eye icon for staff.",
+    "Stepper": "Horizontal (desktop) / vertical (mobile); completed steps with volt check; current step pulses softly; used in tracker, renewals, onboarding, check-in.",
+    "BottomSheet": "Mobile primary container for details and actions; snap points (peek 25%, half 55%, full 92%); drag handle; glass over imagery.",
+    "SideSheet": "Desktop detail panel (480–640px) sliding from right; keeps list visible (Linear style); deep-linkable via URL.",
+    "Dialog": "For confirmations only; financial confirmations show a summary table and require explicit action label (e.g. 'Issue invoice INV-SPX-000123').",
+    "Toast": "Bottom-centre on mobile, bottom-right on desktop; types success/info/warning/error; undo action for reversible operations (5s).",
+    "CommandPalette": "⌘K / Ctrl+K and search icon; sections: Jump to (plates, customers, jobs, invoices), Actions (Check in car, New booking, Record payment, Counter sale), Recent; fuzzy search; glass surface; shows shortcuts.",
+    "EmptyState": "Torq pose + headline + one-line body + primary action + optional secondary link; pop card variant.",
+    "Skeleton": "Shapes match final layout; shimmer per tokens.motion.",
+    "OfflineBanner": "Slim top banner (warning-subtle) with sync queue count; turns volt 'All synced ✓' for 2s when back online.",
+    "SyncBadge": "Per-item indicator on mechanic screens: queued (clock), syncing (spinner), synced (check), failed (retry).",
+    "PhotoCapture": "Full-screen camera with guide overlays for walk-around shots (front, rear, left, right, interior, odometer), retake, auto-compress to WebP, upload progress ring per photo.",
+    "SignaturePad": "Full-width canvas, clear/undo, 'Signed by {name} · {time}' stamp.",
+    "VoiceNote": "Hold-to-record (mechanic) / tap-to-record (desktop), waveform, playback speed 1×/1.5×.",
+    "MoMoPayment": "Network picker with brand-neutral network tiles (MTN, Telecel, AirtelTigo as text labels), phone input pre-filled, 'Approve on your phone' waiting state with countdown and animated phone illustration, success/failure states.",
+    "ProgressBar": "Plan/instalment progress with segments per instalment (paid volt, due sun, overdue brake).",
+    "Badge": "Achievement badges: circular, violet/ignite gradients, pop shadow, locked state greyscale with progress hint.",
+    "StreakFlame": "Animated flame icon with count; grey when streak at risk today.",
+    "Avatar": "Initials fallback with deterministic warm colour; online dot for staff.",
+    "Tabs/SegmentedControl": "Underline tabs on desktop pages; segmented pill control on mobile and filters.",
+    "FilterBar": "Chips with counts, 'Saved views' dropdown, clear all.",
+    "MapView": "MapLibre GL with a FixAm light/dark style; garage pin uses mark icon; vendor delivery shows route line and moving van marker when location updates exist; static image fallback in low-data mode."
+  },
+
+  "patterns": {
+    "navigation": {
+      "desktop": "Collapsible left sidebar (icons + labels, section groups, garage switcher at top, branch switcher below), sticky glass top bar with breadcrumbs, command palette trigger, notifications, theme toggle, profile.",
+      "mobile": "Glass bottom tab bar (max 5, role-specific, centre FAB '+ Check in' for advisors/owners), top bar with title and contextual action, swipe-back gestures.",
+      "keyboard_shortcuts": { "⌘K": "Command palette", "C": "Check in car", "N": "New (context-aware)", "G then J": "Go to job board", "G then V": "Go to vehicles", "G then M": "Go to money", "/": "Focus search", "J/K": "Next/previous row", "Esc": "Close sheet", "?": "Shortcut help" }
+    },
+    "list_detail": "Desktop: list + side sheet (no full page change) for jobs, customers, vehicles, invoices. Mobile: list → full-screen detail with shared-element transition.",
+    "forms": "Single column, grouped sections, sticky bottom action bar on mobile, autosave drafts for long forms (check-in, estimates), inline validation on blur, never clear user input on error.",
+    "confirmation_levels": { "low": "Toast with undo (e.g. move card)", "medium": "Inline confirm (e.g. remove line item)", "high": "Dialog with summary (issue invoice, refund, void, exceed credit limit)" },
+    "loading": "Skeletons within 100ms; if > 3s show Torq 'thinking' with reassuring copy; optimistic updates for status changes, checklist ticks, notes.",
+    "errors": "Inline field errors; section-level error cards with retry; full-page error with Torq 'oops' only for fatal errors; payment errors always state whether money was taken.",
+    "offline_low_data": "Detect navigator.connection.saveData or slow-2g/2g/3g: switch to low-data mode (no glass, static maps, thumbnails at 480px, no Lottie, no autoplay). User can toggle in profile.",
+    "celebrations": {
+      "triggers": { "invoice_fully_paid": "Confetti burst (brand colours) + digit roll + optional ka-ching", "job_ready": "Torq celebrate + rev animation on the card", "renewal_completed": "Volt success sheet with new expiry date", "streak_milestone": "Badge unlock modal with pop card", "onboarding_done": "Full-screen celebration with garage name", "first_vendor_order_received": "Torq delivery pose toast" },
+      "never_on": ["refunds", "credit notes", "overdue states", "partial payments that leave a debt overdue", "errors"]
+    },
+    "gamification": {
+      "mechanics": { "metrics": ["jobs completed", "on-time rate", "QC first-pass rate", "zero comebacks"], "streak": "Days in a row with at least one job completed and no QC failures (weekends/holidays configurable).", "badges": ["First Fix", "Speed Demon (5 jobs before promised time in a week)", "Clean Sheet (zero comebacks this month)", "Photo Pro (50 jobs with complete photos)", "Century (100 jobs)", "Night Owl? no — avoid encouraging overtime"], "leaderboard": "Weekly, top 5 only, friendly framing, owner can disable; never shows bottom ranks." },
+      "customers": { "fixam_score": "0–100 vehicle care score from on-time oil/service, valid insurance and DVLA, open issues. Shown on VehicleHealthCard with tips to raise it.", "milestones": ["Always On Time (3 on-time services)", "Fully Covered (insurance + roadworthy valid)", "Loyal Driver (1 year with the garage)"] },
+      "owners": { "weekly_goal": "Optional revenue or jobs goal ring on dashboard with gentle Monday recap." }
+    },
+    "notifications": "In-app centre grouped by Today/Earlier, actionable items with inline buttons (Approve, View), realtime badge count; push for critical staff events only (configurable)."
+  },
+
+  "surfaces": {
+    "staff_web": {
+      "feel": "Linear/Stripe precision with FixAm warmth: sand backgrounds, crisp hairlines, orange accent, Revolut money moments.",
+      "screens": {
+        "dashboard": { "layout": "Greeting row ('Good morning, Kwame' + date + branch) → 4 StatTiles (Today's revenue as MoneyCard, Payments received, Jobs in progress, Ready for pickup) → two-column: left 'Workshop now' mini-kanban counts + 'Ready for pickup' list with 'Send pay link'; right 'Money' (outstanding, instalments due, credit overdue) + 'Reminders this week' with conversion % → 7-day revenue chart → Low stock.", "states": ["first-run with setup checklist and Torq wave", "loading skeleton", "normal"], "delight": "Weekly goal ring; Monday recap card." },
+        "job_board": { "layout": "Filter bar + saved views → horizontal Kanban with sticky column headers → SideSheet for job detail on click.", "interactions": ["drag between allowed columns", "disallowed drop snaps back with tooltip explaining why", "realtime presence avatars on cards being viewed", "keyboard: arrows move focus, M to move status"], "states": ["empty board Torq", "loading columns", "offline read-only"] },
+        "check_in_wizard": { "layout": "Full-screen, tablet-first, top Stepper (6 steps), large inputs, bottom sticky Next/Back.", "steps": ["Find car (plate/phone search with recent cars)", "Odometer + fuel (big numeric keypad, fuel slider with car-dashboard gauge visual)", "Walk-around photos (guided PhotoCapture)", "Complaint (text + VoiceNote) + items left", "Service templates, mechanic, bay, promised time", "Review + signature"], "finish": "Success screen: car avatar drives into bay animation, 'Tracker link sent to Abena ✓', buttons: Open job / Check in another" },
+        "job_detail": { "layout": "Header (shared-element plate chip + avatar, customer quick actions, StatusPill with primary next-step button) → tabs: Overview, Findings, Estimate, Tasks & time, Photos, Money, Timeline → right rail VehicleHealthCard + previous visits." },
+        "estimate_builder": { "layout": "Two-pane: left line items grouped by finding with drag reorder; right sticky summary card (subtotal, discounts, tax breakdown, deposit, total in display size) + 'Preview as customer' toggle that renders the customer page in a phone frame.", "delight": "Total updates with subtle digit transition (not roll)." },
+        "vehicles_customers": { "layout": "DataTable with avatar + plate chip column, health rings mini column; SideSheet profile; full page for deep history." },
+        "vehicle_profile": { "layout": "Hero band (carbon gradient in dark, sand in light) with large CarAvatar, plate chip, make/model/year, FixAm Score → HealthRings row → Mileage card (≈ km/day, confidence chip, predicted odometer, 'Record reading') → Timeline → Documents grid." },
+        "money": { "feel": "Revolut", "layout": "Top MoneyCards row (Collected today, Outstanding, On credit, Plans active) → segmented tabs Invoices / Payments / Plans / Credit / Expenses / Cash-up → DataTables; invoice SideSheet with PDF preview, payment timeline and big balance.", "delight": "Paid invoices get a volt 'Paid' stamp animation once." },
+        "reports": { "layout": "Period picker (Day/Month, compare toggle) → KPI row → charts (revenue by category stacked bar, profit trend line, payment methods donut) → tables → Export menu.", "rules": "Follow the dataviz skill; profit hidden for roles without permission (show lock with explanation)." },
+        "parts_pos": { "layout": "Parts: DataTable with stock bars per branch, reorder chips. POS: two-pane (product grid with photos/search/scan, cart with big total and pay buttons: Cash / MoMo / Card).", "delight": "Scan beep (if sound on) and item fly-to-cart micro-animation." },
+        "marketplace": { "feel": "Clean e-commerce", "layout": "Search hero with vehicle-compatibility filter → category chips → product grid cards (photo, vendor, rating, ETA chip, price) → cart drawer grouped by vendor → order tracking page Uber-style (map + stepper + vendor contact)." },
+        "reminders_renewals": { "layout": "Reminders: week-grouped list with channel delivery ticks (sent/delivered/read like WhatsApp), conversion chips, template editor with live phone preview and SMS segment counter. Renewals: Kanban by status with document checklist progress on each card." },
+        "settings": { "layout": "Left settings nav + content cards; every setting has plain-language description; dangerous settings in a separated 'Danger zone' card." }
+      }
+    },
+    "mechanic_mobile": {
+      "feel": "Duolingo energy in the Workshop dark theme: big targets, clear progress, encouraging, glove-friendly.",
+      "defaults": { "theme": "dark (Workshop)", "touch_target": 56, "font_bump": "+1 step" },
+      "screens": {
+        "my_jobs": { "layout": "Top: greeting + StreakFlame + jobs-today ring → 'Up next' hero card (plate, car avatar, promised time countdown, Start button) → list of today's jobs → bottom bar (My jobs, Lookup, My stats).", "states": ["no jobs: Torq sleeping 'No jobs yet — grab a coffee'", "offline banner with queue count"] },
+        "job_workspace": { "layout": "Sticky header (plate, timer chip with play/pause) → checklist with large tick rows (tick = spring + haptic + volt flash) → findings (+ Finding opens camera first) → parts requests → bottom sticky 'Send to QC' (enabled when required items done, progress ring shows completion).", "offline": "Every action queues with SyncBadge; never blocks." },
+        "my_stats": { "layout": "StreakFlame hero, weekly bar chart, badges shelf (locked badges show progress), optional leaderboard top 5, Torq cool_shades at 7+ streak." }
+      }
+    },
+    "customer": {
+      "feel": "Uber/Bolt status clarity + Revolut payments + a friendly Torq; garage-branded (garage logo and optional brand colour as accent, FixAm orange as fallback).",
+      "magic_link_pages": {
+        "tracker": { "layout": "Hero: large CarAvatar on soft gradient with the current status headline ('Your car is being repaired') and ETA chip → draggable bottom sheet: Stepper timeline, latest photos carousel, mechanic first name + avatar, notes → sticky actions: Call, WhatsApp, Directions. Pending estimate shows prominent 'Review & approve' card; ready state shows 'Pay GH₵ X & collect' button.", "realtime": "Status changes animate the stepper and show a toast; page title updates for background tabs.", "states": ["expired link with garage contact", "job closed summary with receipt and 'Rate your visit' 1–5 stars"] },
+        "estimate_approval": { "layout": "Header with garage branding → findings as cards (photo, severity chip: urgent/recommended/can wait, plain-language explanation, price) each with Approve/Skip toggle → sticky bottom summary (approved total, deposit) → Sign & approve → deposit payment.", "rules": "Urgent items pre-selected with explanation; customer can change; show 'Ask a question' WhatsApp link." },
+        "pay": { "layout": "Revolut-style: big amount hero, invoice summary accordion, method tiles (MoMo default, Card), MoMo flow with 'Approve on your phone' animated waiting state, success with confetti + digit roll + receipt download/share.", "options": ["Pay full", "Pay instalment (if plan)", "Pay deposit"] },
+        "mileage_update": { "layout": "Single big odometer input (odometer-style digits), optional photo, submit → thank-you with predicted next service date and FixAm Score change." },
+        "renewal": { "layout": "Uber-style stepper: Details → Documents (camera upload with checklist) → Quote (breakdown official fee + service fee) → Pay → Processing (live updates) → Done (new expiry card with volt success)." },
+        "booking": { "layout": "Service cards with icons and durations → vehicle → date strip + time chips (available only) → confirm with phone code → confirmation with add-to-calendar." }
+      },
+      "portal": {
+        "home": { "layout": "Greeting + Torq → horizontal carousel of VehicleHealthCards with FixAm Score → 'Coming up' list (due items with one-tap actions) → active jobs (mini tracker) → balances MoneyCard with Pay → 'Shop for my car' strip.", "nav": "Bottom bar: Home, Vehicles, Payments, Shop, Profile" },
+        "vehicle": { "layout": "Hero avatar + score → health rings → history timeline → documents wallet (insurance, roadworthy, licence as cards like a digital wallet) → actions: Update mileage, Renew, Book service." },
+        "payments": { "layout": "Revolut-style transaction list grouped by month, plan progress bars, credit account statements." },
+        "milestones": "Customer badges shown in profile; gentle, optional."
+      }
+    },
+    "vendor": {
+      "feel": "Efficient merchant dashboard (Stripe Dashboard clarity) with FixAm accent.",
+      "screens": { "orders_inbox": "Kanban or list toggle by order status with big Accept/Reject and status-advance buttons; new order sound/notification; SLA timer chip.", "catalogue": "DataTable with inline price/stock edit, CSV import wizard with validation preview, photo uploader.", "insights": "Sales MoneyCards, top products, ratings breakdown, payouts timeline." }
+    },
+    "admin": {
+      "feel": "Dense, Linear-like, keyboard-first, carbon dark default.",
+      "screens": { "garages": "Table with plan, MRR, usage meter, health; detail with impersonate button (confirmation + banner).", "vendors": "Approval queue cards with documents and approve/reject.", "analytics": "MRR, active garages, churn, message usage, renewals; clean charts.", "config": "Plans, DVLA fees, insurance partners, global templates editors." }
+    },
+    "marketing": {
+      "feel": "Stripe-level polish with Ghanaian warmth and Torq personality.",
+      "pages": {
+        "landing": { "sections": ["Hero: headline 'Run your garage. Keep your customers.' + sub + 'Start free' CTA + live animated product mockup (job board → tracker → payment success) on ignite glow background", "Social proof strip (pilot garage quote)", "Three pillars with animated mini-demos: Workshop, Money (MoMo), Reminders & renewals", "Customer experience showcase in phone frames (tracker, approval, pay)", "Vendor marketplace section", "Mechanic app section with Torq and streaks", "Pricing preview", "FAQ", "Final CTA band with kente-inspired divider"], "performance": "LCP < 2s on 4G; animations lazy-start on intersection; static poster frames for low-data." },
+        "pricing": "Three plan cards (Growth highlighted with ignite border + 'Most popular'), monthly GHS prices, feature comparison table, message allowance explainer, FAQ.",
+        "auth_onboarding": "Split layout: form left, animated illustration right (desktop); onboarding wizard with progress and Torq tips; ends in celebration."
+      }
+    }
+  },
+
+  "accessibility": {
+    "standard": "WCAG 2.2 AA minimum; AAA contrast in sunlight mode.",
+    "requirements": ["All interactive elements keyboard reachable with visible focus ring", "Status never conveyed by colour alone", "Touch targets ≥ 48px (56px mechanic)", "Form errors announced via aria-live", "Drag-and-drop has keyboard and menu alternatives ('Move to…')", "Charts have data table alternatives", "Lottie/confetti have no essential information", "Text resizes to 200% without loss", "Respect prefers-reduced-motion and prefers-contrast", "Language attribute en-GH; currency read as 'Ghana cedis' via aria-label on MoneyText"]
+  },
+
+  "performance_budgets": {
+    "lcp_mobile_4g_ms": 2500,
+    "inp_ms": 200,
+    "cls": 0.05,
+    "js_per_route_kb_gzip": 180,
+    "fonts": "Subset Latin, preload display + ui regular/semibold only, font-display swap",
+    "images": "next/image, AVIF/WebP, blur placeholders, max 1600px",
+    "animation": "Transform/opacity only; Lottie files ≤ 60KB, lazy-loaded; confetti via canvas-confetti dynamic import",
+    "low_data_mode": "Cuts glass, maps, Lottie, autoplay and large images automatically"
+  },
+
+  "implementation": {
+    "stack": ["Tailwind CSS (CSS-first @theme tokens)", "shadcn/ui primitives restyled", "class-variance-authority + tailwind-merge", "framer-motion (motion presets in lib/motion.ts)", "View Transitions API via next/navigation-compatible helper with fallback", "lucide-react", "canvas-confetti (dynamic import)", "lottie-react (dynamic import)", "maplibre-gl (dynamic import, P3+)", "recharts styled to tokens", "vaul (bottom sheets)", "cmdk (command palette)", "sonner (toasts)", "@dnd-kit (kanban)", "react-signature-canvas"],
+    "file_map": {
+      "app/globals.css": "Token CSS variables for light, dark, sunlight + base styles",
+      "lib/design/tokens.ts": "Typed token export (for charts, canvas, emails)",
+      "lib/motion.ts": "Durations, easings, springs, variants (fadeUp, stagger, sheet, pop, celebrate)",
+      "components/ui/*": "Restyled shadcn primitives",
+      "components/brand/*": "Torq, CarAvatar, PlateChip, StatusPill, HealthRing, VehicleHealthCard, MoneyText, MoneyCard, StatTile, StreakFlame, Badge, Celebration, EmptyState, OfflineBanner, SyncBadge, MoMoPayment",
+      "components/patterns/*": "DataTable, KanbanBoard, CommandPalette, SideSheet, BottomSheet, Stepper, Timeline, PhotoCapture, SignaturePad, VoiceNote, FilterBar",
+      "app/(dev)/design/page.tsx": "Living catalogue",
+      "public/brand/*": "Logo SVGs, app icons, Torq poses, car avatars"
+    },
+    "theming": "Theme attribute on <html data-theme='light|dark|sunlight'> persisted per user; mechanic routes default to dark unless user chose otherwise; garage brand accent injected as --garage-accent on customer pages (validated for contrast; fallback to ignition).",
+    "emails_pdfs": "React Email and PDF templates use tokens from lib/design/tokens.ts (sand bg, ignition accents, Geist/Inter fallback fonts) for a consistent premium look.",
+    "task_mapping": {
+      "P0-02": "Tokens, fonts, themes, motion presets, all components/brand and components/ui, /design catalogue, Torq + car avatars + logo SVGs",
+      "P0-07": "Navigation patterns, command palette, notifications, theme toggle, offline banner",
+      "P1-*": "staff_web job board, check-in, job detail, estimate builder, vehicle profile; mechanic_mobile; customer tracker, estimate approval, booking",
+      "P2-*": "money, reports, pay page, celebrations for payments",
+      "P3-*": "parts_pos, marketplace, vendor surfaces, MapView",
+      "P4-*": "reminders_renewals, customer portal, renewal and mileage pages, FixAm Score",
+      "P5-*": "gamification, admin, marketing, pricing, final polish and visual regression"
+    }
+  },
+
+  "quality_bar": {
+    "definition_of_premium": ["Pixel-aligned to the 4pt grid; no orphaned spacing values", "Consistent radii and elevation per component type", "Every screen has designed loading, empty, error and offline states", "Motion feels intentional: nothing animates without a reason; nothing janks (60fps on a mid-range Android)", "Copy is short, human and consistent with voice_and_copy", "Dark and sunlight modes are fully designed, not inverted", "Money screens pass a 'would I trust this with my cash?' review"],
+    "review_checklist_per_pr": ["Screens in light, dark, sunlight at 360px, 768px, 1280px attached", "Reduced-motion verified", "axe: no serious/critical issues", "Lighthouse mobile performance ≥ 85, accessibility ≥ 95 on changed routes", "Visual snapshots updated intentionally", "No hardcoded colours/sizes (lint rule: no raw hex in components)"],
+    "visual_qa": "Playwright screenshot tests for /design and primary screens per theme; fail on > 0.2% pixel diff unless snapshot updated in the PR."
+  },
+
+  "open_inputs_from_peter": ["Final logo (or approve the wrench-x wordmark direction)", "Approve Torq mascot concept and name", "Confirm Geist + Bricolage fonts", "Pilot garage photos for marketing and onboarding", "Default garage accent policy (allow custom colours on customer pages: yes/no)"]
+}

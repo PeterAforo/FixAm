@@ -354,7 +354,7 @@ User (global) ── Customer accounts link to Customer records across garages
 
 **Environments:** Preview (per PR on Vercel), Staging (pilot dry runs), Production.
 
-## 9. UX and visual direction — "Pit Stop Pop"
+## 9. UX and visual direction — "Pit Stop Pop · Premium"
 
 **Feel:** bold, playful, fast, with pit-stop energy. Professional enough for money, fun enough that mechanics want to open it.
 
@@ -372,8 +372,8 @@ User (global) ── Customer accounts link to Customer records across garages
 All text/background pairs must meet WCAG AA contrast.
 
 ### Typography and shape
-- Headings: **Bricolage Grotesque** (chunky, characterful). Body: **Inter**. Numbers: tabular figures.
-- 20px rounded cards, 2px borders with chunky offset shadows, pill buttons, generous spacing.
+- Headings: **Bricolage Grotesque** (characterful). UI: **Geist Sans**; codes and plates: **Geist Mono**. Numbers: tabular figures. Full premium spec in `specs/ui-ux.json`.
+- 20px rounded cards with soft layered shadows and hairline borders, glass top/bottom bars, pill buttons, generous spacing; the chunky "pop" shadow is kept only for playful elements (badges, celebrations, empty states).
 - Large touch targets (min 48px) for mechanics with dirty or gloved hands.
 
 ### Signature moments

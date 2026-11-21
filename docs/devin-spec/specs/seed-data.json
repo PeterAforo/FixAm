@@ -1,54 +1,15 @@
 {
   "$schema_version": "1.0",
   "description": "Demo and test data loaded by scripts/seed.ts (idempotent: upsert by natural keys). All people, businesses, phone numbers and amounts are fictional SAMPLES for development. DVLA fees and insurance partner here are placeholders — Platform Admin must enter real values before production. Default password for all seeded email logins in local/staging: 'Password123!' (never seed in production).",
-  "platform_admin": {
-    "full_name": "Platform Admin",
-    "email": "admin@fixam.test",
-    "phone": "+233200000001"
-  },
+  "platform_admin": { "full_name": "Platform Admin", "email": "admin@fixam.test", "phone": "+233200000001" },
   "insurance_partners": [
-    {
-      "key": "demo_insurer",
-      "name": "Demo Insurance Co. (sample)",
-      "nic_licence_number": "SAMPLE-0001",
-      "contact_name": "Ama Mensah",
-      "contact_phone": "+233200000090",
-      "contact_email": "partners@demo-insurer.test",
-      "commission_rule": {
-        "type": "percent",
-        "bp": 1000
-      }
-    }
+    { "key": "demo_insurer", "name": "Demo Insurance Co. (sample)", "nic_licence_number": "SAMPLE-0001", "contact_name": "Ama Mensah", "contact_phone": "+233200000090", "contact_email": "partners@demo-insurer.test", "commission_rule": { "type": "percent", "bp": 1000 } }
   ],
   "dvla_fees_sample": [
-    {
-      "record_type": "roadworthy",
-      "vehicle_category": "private_car",
-      "description": "Roadworthy renewal — private car (SAMPLE)",
-      "amount_ghs": 0,
-      "effective_from": "2026-01-01"
-    },
-    {
-      "record_type": "roadworthy",
-      "vehicle_category": "commercial",
-      "description": "Roadworthy renewal — commercial (SAMPLE)",
-      "amount_ghs": 0,
-      "effective_from": "2026-01-01"
-    },
-    {
-      "record_type": "registration_licence",
-      "vehicle_category": "private_car",
-      "description": "Registration/licence renewal (SAMPLE)",
-      "amount_ghs": 0,
-      "effective_from": "2026-01-01"
-    },
-    {
-      "record_type": "drivers_licence",
-      "vehicle_category": "any",
-      "description": "Driver's licence renewal (SAMPLE)",
-      "amount_ghs": 0,
-      "effective_from": "2026-01-01"
-    }
+    { "record_type": "roadworthy", "vehicle_category": "private_car", "description": "Roadworthy renewal — private car (SAMPLE)", "amount_ghs": 0, "effective_from": "2026-01-01" },
+    { "record_type": "roadworthy", "vehicle_category": "commercial", "description": "Roadworthy renewal — commercial (SAMPLE)", "amount_ghs": 0, "effective_from": "2026-01-01" },
+    { "record_type": "registration_licence", "vehicle_category": "private_car", "description": "Registration/licence renewal (SAMPLE)", "amount_ghs": 0, "effective_from": "2026-01-01" },
+    { "record_type": "drivers_licence", "vehicle_category": "any", "description": "Driver's licence renewal (SAMPLE)", "amount_ghs": 0, "effective_from": "2026-01-01" }
   ],
   "garage": {
     "name": "Pitstop Motors (Demo)",
@@ -58,838 +19,111 @@
     "address": "Spintex Road, Accra",
     "city": "Accra",
     "region": "Greater Accra",
-    "gps": [
-      5.6337,
-      -0.1236
-    ],
+    "gps": [5.6337, -0.1236],
     "settings": {
       "default_labour_rate_ghs": 150,
       "advisor_discount_limit_percent": 10,
       "prices_include_tax": false,
       "tax_rules_note": "Seed one sample tax rule DISABLED with rate 0 so the owner configures real rates during onboarding.",
-      "tax_rules": [
-        {
-          "code": "VAT",
-          "name": "VAT (configure)",
-          "rate_bp": 0,
-          "applies_to": [
-            "labour",
-            "part",
-            "sundry",
-            "service_fee"
-          ],
-          "compound": false,
-          "enabled": false
-        }
-      ]
+      "tax_rules": [ { "code": "VAT", "name": "VAT (configure)", "rate_bp": 0, "applies_to": ["labour", "part", "sundry", "service_fee"], "compound": false, "enabled": false } ]
     },
-    "subscription": {
-      "plan_code": "pro",
-      "status": "active",
-      "is_complimentary": true
-    },
+    "subscription": { "plan_code": "pro", "status": "active", "is_complimentary": true },
     "branches": [
-      {
-        "name": "Spintex",
-        "code": "SPX",
-        "is_default": true,
-        "bays": [
-          "Bay 1",
-          "Bay 2",
-          "Bay 3",
-          "Lift A"
-        ]
-      },
-      {
-        "name": "East Legon",
-        "code": "ELG",
-        "bays": [
-          "Bay 1",
-          "Bay 2"
-        ]
-      }
+      { "name": "Spintex", "code": "SPX", "is_default": true, "bays": ["Bay 1", "Bay 2", "Bay 3", "Lift A"] },
+      { "name": "East Legon", "code": "ELG", "bays": ["Bay 1", "Bay 2"] }
     ],
     "staff": [
-      {
-        "full_name": "Kwame Owusu",
-        "email": "owner@pitstop-demo.test",
-        "phone": "+233200000011",
-        "role": "owner",
-        "branch": null
-      },
-      {
-        "full_name": "Efua Asante",
-        "email": "advisor@pitstop-demo.test",
-        "phone": "+233200000012",
-        "role": "service_advisor",
-        "branch": "SPX"
-      },
-      {
-        "full_name": "Yaw Boateng",
-        "email": "mechanic1@pitstop-demo.test",
-        "phone": "+233200000013",
-        "role": "mechanic",
-        "branch": "SPX"
-      },
-      {
-        "full_name": "Kojo Darko",
-        "email": "mechanic2@pitstop-demo.test",
-        "phone": "+233200000014",
-        "role": "mechanic",
-        "branch": "SPX"
-      },
-      {
-        "full_name": "Akosua Frimpong",
-        "email": "store@pitstop-demo.test",
-        "phone": "+233200000015",
-        "role": "storekeeper",
-        "branch": "SPX"
-      },
-      {
-        "full_name": "Nana Adjei",
-        "email": "accounts@pitstop-demo.test",
-        "phone": "+233200000016",
-        "role": "accountant",
-        "branch": null
-      },
-      {
-        "full_name": "Esi Quaye",
-        "email": "manager.elg@pitstop-demo.test",
-        "phone": "+233200000017",
-        "role": "manager",
-        "branch": "ELG"
-      }
+      { "full_name": "Kwame Owusu", "email": "owner@pitstop-demo.test", "phone": "+233200000011", "role": "owner", "branch": null },
+      { "full_name": "Efua Asante", "email": "advisor@pitstop-demo.test", "phone": "+233200000012", "role": "service_advisor", "branch": "SPX" },
+      { "full_name": "Yaw Boateng", "email": "mechanic1@pitstop-demo.test", "phone": "+233200000013", "role": "mechanic", "branch": "SPX" },
+      { "full_name": "Kojo Darko", "email": "mechanic2@pitstop-demo.test", "phone": "+233200000014", "role": "mechanic", "branch": "SPX" },
+      { "full_name": "Akosua Frimpong", "email": "store@pitstop-demo.test", "phone": "+233200000015", "role": "storekeeper", "branch": "SPX" },
+      { "full_name": "Nana Adjei", "email": "accounts@pitstop-demo.test", "phone": "+233200000016", "role": "accountant", "branch": null },
+      { "full_name": "Esi Quaye", "email": "manager.elg@pitstop-demo.test", "phone": "+233200000017", "role": "manager", "branch": "ELG" }
     ],
     "job_templates": [
-      {
-        "name": "Oil service — mineral",
-        "estimated_minutes": 45,
-        "creates_due_item_type": "oil_change",
-        "oil_grade": "mineral",
-        "items": [
-          {
-            "type": "labour",
-            "description": "Oil & filter change",
-            "labour_hours": 0.5
-          },
-          {
-            "type": "part",
-            "sku": "OIL-MIN-20W50-4L",
-            "quantity": 1
-          },
-          {
-            "type": "part",
-            "sku": "FLT-OIL-TOY-01",
-            "quantity": 1
-          }
-        ],
-        "checklist": [
-          "Drain old oil",
-          "Replace oil filter",
-          "Refill to spec",
-          "Check for leaks",
-          "Reset service light",
-          "Record odometer"
-        ]
-      },
-      {
-        "name": "Oil service — fully synthetic",
-        "estimated_minutes": 45,
-        "creates_due_item_type": "oil_change",
-        "oil_grade": "fully_synthetic",
-        "items": [
-          {
-            "type": "labour",
-            "description": "Oil & filter change",
-            "labour_hours": 0.5
-          },
-          {
-            "type": "part",
-            "sku": "OIL-SYN-5W30-4L",
-            "quantity": 1
-          },
-          {
-            "type": "part",
-            "sku": "FLT-OIL-TOY-01",
-            "quantity": 1
-          }
-        ],
-        "checklist": [
-          "Drain old oil",
-          "Replace oil filter",
-          "Refill to spec",
-          "Check for leaks",
-          "Reset service light",
-          "Record odometer"
-        ]
-      },
-      {
-        "name": "Oil service — semi-synthetic",
-        "estimated_minutes": 45,
-        "creates_due_item_type": "oil_change",
-        "oil_grade": "semi_synthetic",
-        "items": [
-          {
-            "type": "labour",
-            "description": "Oil & filter change",
-            "labour_hours": 0.5
-          },
-          {
-            "type": "part",
-            "sku": "OIL-SYN-5W30-4L",
-            "quantity": 1
-          },
-          {
-            "type": "part",
-            "sku": "FLT-OIL-TOY-01",
-            "quantity": 1
-          }
-        ],
-        "checklist": [
-          "Drain old oil",
-          "Replace oil filter",
-          "Refill to spec",
-          "Check for leaks",
-          "Reset service light",
-          "Record odometer"
-        ]
-      },
-      {
-        "name": "Full service",
-        "estimated_minutes": 180,
-        "creates_due_item_type": "general_service",
-        "deposit_percent": 30,
-        "items": [
-          {
-            "type": "labour",
-            "description": "Full service labour",
-            "labour_hours": 3
-          }
-        ],
-        "checklist": [
-          "Oil & filter",
-          "Air filter",
-          "Fuel filter",
-          "Spark plugs",
-          "Brake inspection",
-          "Suspension check",
-          "Fluids top-up",
-          "Road test"
-        ]
-      },
-      {
-        "name": "Brake pads (front)",
-        "estimated_minutes": 90,
-        "deposit_percent": 50,
-        "items": [
-          {
-            "type": "labour",
-            "description": "Replace front brake pads",
-            "labour_hours": 1.5
-          },
-          {
-            "type": "part",
-            "sku": "BRK-PAD-TOY-F",
-            "quantity": 1
-          }
-        ],
-        "checklist": [
-          "Remove wheels",
-          "Replace pads",
-          "Inspect discs",
-          "Test brakes"
-        ]
-      },
-      {
-        "name": "Diagnostics scan",
-        "estimated_minutes": 30,
-        "items": [
-          {
-            "type": "labour",
-            "description": "OBD diagnostics",
-            "labour_hours": 0.5
-          }
-        ],
-        "checklist": [
-          "Connect scanner",
-          "Read fault codes",
-          "Record findings with photos"
-        ]
-      },
-      {
-        "name": "Roadworthy pre-inspection",
-        "estimated_minutes": 60,
-        "items": [
-          {
-            "type": "labour",
-            "description": "Pre-inspection check",
-            "labour_hours": 1
-          }
-        ],
-        "checklist": [
-          "Lights",
-          "Brakes",
-          "Tyres",
-          "Wipers",
-          "Horn",
-          "Seat belts",
-          "Emissions/smoke",
-          "Documents present"
-        ]
-      },
-      {
-        "name": "Battery replacement",
-        "estimated_minutes": 20,
-        "items": [
-          {
-            "type": "labour",
-            "description": "Battery fit & test",
-            "labour_hours": 0.25
-          },
-          {
-            "type": "part",
-            "sku": "BAT-12V-70AH",
-            "quantity": 1
-          }
-        ],
-        "checklist": [
-          "Test old battery",
-          "Fit new battery",
-          "Test charging system"
-        ]
-      },
-      {
-        "name": "Tyre change",
-        "estimated_minutes": 30,
-        "items": [
-          {
-            "type": "labour",
-            "description": "Tyre replacement & balance",
-            "labour_hours": 0.5
-          },
-          {
-            "type": "part",
-            "sku": "TYR-195-65R15",
-            "quantity": 1
-          }
-        ],
-        "checklist": [
-          "Check tyre pressures",
-          "Torque wheel nuts",
-          "Check spare & tools"
-        ]
-      }
+      { "name": "Oil service — mineral", "estimated_minutes": 45, "creates_due_item_type": "oil_change", "oil_grade": "mineral", "items": [ { "type": "labour", "description": "Oil & filter change", "labour_hours": 0.5 }, { "type": "part", "sku": "OIL-MIN-20W50-4L", "quantity": 1 }, { "type": "part", "sku": "FLT-OIL-TOY-01", "quantity": 1 } ], "checklist": ["Drain old oil", "Replace oil filter", "Refill to spec", "Check for leaks", "Reset service light", "Record odometer"] },
+      { "name": "Oil service — fully synthetic", "estimated_minutes": 45, "creates_due_item_type": "oil_change", "oil_grade": "fully_synthetic", "items": [ { "type": "labour", "description": "Oil & filter change", "labour_hours": 0.5 }, { "type": "part", "sku": "OIL-SYN-5W30-4L", "quantity": 1 }, { "type": "part", "sku": "FLT-OIL-TOY-01", "quantity": 1 } ], "checklist": ["Drain old oil", "Replace oil filter", "Refill to spec", "Check for leaks", "Reset service light", "Record odometer"] },
+      { "name": "Full service", "estimated_minutes": 180, "creates_due_item_type": "general_service", "deposit_percent": 30, "items": [ { "type": "labour", "description": "Full service labour", "labour_hours": 3 } ], "checklist": ["Oil & filter", "Air filter", "Fuel filter", "Spark plugs", "Brake inspection", "Suspension check", "Fluids top-up", "Road test"] },
+      { "name": "Brake pads (front)", "estimated_minutes": 90, "deposit_percent": 50, "items": [ { "type": "labour", "description": "Replace front brake pads", "labour_hours": 1.5 }, { "type": "part", "sku": "BRK-PAD-TOY-F", "quantity": 1 } ], "checklist": ["Remove wheels", "Replace pads", "Inspect discs", "Test brakes"] },
+      { "name": "Diagnostics scan", "estimated_minutes": 30, "items": [ { "type": "labour", "description": "OBD diagnostics", "labour_hours": 0.5 } ], "checklist": ["Connect scanner", "Read fault codes", "Record findings with photos"] },
+      { "name": "Roadworthy pre-inspection", "estimated_minutes": 60, "items": [ { "type": "labour", "description": "Pre-inspection check", "labour_hours": 1 } ], "checklist": ["Lights", "Brakes", "Tyres", "Wipers", "Horn", "Seat belts", "Emissions/smoke", "Documents present"] },
+      { "name": "Battery replacement", "estimated_minutes": 20, "items": [ { "type": "labour", "description": "Battery fit & test", "labour_hours": 0.25 }, { "type": "part", "sku": "BAT-12V-70AH", "quantity": 1 } ], "checklist": ["Test old battery", "Fit new battery", "Test charging system"] }
     ],
     "parts": [
-      {
-        "sku": "OIL-MIN-20W50-4L",
-        "name": "Engine oil 20W-50 mineral 4L",
-        "brand": "DemoLube",
-        "category": "Lubricants",
-        "cost_ghs": 180,
-        "price_ghs": 240,
-        "stock": {
-          "SPX": 24,
-          "ELG": 10
-        },
-        "reorder_level": 8,
-        "reorder_quantity": 24,
-        "preferred_vendor": "accra-auto-supplies"
-      },
-      {
-        "sku": "OIL-SYN-5W30-4L",
-        "name": "Engine oil 5W-30 fully synthetic 4L",
-        "brand": "DemoLube",
-        "category": "Lubricants",
-        "cost_ghs": 420,
-        "price_ghs": 550,
-        "stock": {
-          "SPX": 12,
-          "ELG": 6
-        },
-        "reorder_level": 6,
-        "reorder_quantity": 12,
-        "preferred_vendor": "accra-auto-supplies"
-      },
-      {
-        "sku": "FLT-OIL-TOY-01",
-        "name": "Oil filter — Toyota (common)",
-        "brand": "FilterPro",
-        "category": "Filters",
-        "cost_ghs": 35,
-        "price_ghs": 60,
-        "stock": {
-          "SPX": 30,
-          "ELG": 15
-        },
-        "reorder_level": 10,
-        "reorder_quantity": 30,
-        "preferred_vendor": "accra-auto-supplies"
-      },
-      {
-        "sku": "FLT-AIR-TOY-01",
-        "name": "Air filter — Toyota Corolla",
-        "brand": "FilterPro",
-        "category": "Filters",
-        "cost_ghs": 55,
-        "price_ghs": 90,
-        "stock": {
-          "SPX": 8,
-          "ELG": 4
-        },
-        "reorder_level": 4,
-        "reorder_quantity": 10
-      },
-      {
-        "sku": "BRK-PAD-TOY-F",
-        "name": "Front brake pads — Toyota Corolla/Yaris",
-        "brand": "StopRight",
-        "category": "Brakes",
-        "cost_ghs": 220,
-        "price_ghs": 320,
-        "stock": {
-          "SPX": 3,
-          "ELG": 2
-        },
-        "reorder_level": 4,
-        "reorder_quantity": 6,
-        "preferred_vendor": "kumasi-parts-hub"
-      },
-      {
-        "sku": "BAT-12V-70AH",
-        "name": "Battery 12V 70Ah",
-        "brand": "PowerCell",
-        "category": "Electrical",
-        "cost_ghs": 750,
-        "price_ghs": 980,
-        "stock": {
-          "SPX": 5,
-          "ELG": 2
-        },
-        "reorder_level": 2,
-        "reorder_quantity": 5,
-        "preferred_vendor": "kumasi-parts-hub"
-      },
-      {
-        "sku": "SPK-PLUG-IRD",
-        "name": "Spark plug iridium (each)",
-        "brand": "SparkMax",
-        "category": "Ignition",
-        "cost_ghs": 45,
-        "price_ghs": 75,
-        "stock": {
-          "SPX": 40,
-          "ELG": 16
-        },
-        "reorder_level": 12,
-        "reorder_quantity": 40
-      },
-      {
-        "sku": "CLT-1L",
-        "name": "Coolant 1L",
-        "brand": "DemoLube",
-        "category": "Fluids",
-        "cost_ghs": 40,
-        "price_ghs": 65,
-        "stock": {
-          "SPX": 20,
-          "ELG": 8
-        },
-        "reorder_level": 6,
-        "reorder_quantity": 20
-      },
-      {
-        "sku": "WPR-BLADE-22",
-        "name": "Wiper blade 22\"",
-        "brand": "ClearView",
-        "category": "Accessories",
-        "cost_ghs": 30,
-        "price_ghs": 55,
-        "stock": {
-          "SPX": 14,
-          "ELG": 6
-        },
-        "reorder_level": 4,
-        "reorder_quantity": 12,
-        "online_visible": true
-      },
-      {
-        "sku": "TYR-195-65R15",
-        "name": "Tyre 195/65 R15",
-        "brand": "RoadGrip",
-        "category": "Tyres",
-        "cost_ghs": 650,
-        "price_ghs": 850,
-        "stock": {
-          "SPX": 8,
-          "ELG": 4
-        },
-        "reorder_level": 4,
-        "reorder_quantity": 8,
-        "preferred_vendor": "kumasi-parts-hub",
-        "online_visible": true
-      }
+      { "sku": "OIL-MIN-20W50-4L", "name": "Engine oil 20W-50 mineral 4L", "brand": "DemoLube", "category": "Lubricants", "cost_ghs": 180, "price_ghs": 240, "stock": { "SPX": 24, "ELG": 10 }, "reorder_level": 8, "reorder_quantity": 24, "preferred_vendor": "accra-auto-supplies" },
+      { "sku": "OIL-SYN-5W30-4L", "name": "Engine oil 5W-30 fully synthetic 4L", "brand": "DemoLube", "category": "Lubricants", "cost_ghs": 420, "price_ghs": 550, "stock": { "SPX": 12, "ELG": 6 }, "reorder_level": 6, "reorder_quantity": 12, "preferred_vendor": "accra-auto-supplies" },
+      { "sku": "FLT-OIL-TOY-01", "name": "Oil filter — Toyota (common)", "brand": "FilterPro", "category": "Filters", "cost_ghs": 35, "price_ghs": 60, "stock": { "SPX": 30, "ELG": 15 }, "reorder_level": 10, "reorder_quantity": 30, "preferred_vendor": "accra-auto-supplies" },
+      { "sku": "FLT-AIR-TOY-01", "name": "Air filter — Toyota Corolla", "brand": "FilterPro", "category": "Filters", "cost_ghs": 55, "price_ghs": 90, "stock": { "SPX": 8, "ELG": 4 }, "reorder_level": 4, "reorder_quantity": 10 },
+      { "sku": "BRK-PAD-TOY-F", "name": "Front brake pads — Toyota Corolla/Yaris", "brand": "StopRight", "category": "Brakes", "cost_ghs": 220, "price_ghs": 320, "stock": { "SPX": 3, "ELG": 2 }, "reorder_level": 4, "reorder_quantity": 6, "preferred_vendor": "kumasi-parts-hub" },
+      { "sku": "BAT-12V-70AH", "name": "Battery 12V 70Ah", "brand": "PowerCell", "category": "Electrical", "cost_ghs": 750, "price_ghs": 980, "stock": { "SPX": 5, "ELG": 2 }, "reorder_level": 2, "reorder_quantity": 5, "preferred_vendor": "kumasi-parts-hub" },
+      { "sku": "SPK-PLUG-IRD", "name": "Spark plug iridium (each)", "brand": "SparkMax", "category": "Ignition", "cost_ghs": 45, "price_ghs": 75, "stock": { "SPX": 40, "ELG": 16 }, "reorder_level": 12, "reorder_quantity": 40 },
+      { "sku": "CLT-1L", "name": "Coolant 1L", "brand": "DemoLube", "category": "Fluids", "cost_ghs": 40, "price_ghs": 65, "stock": { "SPX": 20, "ELG": 8 }, "reorder_level": 6, "reorder_quantity": 20 },
+      { "sku": "WPR-BLADE-22", "name": "Wiper blade 22\"", "brand": "ClearView", "category": "Accessories", "cost_ghs": 30, "price_ghs": 55, "stock": { "SPX": 14, "ELG": 6 }, "reorder_level": 4, "reorder_quantity": 12, "online_visible": true },
+      { "sku": "TYR-195-65R15", "name": "Tyre 195/65 R15", "brand": "RoadGrip", "category": "Tyres", "cost_ghs": 650, "price_ghs": 850, "stock": { "SPX": 8, "ELG": 4 }, "reorder_level": 4, "reorder_quantity": 8, "preferred_vendor": "kumasi-parts-hub", "online_visible": true }
     ],
     "customers": [
       {
-        "full_name": "Abena Osei",
-        "phone": "+233200000101",
-        "email": "abena@example.test",
-        "type": "individual",
-        "preferred_channels": [
-          "whatsapp",
-          "sms"
-        ],
+        "full_name": "Abena Osei", "phone": "+233200000101", "email": "abena@example.test", "type": "individual", "preferred_channels": ["whatsapp", "sms"],
         "vehicles": [
-          {
-            "plate_number": "GR 1234-24",
-            "make": "Toyota",
-            "model": "Corolla",
-            "year": 2016,
-            "color": "Silver",
-            "color_hex": "#C0C4CC",
-            "body_type": "sedan",
-            "fuel_type": "petrol",
-            "transmission": "automatic",
-            "usage": "private",
-            "odometer_history": [
-              [
-                "2026-03-02",
-                98200
-              ],
-              [
-                "2026-06-10",
-                103150
-              ],
-              [
-                "2026-09-01",
-                107300
-              ]
-            ],
-            "last_oil_change": {
-              "date": "2026-09-01",
-              "km": 107300,
-              "grade": "mineral"
-            },
-            "insurance": {
-              "insurer_name": "Demo Insurance Co. (sample)",
-              "policy_type": "comprehensive",
-              "policy_number": "POL-DEMO-0001",
-              "start_date": "2025-12-10",
-              "end_date": "2026-12-09",
-              "premium_ghs": 3200
-            },
-            "dvla": [
-              {
-                "type": "roadworthy",
-                "expiry_date": "2026-12-20"
-              }
-            ]
-          }
+          { "plate_number": "GR 1234-24", "make": "Toyota", "model": "Corolla", "year": 2016, "color": "Silver", "color_hex": "#C0C4CC", "body_type": "sedan", "fuel_type": "petrol", "transmission": "automatic", "usage": "private",
+            "odometer_history": [["2026-03-02", 98200], ["2026-06-10", 103150], ["2026-09-01", 107300]],
+            "last_oil_change": { "date": "2026-09-01", "km": 107300, "grade": "mineral" },
+            "insurance": { "insurer_name": "Demo Insurance Co. (sample)", "policy_type": "comprehensive", "policy_number": "POL-DEMO-0001", "start_date": "2025-12-10", "end_date": "2026-12-09", "premium_ghs": 3200 },
+            "dvla": [ { "type": "roadworthy", "expiry_date": "2026-12-20" } ] }
         ]
       },
       {
-        "full_name": "Kofi Mensah",
-        "phone": "+233200000102",
-        "type": "individual",
-        "preferred_channels": [
-          "sms"
-        ],
+        "full_name": "Kofi Mensah", "phone": "+233200000102", "type": "individual", "preferred_channels": ["sms"],
         "vehicles": [
-          {
-            "plate_number": "AS 5678-22",
-            "make": "Hyundai",
-            "model": "Elantra",
-            "year": 2014,
-            "color": "Red",
-            "color_hex": "#C62828",
-            "body_type": "sedan",
-            "fuel_type": "petrol",
-            "transmission": "automatic",
-            "usage": "ride_hailing",
-            "odometer_history": [
-              [
-                "2026-08-15",
-                164000
-              ],
-              [
-                "2026-10-01",
-                172900
-              ]
-            ],
-            "last_oil_change": {
-              "date": "2026-10-01",
-              "km": 172900,
-              "grade": "semi_synthetic"
-            },
-            "dvla": [
-              {
-                "type": "roadworthy",
-                "expiry_date": "2027-01-15"
-              },
-              {
-                "type": "registration_licence",
-                "expiry_date": "2027-02-01"
-              }
-            ]
-          }
+          { "plate_number": "AS 5678-22", "make": "Hyundai", "model": "Elantra", "year": 2014, "color": "Red", "color_hex": "#C62828", "body_type": "sedan", "fuel_type": "petrol", "transmission": "automatic", "usage": "ride_hailing",
+            "odometer_history": [["2026-08-15", 164000], ["2026-10-01", 172900]],
+            "last_oil_change": { "date": "2026-10-01", "km": 172900, "grade": "semi_synthetic" },
+            "dvla": [ { "type": "roadworthy", "expiry_date": "2027-01-15" }, { "type": "registration_licence", "expiry_date": "2027-02-01" } ] }
         ]
       },
       {
-        "full_name": "Adwoa Boakye",
-        "phone": "+233200000103",
-        "email": "adwoa@example.test",
-        "type": "individual",
-        "preferred_channels": [
-          "whatsapp",
-          "email"
-        ],
+        "full_name": "Adwoa Boakye", "phone": "+233200000103", "email": "adwoa@example.test", "type": "individual", "preferred_channels": ["whatsapp", "email"],
         "vehicles": [
-          {
-            "plate_number": "GW 2468-23",
-            "make": "Kia",
-            "model": "Sportage",
-            "year": 2019,
-            "color": "White",
-            "color_hex": "#F5F5F5",
-            "body_type": "suv",
-            "fuel_type": "diesel",
-            "transmission": "automatic",
-            "usage": "private",
-            "odometer_history": [
-              [
-                "2026-07-20",
-                61000
-              ]
-            ],
-            "insurance": {
-              "insurer_name": "Other Insurer (sample)",
-              "policy_type": "third_party",
-              "start_date": "2025-12-01",
-              "end_date": "2026-11-30"
-            }
-          }
+          { "plate_number": "GW 2468-23", "make": "Kia", "model": "Sportage", "year": 2019, "color": "White", "color_hex": "#F5F5F5", "body_type": "suv", "fuel_type": "diesel", "transmission": "automatic", "usage": "private",
+            "odometer_history": [["2026-07-20", 61000]],
+            "insurance": { "insurer_name": "Other Insurer (sample)", "policy_type": "third_party", "start_date": "2025-12-01", "end_date": "2026-11-30" } }
         ]
       },
       {
-        "full_name": "Swift Logistics Ltd (Demo)",
-        "company_name": "Swift Logistics Ltd",
-        "phone": "+233200000104",
-        "email": "fleet@swift-logistics.test",
-        "type": "fleet",
-        "preferred_channels": [
-          "email",
-          "whatsapp"
-        ],
-        "credit_account": {
-          "credit_limit_ghs": 20000,
-          "payment_terms_days": 30,
-          "statement_day": 1
-        },
-        "fleet_manager_user": {
-          "full_name": "Selorm Agbeko",
-          "phone": "+233200000105"
-        },
+        "full_name": "Swift Logistics Ltd (Demo)", "company_name": "Swift Logistics Ltd", "phone": "+233200000104", "email": "fleet@swift-logistics.test", "type": "fleet", "preferred_channels": ["email", "whatsapp"],
+        "credit_account": { "credit_limit_ghs": 20000, "payment_terms_days": 30, "statement_day": 1 },
+        "fleet_manager_user": { "full_name": "Selorm Agbeko", "phone": "+233200000105" },
         "vehicles": [
-          {
-            "plate_number": "GT 1001-21",
-            "make": "Toyota",
-            "model": "Hiace",
-            "year": 2018,
-            "color": "White",
-            "color_hex": "#FFFFFF",
-            "body_type": "van",
-            "fuel_type": "diesel",
-            "transmission": "manual",
-            "usage": "fleet",
-            "odometer_history": [
-              [
-                "2026-06-01",
-                210000
-              ],
-              [
-                "2026-08-01",
-                219500
-              ],
-              [
-                "2026-10-01",
-                228900
-              ]
-            ]
-          },
-          {
-            "plate_number": "GT 1002-21",
-            "make": "Nissan",
-            "model": "Navara",
-            "year": 2020,
-            "color": "Grey",
-            "color_hex": "#6B7280",
-            "body_type": "pickup",
-            "fuel_type": "diesel",
-            "transmission": "manual",
-            "usage": "fleet",
-            "odometer_history": [
-              [
-                "2026-09-10",
-                98000
-              ]
-            ]
-          }
+          { "plate_number": "GT 1001-21", "make": "Toyota", "model": "Hiace", "year": 2018, "color": "White", "color_hex": "#FFFFFF", "body_type": "van", "fuel_type": "diesel", "transmission": "manual", "usage": "fleet", "odometer_history": [["2026-06-01", 210000], ["2026-08-01", 219500], ["2026-10-01", 228900]] },
+          { "plate_number": "GT 1002-21", "make": "Nissan", "model": "Navara", "year": 2020, "color": "Grey", "color_hex": "#6B7280", "body_type": "pickup", "fuel_type": "diesel", "transmission": "manual", "usage": "fleet", "odometer_history": [["2026-09-10", 98000]] }
         ]
       }
     ],
     "sample_jobs": [
-      {
-        "plate": "AS 5678-22",
-        "status": "in_progress",
-        "template": "Brake pads (front)",
-        "complaint": "Grinding noise when braking",
-        "assigned": [
-          "mechanic1@pitstop-demo.test"
-        ],
-        "bay": "Bay 1"
-      },
-      {
-        "plate": "GW 2468-23",
-        "status": "estimate_sent",
-        "template": "Diagnostics scan",
-        "complaint": "Check engine light on",
-        "findings": [
-          {
-            "title": "Faulty O2 sensor",
-            "severity": "recommended"
-          }
-        ]
-      },
-      {
-        "plate": "GT 1001-21",
-        "status": "ready",
-        "template": "Full service",
-        "assigned": [
-          "mechanic2@pitstop-demo.test"
-        ],
-        "invoice": "charge_to_credit_account"
-      }
+      { "plate": "AS 5678-22", "status": "in_progress", "template": "Brake pads (front)", "complaint": "Grinding noise when braking", "assigned": ["mechanic1@pitstop-demo.test"], "bay": "Bay 1" },
+      { "plate": "GW 2468-23", "status": "estimate_sent", "template": "Diagnostics scan", "complaint": "Check engine light on", "findings": [ { "title": "Faulty O2 sensor", "severity": "recommended" } ] },
+      { "plate": "GT 1001-21", "status": "ready", "template": "Full service", "assigned": ["mechanic2@pitstop-demo.test"], "invoice": "charge_to_credit_account" }
     ]
   },
   "vendors": [
-    {
-      "slug": "accra-auto-supplies",
-      "business_name": "Accra Auto Supplies (Demo)",
-      "phone": "+233200000201",
-      "email": "orders@accra-auto.test",
-      "city": "Accra",
-      "region": "Greater Accra",
-      "status": "approved",
-      "owner": {
-        "full_name": "Isaac Tetteh",
-        "email": "vendor1@accra-auto.test"
-      },
-      "delivery_zones": [
-        {
-          "region": "Greater Accra",
-          "fee_ghs": 30,
-          "eta_hours": 4
-        }
-      ],
+    { "slug": "accra-auto-supplies", "business_name": "Accra Auto Supplies (Demo)", "phone": "+233200000201", "email": "orders@accra-auto.test", "city": "Accra", "region": "Greater Accra", "status": "approved",
+      "owner": { "full_name": "Isaac Tetteh", "email": "vendor1@accra-auto.test" },
+      "delivery_zones": [ { "region": "Greater Accra", "fee_ghs": 30, "eta_hours": 4 } ],
       "products": [
-        {
-          "sku": "AAS-OIL-2050-4",
-          "name": "Engine oil 20W-50 mineral 4L",
-          "category": "Lubricants",
-          "price_ghs": 170,
-          "quantity_available": 200,
-          "maps_to_part_sku": "OIL-MIN-20W50-4L"
-        },
-        {
-          "sku": "AAS-OIL-530-4",
-          "name": "Engine oil 5W-30 synthetic 4L",
-          "category": "Lubricants",
-          "price_ghs": 400,
-          "quantity_available": 80,
-          "maps_to_part_sku": "OIL-SYN-5W30-4L"
-        },
-        {
-          "sku": "AAS-FLT-TOY",
-          "name": "Oil filter Toyota",
-          "category": "Filters",
-          "price_ghs": 32,
-          "quantity_available": 500,
-          "maps_to_part_sku": "FLT-OIL-TOY-01"
-        },
-        {
-          "sku": "AAS-RAGS-5KG",
-          "name": "Workshop rags 5kg",
-          "category": "Workshop materials",
-          "price_ghs": 85,
-          "quantity_available": 40
-        }
-      ]
-    },
-    {
-      "slug": "kumasi-parts-hub",
-      "business_name": "Kumasi Parts Hub (Demo)",
-      "phone": "+233200000202",
-      "email": "sales@kumasi-parts.test",
-      "city": "Kumasi",
-      "region": "Ashanti",
-      "status": "approved",
-      "owner": {
-        "full_name": "Akwasi Poku",
-        "email": "vendor2@kumasi-parts.test"
-      },
-      "delivery_zones": [
-        {
-          "region": "Ashanti",
-          "fee_ghs": 25,
-          "eta_hours": 6
-        },
-        {
-          "region": "Greater Accra",
-          "fee_ghs": 80,
-          "eta_hours": 24
-        }
-      ],
+        { "sku": "AAS-OIL-2050-4", "name": "Engine oil 20W-50 mineral 4L", "category": "Lubricants", "price_ghs": 170, "quantity_available": 200, "maps_to_part_sku": "OIL-MIN-20W50-4L" },
+        { "sku": "AAS-OIL-530-4", "name": "Engine oil 5W-30 synthetic 4L", "category": "Lubricants", "price_ghs": 400, "quantity_available": 80, "maps_to_part_sku": "OIL-SYN-5W30-4L" },
+        { "sku": "AAS-FLT-TOY", "name": "Oil filter Toyota", "category": "Filters", "price_ghs": 32, "quantity_available": 500, "maps_to_part_sku": "FLT-OIL-TOY-01" },
+        { "sku": "AAS-RAGS-5KG", "name": "Workshop rags 5kg", "category": "Workshop materials", "price_ghs": 85, "quantity_available": 40 }
+      ] },
+    { "slug": "kumasi-parts-hub", "business_name": "Kumasi Parts Hub (Demo)", "phone": "+233200000202", "email": "sales@kumasi-parts.test", "city": "Kumasi", "region": "Ashanti", "status": "approved",
+      "owner": { "full_name": "Akwasi Poku", "email": "vendor2@kumasi-parts.test" },
+      "delivery_zones": [ { "region": "Ashanti", "fee_ghs": 25, "eta_hours": 6 }, { "region": "Greater Accra", "fee_ghs": 80, "eta_hours": 24 } ],
       "products": [
-        {
-          "sku": "KPH-BRK-COR-F",
-          "name": "Front brake pads Corolla/Yaris",
-          "category": "Brakes",
-          "price_ghs": 205,
-          "quantity_available": 60,
-          "maps_to_part_sku": "BRK-PAD-TOY-F"
-        },
-        {
-          "sku": "KPH-BAT-70",
-          "name": "Battery 12V 70Ah",
-          "category": "Electrical",
-          "price_ghs": 720,
-          "quantity_available": 25,
-          "maps_to_part_sku": "BAT-12V-70AH"
-        },
-        {
-          "sku": "KPH-TYR-1956515",
-          "name": "Tyre 195/65 R15",
-          "category": "Tyres",
-          "price_ghs": 620,
-          "quantity_available": 100,
-          "maps_to_part_sku": "TYR-195-65R15"
-        }
-      ]
-    },
-    {
-      "slug": "pending-vendor",
-      "business_name": "Pending Vendor (Demo)",
-      "phone": "+233200000203",
-      "city": "Tema",
-      "region": "Greater Accra",
-      "status": "pending",
-      "owner": {
-        "full_name": "Pending Owner",
-        "email": "vendor3@pending.test"
-      },
-      "delivery_zones": [],
-      "products": []
-    }
+        { "sku": "KPH-BRK-COR-F", "name": "Front brake pads Corolla/Yaris", "category": "Brakes", "price_ghs": 205, "quantity_available": 60, "maps_to_part_sku": "BRK-PAD-TOY-F" },
+        { "sku": "KPH-BAT-70", "name": "Battery 12V 70Ah", "category": "Electrical", "price_ghs": 720, "quantity_available": 25, "maps_to_part_sku": "BAT-12V-70AH" },
+        { "sku": "KPH-TYR-1956515", "name": "Tyre 195/65 R15", "category": "Tyres", "price_ghs": 620, "quantity_available": 100, "maps_to_part_sku": "TYR-195-65R15" }
+      ] },
+    { "slug": "pending-vendor", "business_name": "Pending Vendor (Demo)", "phone": "+233200000203", "city": "Tema", "region": "Greater Accra", "status": "pending", "owner": { "full_name": "Pending Owner", "email": "vendor3@pending.test" }, "delivery_zones": [], "products": [] }
   ]
 }

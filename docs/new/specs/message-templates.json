@@ -1,0 +1,149 @@
+{
+  "$schema_version": "1.0",
+  "description": "Platform default message templates, seeded into message_templates with garage_id null. Garages can override body/subject. Variables use {{double_braces}}. SMS bodies must stay under 160 characters after rendering where possible (max 2 segments). WhatsApp templates must be submitted to Meta for approval with the given name and category; variables map to {{1}}, {{2}}… in the order listed in 'whatsapp_params'. Emails render with React Email using the subject and body as content.",
+  "variables": {
+    "customer_first_name": "Customer first name",
+    "garage_name": "Garage display name",
+    "garage_phone": "Garage phone",
+    "plate": "Vehicle plate number",
+    "vehicle": "Make and model, e.g. Toyota Corolla",
+    "due_date": "Formatted date, e.g. Mon 14 Jan",
+    "days_left": "Whole days until due",
+    "predicted_km": "Predicted current mileage",
+    "action_link": "Short magic link for the primary action",
+    "amount": "Formatted money, e.g. GH₵ 450.00",
+    "balance": "Formatted balance",
+    "invoice_number": "Invoice number",
+    "job_number": "Job number",
+    "tracker_link": "Live tracker link",
+    "items_list": "Comma-separated due items for combined messages",
+    "otp_code": "One-time code",
+    "renewal_status": "Human readable renewal status",
+    "staff_name": "Staff first name"
+  },
+  "templates": [
+    { "key": "otp", "category": "otp", "channels": {
+      "sms": { "body": "{{otp_code}} is your {{garage_name}} code. It expires in 10 minutes. Do not share it." },
+      "whatsapp": { "template_name": "otp_code", "category": "AUTHENTICATION", "whatsapp_params": ["otp_code"] } } },
+
+    { "key": "check_in_tracker", "category": "transactional", "channels": {
+      "sms": { "body": "Hi {{customer_first_name}}, your {{plate}} is checked in at {{garage_name}} (Job {{job_number}}). Follow live: {{tracker_link}}" },
+      "whatsapp": { "template_name": "check_in_tracker", "category": "UTILITY", "whatsapp_params": ["customer_first_name", "plate", "garage_name", "job_number", "tracker_link"], "body": "Hi {{customer_first_name}} 👋 Your {{plate}} is checked in at {{garage_name}} (Job {{job_number}}). Follow every step live here: {{tracker_link}}" },
+      "email": { "subject": "Your {{vehicle}} is checked in — follow it live", "body": "Hi {{customer_first_name}},\n\nYour {{vehicle}} ({{plate}}) is checked in at {{garage_name}}. You can follow progress, see photos and approve work here:\n\n{{tracker_link}}" },
+      "push": { "title": "Checked in 🚗", "body": "{{plate}} is at {{garage_name}}. Tap to follow live." } } },
+
+    { "key": "estimate_ready", "category": "transactional", "channels": {
+      "sms": { "body": "{{garage_name}}: estimate for {{plate}} is {{amount}}. Review & approve: {{action_link}}" },
+      "whatsapp": { "template_name": "estimate_ready", "category": "UTILITY", "whatsapp_params": ["customer_first_name", "plate", "amount", "action_link"], "body": "Hi {{customer_first_name}}, we've inspected your {{plate}}. Estimate: *{{amount}}*. See photos and approve item by item: {{action_link}}" },
+      "email": { "subject": "Estimate for {{plate}}: {{amount}}", "body": "Hi {{customer_first_name}},\n\nWe've inspected your {{vehicle}}. Review the findings, photos and estimate, then approve what you'd like us to do:\n\n{{action_link}}" },
+      "push": { "title": "Estimate ready", "body": "{{amount}} for {{plate}}. Tap to review." } } },
+
+    { "key": "job_ready", "category": "transactional", "channels": {
+      "sms": { "body": "Good news {{customer_first_name}}! {{plate}} is ready at {{garage_name}}. Balance {{balance}}. Pay: {{action_link}}" },
+      "whatsapp": { "template_name": "job_ready", "category": "UTILITY", "whatsapp_params": ["customer_first_name", "plate", "garage_name", "balance", "action_link"], "body": "🎉 Good news {{customer_first_name}}! Your {{plate}} is ready for pickup at {{garage_name}}. Balance: *{{balance}}*. Pay with MoMo or card: {{action_link}}" },
+      "email": { "subject": "Your {{vehicle}} is ready 🎉", "body": "Hi {{customer_first_name}},\n\nYour {{vehicle}} ({{plate}}) is ready for pickup. Balance due: {{balance}}.\n\nPay online: {{action_link}}" },
+      "push": { "title": "Ready for pickup 🎉", "body": "{{plate}} is ready. Balance {{balance}}." } } },
+
+    { "key": "payment_receipt", "category": "transactional", "channels": {
+      "sms": { "body": "{{garage_name}}: received {{amount}} for {{invoice_number}}. Balance {{balance}}. Receipt: {{action_link}} Thank you!" },
+      "whatsapp": { "template_name": "payment_receipt", "category": "UTILITY", "whatsapp_params": ["amount", "invoice_number", "balance", "action_link"], "body": "✅ Payment received: *{{amount}}* for {{invoice_number}}. Balance: {{balance}}. Your receipt: {{action_link}}" },
+      "email": { "subject": "Receipt for {{amount}} — {{invoice_number}}", "body": "Thank you! We received {{amount}} for {{invoice_number}}. Balance remaining: {{balance}}.\n\nDownload your receipt: {{action_link}}" },
+      "push": { "title": "Payment received ✅", "body": "{{amount}} for {{invoice_number}}" } } },
+
+    { "key": "booking_confirmed", "category": "transactional", "channels": {
+      "sms": { "body": "Booked! {{plate}} at {{garage_name}} on {{due_date}}. Call {{garage_phone}} to change." },
+      "whatsapp": { "template_name": "booking_confirmed", "category": "UTILITY", "whatsapp_params": ["plate", "garage_name", "due_date", "garage_phone"] },
+      "email": { "subject": "Booking confirmed for {{due_date}}", "body": "Your {{vehicle}} ({{plate}}) is booked at {{garage_name}} on {{due_date}}. Need to change? Call {{garage_phone}}." },
+      "push": { "title": "Booking confirmed", "body": "{{garage_name}} · {{due_date}}" } } },
+
+    { "key": "booking_tomorrow", "category": "reminder", "channels": {
+      "sms": { "body": "Reminder: {{plate}} is booked at {{garage_name}} tomorrow, {{due_date}}. See you!" },
+      "whatsapp": { "template_name": "booking_tomorrow", "category": "UTILITY", "whatsapp_params": ["plate", "garage_name", "due_date"] },
+      "push": { "title": "See you tomorrow", "body": "{{plate}} · {{garage_name}} · {{due_date}}" } } },
+
+    { "key": "oil_due_soon", "category": "reminder", "channels": {
+      "sms": { "body": "Hi {{customer_first_name}}, {{plate}} oil change is due around {{due_date}}. Book at {{garage_name}}: {{action_link}}" },
+      "whatsapp": { "template_name": "oil_due_soon", "category": "UTILITY", "whatsapp_params": ["customer_first_name", "plate", "due_date", "action_link"], "body": "🛢️ Hi {{customer_first_name}}, your {{plate}} is due for an oil change around *{{due_date}}*. Book a slot in seconds: {{action_link}}" },
+      "email": { "subject": "Oil change due soon for {{plate}}", "body": "Hi {{customer_first_name}},\n\nBased on your driving, your {{vehicle}} will need an oil change around {{due_date}}. Book a slot: {{action_link}}" },
+      "push": { "title": "Oil change due soon 🛢️", "body": "{{plate}} · around {{due_date}}. Tap to book." } } },
+    { "key": "oil_due", "category": "reminder", "channels": {
+      "sms": { "body": "{{plate}} oil change is due now. Protect your engine — book at {{garage_name}}: {{action_link}}" },
+      "whatsapp": { "template_name": "oil_due", "category": "UTILITY", "whatsapp_params": ["plate", "action_link"] },
+      "email": { "subject": "Oil change due now — {{plate}}", "body": "Your {{vehicle}} is due for an oil change now. Book here: {{action_link}}" },
+      "push": { "title": "Oil change due now", "body": "{{plate}}. Tap to book." } } },
+    { "key": "oil_overdue", "category": "reminder", "channels": {
+      "sms": { "body": "{{plate}} oil change is overdue. Old oil can damage your engine. Book: {{action_link}}" },
+      "whatsapp": { "template_name": "oil_overdue", "category": "UTILITY", "whatsapp_params": ["plate", "action_link"] },
+      "email": { "subject": "Oil change overdue — {{plate}}", "body": "Your {{vehicle}}'s oil change is overdue. Book a slot: {{action_link}}" },
+      "push": { "title": "Oil change overdue ⚠️", "body": "{{plate}}. Tap to book." } } },
+
+    { "key": "service_due_soon", "category": "reminder", "channels": {
+      "sms": { "body": "Hi {{customer_first_name}}, {{plate}} is due for a service around {{due_date}}. Book: {{action_link}}" },
+      "whatsapp": { "template_name": "service_due_soon", "category": "UTILITY", "whatsapp_params": ["customer_first_name", "plate", "due_date", "action_link"] },
+      "push": { "title": "Service due soon", "body": "{{plate}} · {{due_date}}" } } },
+    { "key": "service_due", "category": "reminder", "channels": { "sms": { "body": "{{plate}} service is due now. Book at {{garage_name}}: {{action_link}}" }, "whatsapp": { "template_name": "service_due", "category": "UTILITY", "whatsapp_params": ["plate", "action_link"] }, "push": { "title": "Service due", "body": "{{plate}}. Tap to book." } } },
+    { "key": "service_overdue", "category": "reminder", "channels": { "sms": { "body": "{{plate}} service is overdue. Book: {{action_link}}" }, "whatsapp": { "template_name": "service_overdue", "category": "UTILITY", "whatsapp_params": ["plate", "action_link"] }, "push": { "title": "Service overdue", "body": "{{plate}}. Tap to book." } } },
+
+    { "key": "insurance_due_soon", "category": "reminder", "channels": {
+      "sms": { "body": "Hi {{customer_first_name}}, {{plate}} insurance expires {{due_date}} ({{days_left}} days). Renew with {{garage_name}}: {{action_link}}" },
+      "whatsapp": { "template_name": "insurance_due_soon", "category": "UTILITY", "whatsapp_params": ["customer_first_name", "plate", "due_date", "days_left", "action_link"], "body": "🛡️ Hi {{customer_first_name}}, your {{plate}} insurance expires on *{{due_date}}* ({{days_left}} days). Let {{garage_name}} renew it for you — no queues: {{action_link}}" },
+      "email": { "subject": "Insurance for {{plate}} expires {{due_date}}", "body": "Hi {{customer_first_name}},\n\nYour insurance for {{vehicle}} ({{plate}}) expires on {{due_date}}. We can renew it for you: {{action_link}}" },
+      "push": { "title": "Insurance expires in {{days_left}} days", "body": "{{plate}}. Tap to renew." } } },
+    { "key": "insurance_due", "category": "reminder", "channels": { "sms": { "body": "{{plate}} insurance expires TODAY. Don't drive uninsured. Renew: {{action_link}}" }, "whatsapp": { "template_name": "insurance_due", "category": "UTILITY", "whatsapp_params": ["plate", "action_link"] }, "email": { "subject": "Insurance expires today — {{plate}}", "body": "Your insurance for {{plate}} expires today. Renew now: {{action_link}}" }, "push": { "title": "Insurance expires today", "body": "{{plate}}. Tap to renew." } } },
+    { "key": "insurance_overdue", "category": "reminder", "channels": { "sms": { "body": "{{plate}} insurance has expired. Renew quickly with {{garage_name}}: {{action_link}}" }, "whatsapp": { "template_name": "insurance_overdue", "category": "UTILITY", "whatsapp_params": ["plate", "action_link"] }, "email": { "subject": "Insurance expired — {{plate}}", "body": "Your insurance for {{plate}} has expired. Renew: {{action_link}}" }, "push": { "title": "Insurance expired ⚠️", "body": "{{plate}}. Tap to renew." } } },
+
+    { "key": "roadworthy_due_soon", "category": "reminder", "channels": {
+      "sms": { "body": "Hi {{customer_first_name}}, {{plate}} roadworthy expires {{due_date}}. Let {{garage_name}} handle DVLA: {{action_link}}" },
+      "whatsapp": { "template_name": "roadworthy_due_soon", "category": "UTILITY", "whatsapp_params": ["customer_first_name", "plate", "due_date", "action_link"], "body": "📋 Hi {{customer_first_name}}, your {{plate}} roadworthy certificate expires on *{{due_date}}*. We'll check the car and handle DVLA for you: {{action_link}}" },
+      "email": { "subject": "Roadworthy for {{plate}} expires {{due_date}}", "body": "Your roadworthy certificate for {{plate}} expires on {{due_date}}. We can inspect the car and handle the DVLA renewal: {{action_link}}" },
+      "push": { "title": "Roadworthy expires soon", "body": "{{plate}} · {{due_date}}" } } },
+    { "key": "roadworthy_due", "category": "reminder", "channels": { "sms": { "body": "{{plate}} roadworthy expires TODAY. Renew with {{garage_name}}: {{action_link}}" }, "whatsapp": { "template_name": "roadworthy_due", "category": "UTILITY", "whatsapp_params": ["plate", "action_link"] }, "push": { "title": "Roadworthy expires today", "body": "{{plate}}" } } },
+    { "key": "roadworthy_overdue", "category": "reminder", "channels": { "sms": { "body": "{{plate}} roadworthy has expired. Renew: {{action_link}}" }, "whatsapp": { "template_name": "roadworthy_overdue", "category": "UTILITY", "whatsapp_params": ["plate", "action_link"] }, "push": { "title": "Roadworthy expired ⚠️", "body": "{{plate}}" } } },
+
+    { "key": "registration_due_soon", "category": "reminder", "channels": { "sms": { "body": "{{plate}} DVLA registration/licence renewal is due {{due_date}}. Renew with us: {{action_link}}" }, "whatsapp": { "template_name": "registration_due_soon", "category": "UTILITY", "whatsapp_params": ["plate", "due_date", "action_link"] }, "push": { "title": "DVLA renewal due soon", "body": "{{plate}} · {{due_date}}" } } },
+    { "key": "registration_due", "category": "reminder", "channels": { "sms": { "body": "{{plate}} DVLA renewal is due today. Renew: {{action_link}}" }, "whatsapp": { "template_name": "registration_due", "category": "UTILITY", "whatsapp_params": ["plate", "action_link"] }, "push": { "title": "DVLA renewal due today", "body": "{{plate}}" } } },
+    { "key": "registration_overdue", "category": "reminder", "channels": { "sms": { "body": "{{plate}} DVLA renewal is overdue. Renew: {{action_link}}" }, "whatsapp": { "template_name": "registration_overdue", "category": "UTILITY", "whatsapp_params": ["plate", "action_link"] }, "push": { "title": "DVLA renewal overdue", "body": "{{plate}}" } } },
+
+    { "key": "drivers_licence_due_soon", "category": "reminder", "channels": { "sms": { "body": "Hi {{customer_first_name}}, your driver's licence expires {{due_date}}. We can help renew: {{action_link}}" }, "whatsapp": { "template_name": "drivers_licence_due_soon", "category": "UTILITY", "whatsapp_params": ["customer_first_name", "due_date", "action_link"] }, "push": { "title": "Driver's licence expires soon", "body": "{{due_date}}" } } },
+    { "key": "drivers_licence_due", "category": "reminder", "channels": { "sms": { "body": "Your driver's licence expires today. Renew: {{action_link}}" }, "whatsapp": { "template_name": "drivers_licence_due", "category": "UTILITY", "whatsapp_params": ["action_link"] }, "push": { "title": "Driver's licence expires today", "body": "Tap to renew" } } },
+    { "key": "drivers_licence_overdue", "category": "reminder", "channels": { "sms": { "body": "Your driver's licence has expired. Renew: {{action_link}}" }, "whatsapp": { "template_name": "drivers_licence_overdue", "category": "UTILITY", "whatsapp_params": ["action_link"] }, "push": { "title": "Driver's licence expired", "body": "Tap to renew" } } },
+
+    { "key": "custom_due_soon", "category": "reminder", "channels": { "sms": { "body": "Hi {{customer_first_name}}, {{items_list}} for {{plate}} is due {{due_date}}. Book at {{garage_name}}: {{action_link}}" }, "whatsapp": { "template_name": "custom_due_soon", "category": "UTILITY", "whatsapp_params": ["customer_first_name", "items_list", "plate", "due_date", "action_link"] }, "push": { "title": "{{items_list}} due soon", "body": "{{plate}} · {{due_date}}" } } },
+    { "key": "custom_due", "category": "reminder", "channels": { "sms": { "body": "{{items_list}} for {{plate}} is due now. Book: {{action_link}}" }, "whatsapp": { "template_name": "custom_due", "category": "UTILITY", "whatsapp_params": ["items_list", "plate", "action_link"] }, "push": { "title": "{{items_list}} due now", "body": "{{plate}}" } } },
+    { "key": "custom_overdue", "category": "reminder", "channels": { "sms": { "body": "{{items_list}} for {{plate}} is overdue. Book: {{action_link}}" }, "whatsapp": { "template_name": "custom_overdue", "category": "UTILITY", "whatsapp_params": ["items_list", "plate", "action_link"] }, "push": { "title": "{{items_list}} overdue", "body": "{{plate}}" } } },
+
+    { "key": "combined_due", "category": "reminder", "channels": {
+      "sms": { "body": "Hi {{customer_first_name}}, {{plate}} has {{items_list}} due soon. Sort it all at {{garage_name}}: {{action_link}}" },
+      "whatsapp": { "template_name": "combined_due", "category": "UTILITY", "whatsapp_params": ["customer_first_name", "plate", "items_list", "action_link"], "body": "Hi {{customer_first_name}}, heads up for {{plate}}: *{{items_list}}* coming up soon. Handle everything in one visit: {{action_link}}" },
+      "email": { "subject": "{{plate}}: {{items_list}} due soon", "body": "Hi {{customer_first_name}},\n\nA few things are due for your {{vehicle}}: {{items_list}}. Sort them in one go: {{action_link}}" },
+      "push": { "title": "A few things are due", "body": "{{plate}}: {{items_list}}" } } },
+
+    { "key": "mileage_confirm", "category": "reminder", "channels": {
+      "sms": { "body": "Hi {{customer_first_name}}, help us time your next service. What's {{plate}}'s mileage now? Reply with the number or tap {{action_link}}" },
+      "whatsapp": { "template_name": "mileage_confirm", "category": "UTILITY", "whatsapp_params": ["customer_first_name", "plate", "action_link"], "body": "Hi {{customer_first_name}} 👋 Quick one: what's your {{plate}}'s mileage right now? Just reply with the number, or tap {{action_link}}" },
+      "push": { "title": "What's your mileage?", "body": "Update {{plate}} so we remind you at the right time." } } },
+    { "key": "mileage_nudge", "category": "reminder", "channels": {
+      "sms": { "body": "{{garage_name}}: we estimate {{plate}} is at about {{predicted_km}} km. Not right? Update: {{action_link}}" },
+      "whatsapp": { "template_name": "mileage_nudge", "category": "UTILITY", "whatsapp_params": ["plate", "predicted_km", "action_link"] },
+      "push": { "title": "Is this right?", "body": "{{plate}} ≈ {{predicted_km}} km. Tap to update." } } },
+
+    { "key": "instalment_due_soon", "category": "reminder", "channels": { "sms": { "body": "{{garage_name}}: instalment of {{amount}} is due {{due_date}}. Pay with MoMo: {{action_link}}" }, "whatsapp": { "template_name": "instalment_due_soon", "category": "UTILITY", "whatsapp_params": ["amount", "due_date", "action_link"] }, "email": { "subject": "Instalment of {{amount}} due {{due_date}}", "body": "Your next instalment of {{amount}} is due on {{due_date}}. Pay online: {{action_link}}" }, "push": { "title": "Instalment due {{due_date}}", "body": "{{amount}}. Tap to pay." } } },
+    { "key": "instalment_due", "category": "reminder", "channels": { "sms": { "body": "Your instalment of {{amount}} is due today. Pay: {{action_link}}" }, "whatsapp": { "template_name": "instalment_due", "category": "UTILITY", "whatsapp_params": ["amount", "action_link"] }, "push": { "title": "Instalment due today", "body": "{{amount}}" } } },
+    { "key": "instalment_overdue", "category": "reminder", "channels": { "sms": { "body": "Your instalment of {{amount}} is overdue. Pay now to avoid late fees: {{action_link}}" }, "whatsapp": { "template_name": "instalment_overdue", "category": "UTILITY", "whatsapp_params": ["amount", "action_link"] }, "push": { "title": "Instalment overdue", "body": "{{amount}}. Tap to pay." } } },
+
+    { "key": "credit_statement_ready", "category": "reminder", "channels": { "sms": { "body": "{{garage_name}} statement ready. Balance {{balance}}, due {{due_date}}. View & pay: {{action_link}}" }, "whatsapp": { "template_name": "credit_statement_ready", "category": "UTILITY", "whatsapp_params": ["balance", "due_date", "action_link"] }, "email": { "subject": "Your {{garage_name}} statement — {{balance}}", "body": "Your monthly statement is ready. Balance: {{balance}}, due {{due_date}}.\n\nView and pay: {{action_link}}" } } },
+    { "key": "credit_statement_overdue", "category": "reminder", "channels": { "sms": { "body": "Your {{garage_name}} account balance of {{balance}} is overdue. Pay: {{action_link}}" }, "whatsapp": { "template_name": "credit_statement_overdue", "category": "UTILITY", "whatsapp_params": ["balance", "action_link"] }, "email": { "subject": "Overdue balance — {{balance}}", "body": "Your account balance of {{balance}} is overdue. Pay here: {{action_link}}" } } },
+
+    { "key": "renewal_update", "category": "transactional", "channels": { "sms": { "body": "{{plate}} renewal update: {{renewal_status}}. Track: {{action_link}}" }, "whatsapp": { "template_name": "renewal_update", "category": "UTILITY", "whatsapp_params": ["plate", "renewal_status", "action_link"] }, "email": { "subject": "Renewal update for {{plate}}", "body": "Status: {{renewal_status}}. Track progress: {{action_link}}" }, "push": { "title": "Renewal update", "body": "{{plate}}: {{renewal_status}}" } } },
+
+    { "key": "staff_invite", "category": "staff", "channels": { "sms": { "body": "{{staff_name}}, you've been invited to {{garage_name}} on FixAm. Join: {{action_link}}" }, "whatsapp": { "template_name": "staff_invite", "category": "UTILITY", "whatsapp_params": ["staff_name", "garage_name", "action_link"] }, "email": { "subject": "Join {{garage_name}} on FixAm", "body": "Hi {{staff_name}},\n\nYou've been invited to join {{garage_name}}. Accept your invite: {{action_link}}" } } },
+
+    { "key": "allowance_warning", "category": "staff", "channels": { "email": { "subject": "You've used 80% of this month's messages", "body": "{{garage_name}} has used 80% of its monthly message allowance. Add a bundle or upgrade to keep reminders flowing: {{action_link}}" }, "push": { "title": "Messages 80% used", "body": "Top up to keep reminders flowing." } } },
+    { "key": "allowance_exhausted", "category": "staff", "channels": { "email": { "subject": "Message allowance used up", "body": "{{garage_name}} has used all SMS/WhatsApp messages for this month. Reminders now go by push and email only. Top up: {{action_link}}" }, "push": { "title": "Message allowance used up", "body": "Tap to top up." } } }
+  ],
+  "inbound_whatsapp_sms": {
+    "mileage_reply": "If an inbound message from a known customer phone is a number between 1 and 2,000,000 (allowing commas and 'km'), and that customer has a mileage_confirm or mileage_nudge sent in the last 14 days, record it as an odometer reading (source customer_update) for that vehicle and reply 'Thanks! Updated {{plate}} to {{km}} km ✅'. If the customer has several vehicles, reply with a numbered list to choose.",
+    "stop": "STOP / UNSUBSCRIBE turns off that channel for marketing and reminders (not transactional) and replies with a confirmation.",
+    "other": "Forward to the garage inbox as a notification for the service advisor."
+  }
+}

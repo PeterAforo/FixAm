@@ -12,7 +12,7 @@ specs/
   message-templates.json   SMS / WhatsApp / email / push templates + inbound reply rules
   integrations.json        Adapters (Paystack, Hubtel/Arkesel, WhatsApp, Resend, Web Push, Supabase Storage), webhooks, Inngest jobs
   ui-screens.json          Navigation per role and every screen's content
-  design-tokens.json       "Pit Stop Pop" colours, fonts, radius, shadows, motion
+  ui-ux.json               Premium UI/UX spec: tokens, themes, motion, mascot, components, patterns, every surface
   plans.json               Subscription tiers, features, message allowances
   project.config.json      Stack, folder structure, scripts, env vars, conventions
   seed-data.json           Demo garage, staff, customers, vehicles, parts, vendors

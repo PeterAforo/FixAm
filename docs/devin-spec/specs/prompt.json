@@ -13,7 +13,7 @@
       "specs/roles-permissions.json",
       "specs/reminder-rules.json",
       "specs/ui-screens.json",
-      "specs/design-tokens.json",
+      "specs/ui-ux.json",
       "specs/project.config.json",
       "specs/integrations.json",
       "specs/plans.json",
@@ -26,7 +26,13 @@
   },
   "product_context": {
     "market": "Ghana",
-    "currency": { "code": "GHS", "symbol": "GH₵", "minor_unit": "pesewa", "minor_units_per_major": 100, "display_example": "GH₵ 1,250.00" },
+    "currency": {
+      "code": "GHS",
+      "symbol": "GH₵",
+      "minor_unit": "pesewa",
+      "minor_units_per_major": 100,
+      "display_example": "GH₵ 1,250.00"
+    },
     "timezone": "Africa/Accra",
     "locale": "en-GH",
     "language": "English for v1; every UI string goes through the i18n layer so more languages can be added later",
@@ -50,7 +56,7 @@
     "Never commit secrets. All secrets come from environment variables listed in specs/project.config.json. Keep .env.example up to date.",
     "Accessibility: WCAG 2.1 AA, keyboard navigable, visible focus, prefers-reduced-motion respected for all animations.",
     "Mobile first: every staff screen works at 360px width; mechanic screens are optimised for phones with 48px minimum touch targets.",
-    "Use the design tokens in specs/design-tokens.json through Tailwind theme variables. Do not hardcode colours.",
+    "Follow specs/ui-ux.json for all visual design, interaction, motion and copy. Use its tokens through Tailwind theme variables; never hardcode colours, radii, shadows or durations.",
     "TypeScript strict mode, no 'any' without a comment explaining why. ESLint and Prettier must pass.",
     "Write tests as you go: unit tests for business logic (pricing, tax, mileage prediction, reminder scheduling, instalments, credit ageing), integration tests for server actions with RLS, and Playwright e2e for the scenarios in specs/acceptance-tests.json."
   ],
@@ -64,7 +70,13 @@
       "6. After merging a phase, run every acceptance test for that phase in specs/acceptance-tests.json against the Vercel preview and fix failures before starting the next phase.",
       "7. Keep docs/DECISIONS.md (decisions and assumptions), docs/CHANGELOG.md and README.md (setup, scripts, env vars) current."
     ],
-    "check_suite": ["pnpm lint", "pnpm typecheck", "pnpm test", "pnpm test:e2e", "pnpm build"],
+    "check_suite": [
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm test",
+      "pnpm test:e2e",
+      "pnpm build"
+    ],
     "commit_style": "Conventional Commits (feat:, fix:, chore:, refactor:, test:, docs:)."
   },
   "definition_of_done": [
@@ -79,18 +91,9 @@
     "No critical or high Sentry errors in a 48-hour staging soak."
   ],
   "ux_direction": {
-    "name": "Pit Stop Pop",
-    "summary": "Fun, modern, vibrant and captivating for every stakeholder. Bold colour, chunky rounded cards, satisfying micro-interactions, playful illustrations and celebrations, but always fast and clear. Light mode for the front office, dark 'workshop mode' for the floor.",
-    "signature_moments": [
-      "Vehicle health card: car avatar tinted to the real vehicle colour with traffic-light rings for oil, insurance, DVLA and open issues.",
-      "Live repair tracker for customers: delivery-style step progress with photos, mechanic name and ETA.",
-      "Kanban job board with drag-and-drop between statuses and bay lanes.",
-      "Confetti when an invoice is fully paid; engine-rev animation when a job is marked Ready (can be turned off in settings).",
-      "Mechanic gamification: streaks, jobs completed, quality badges, optional weekly leaderboard.",
-      "Illustrated empty states with a clear next action.",
-      "Command palette (Cmd/Ctrl+K) to jump to any plate, phone, customer, job or invoice."
-    ],
-    "details": "specs/design-tokens.json and specs/ui-screens.json"
+    "name": "Pit Stop Pop · Premium",
+    "summary": "Premium, calm and fast for the work; joyful at the moments that matter. Linear/Stripe precision for staff screens, Revolut/Monzo confidence for money, Uber/Bolt live status for customers, Duolingo-style encouragement (Torq the mascot, streaks, badges) for mechanics and customers. Light, dark 'Workshop' and high-contrast 'Sunlight' themes.",
+    "details": "specs/ui-ux.json (authoritative) and specs/ui-screens.json (routes and screen inventory)"
   },
   "out_of_scope_for_v1": [
     "Native iOS/Android apps (PWA only)",

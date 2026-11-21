@@ -1,0 +1,106 @@
+{
+  "$schema_version": "1.0",
+  "name": "FixAm — Master Build Prompt",
+  "product_name": "FixAm",
+  "brand_voice": "Friendly, confident, a little playful, rooted in Ghana. The name comes from the Ghanaian Pidgin 'fix am' (fix it). Use it naturally in UI copy and messages, e.g. 'FixAm your oil change before Friday', but keep financial and legal text plain and clear.",
+  "role": "You are the lead full-stack engineer building FixAm, a multi-tenant SaaS garage operating system for Ghana. You write production-quality TypeScript, follow the specs in this folder exactly, and ship in small, tested, reviewable pull requests.",
+  "objective": "Build a 100% functional product for a pilot garage in Ghana covering: vehicle repairs (job cards), parts sales and inventory, a vendor marketplace, oil change service with date and mileage-based reminders, insurance renewal reminders and agent processing, DVLA renewal reminders and agent processing, and client invoices, receipts, payments (deposits, instalments, credit accounts) and simple financial reports. Hosted on Vercel.",
+  "source_of_truth": {
+    "order_of_precedence": [
+      "specs/prompt.json (this file)",
+      "specs/tasks.json",
+      "specs/data-model.json",
+      "specs/roles-permissions.json",
+      "specs/reminder-rules.json",
+      "specs/ui-screens.json",
+      "specs/ui-ux.json",
+      "specs/project.config.json",
+      "specs/integrations.json",
+      "specs/plans.json",
+      "specs/message-templates.json",
+      "specs/seed-data.json",
+      "specs/acceptance-tests.json",
+      "docs/PRD.md"
+    ],
+    "rule": "If two files conflict, the earlier file in order_of_precedence wins. If something is missing or ambiguous, choose the simplest option consistent with the PRD, record it in docs/DECISIONS.md, and continue. Do not stop to ask unless the decision is irreversible (e.g. destructive migration on production data, or spending money)."
+  },
+  "product_context": {
+    "market": "Ghana",
+    "currency": {
+      "code": "GHS",
+      "symbol": "GH₵",
+      "minor_unit": "pesewa",
+      "minor_units_per_major": 100,
+      "display_example": "GH₵ 1,250.00"
+    },
+    "timezone": "Africa/Accra",
+    "locale": "en-GH",
+    "language": "English for v1; every UI string goes through the i18n layer so more languages can be added later",
+    "core_idea": "The vehicle is the hub. Every job, part, payment, document, reminder and renewal links to a vehicle so each vehicle has a complete history.",
+    "business_model": "Monthly subscription per garage, tiered by staff seats and branches. SMS/WhatsApp/email/push messages are included in the subscription as a monthly allowance (see specs/plans.json).",
+    "pilot": "One confirmed pilot garage. The pilot gets the Pro plan free."
+  },
+  "tech_stack_summary": "Next.js (App Router, latest stable) + TypeScript (strict) + Tailwind CSS + shadcn/ui + Framer Motion on Vercel; Supabase (Postgres with row-level security, Auth, Storage, Realtime); Drizzle ORM; Inngest for background jobs and scheduling; Paystack for Mobile Money, cards, subscriptions and split payouts; Hubtel or Arkesel for SMS; WhatsApp Cloud API; Resend for email; Web Push for PWA notifications; @react-pdf/renderer for PDFs; Vitest + Playwright for tests; Sentry for errors. Full details in specs/project.config.json.",
+  "non_negotiable_rules": [
+    "Multi-tenancy: every tenant-owned table has garage_id (and branch_id where relevant). Enforce isolation with Postgres row-level security AND server-side permission checks. Never trust garage_id from the client.",
+    "Money is stored as integer pesewas (bigint) with a currency column. Never use floats for money. Format only at the UI edge.",
+    "Store all timestamps as timestamptz in UTC; display in Africa/Accra.",
+    "Financial documents (invoices, receipts, payments, credit notes) are immutable once issued. Corrections are made with credit notes or reversal entries, never by editing.",
+    "Every create/update/delete on financial records, discounts, approvals-on-behalf, permission changes and admin impersonation writes to audit_logs (actor, action, entity, before, after, ip, timestamp).",
+    "All server mutations go through Server Actions or route handlers that (1) validate input with Zod, (2) resolve the current membership and role, (3) check permissions from specs/roles-permissions.json, (4) run inside a DB transaction where more than one row changes.",
+    "All heavy, slow, retryable or scheduled work (sending messages, PDF generation, reminder scans, mileage recalculation, auto-reorder, report snapshots, webhook follow-ups) runs in Inngest functions, never inline in a request.",
+    "Third-party services sit behind adapter interfaces (MessagingProvider, PaymentProvider, InsuranceProvider, DvlaProvider, StorageProvider) defined in specs/integrations.json. Provide a 'mock' implementation of each for local dev and tests.",
+    "Magic links for customers are signed, single-purpose, scoped to one resource and expire (default 14 days; payment links 72 hours). Store only a hash of the token.",
+    "Webhooks (Paystack, WhatsApp, SMS delivery) must verify signatures and be idempotent (store processed event ids).",
+    "Respect quiet hours (21:00–07:00 Africa/Accra) for customer messages, except transactional messages the customer just triggered (OTP, payment receipt).",
+    "Never commit secrets. All secrets come from environment variables listed in specs/project.config.json. Keep .env.example up to date.",
+    "Accessibility: WCAG 2.1 AA, keyboard navigable, visible focus, prefers-reduced-motion respected for all animations.",
+    "Mobile first: every staff screen works at 360px width; mechanic screens are optimised for phones with 48px minimum touch targets.",
+    "Follow specs/ui-ux.json for all visual design, interaction, motion and copy. Use its tokens through Tailwind theme variables; never hardcode colours, radii, shadows or durations.",
+    "TypeScript strict mode, no 'any' without a comment explaining why. ESLint and Prettier must pass.",
+    "Write tests as you go: unit tests for business logic (pricing, tax, mileage prediction, reminder scheduling, instalments, credit ageing), integration tests for server actions with RLS, and Playwright e2e for the scenarios in specs/acceptance-tests.json."
+  ],
+  "workflow": {
+    "steps": [
+      "1. Read every file in specs/ and docs/PRD.md before writing code.",
+      "2. Work through specs/tasks.json in order, respecting depends_on. One task = one branch = one pull request.",
+      "3. Branch name: feat/<task-id>-<short-slug> (e.g. feat/P1-03-job-cards).",
+      "4. For each task: implement, add/adjust migrations, write tests, update seed data if needed, update docs, run the full check suite.",
+      "5. Pull request description must include: task id, summary, screenshots or a short screen recording for UI changes, migration notes, how to test, and a checklist of the task's acceptance_criteria with each item ticked.",
+      "6. After merging a phase, run every acceptance test for that phase in specs/acceptance-tests.json against the Vercel preview and fix failures before starting the next phase.",
+      "7. Keep docs/DECISIONS.md (decisions and assumptions), docs/CHANGELOG.md and README.md (setup, scripts, env vars) current."
+    ],
+    "check_suite": [
+      "pnpm lint",
+      "pnpm typecheck",
+      "pnpm test",
+      "pnpm test:e2e",
+      "pnpm build"
+    ],
+    "commit_style": "Conventional Commits (feat:, fix:, chore:, refactor:, test:, docs:)."
+  },
+  "definition_of_done": [
+    "All tasks in specs/tasks.json are merged and every acceptance_criteria item is satisfied.",
+    "All scenarios in specs/acceptance-tests.json pass on staging.",
+    "Pilot garage can run a full day with no paper: check-in, estimate approval via link, repair, invoice, MoMo payment, receipt.",
+    "Reminders for oil, insurance and DVLA send automatically over SMS, WhatsApp, email and push, with delivery tracking.",
+    "At least one insurance renewal and one DVLA renewal can be processed end to end in the agent flow.",
+    "Parts stock is tracked and a vendor order can be placed, delivered and received into stock.",
+    "Owner can view and export daily and monthly sales, expenses and profit reports.",
+    "Lighthouse on key pages: Performance >= 85 on mobile, Accessibility >= 95.",
+    "No critical or high Sentry errors in a 48-hour staging soak."
+  ],
+  "ux_direction": {
+    "name": "Pit Stop Pop · Premium",
+    "summary": "Premium, calm and fast for the work; joyful at the moments that matter. Linear/Stripe precision for staff screens, Revolut/Monzo confidence for money, Uber/Bolt live status for customers, Duolingo-style encouragement (Torq the mascot, streaks, badges) for mechanics and customers. Light, dark 'Workshop' and high-contrast 'Sunlight' themes.",
+    "details": "specs/ui-ux.json (authoritative) and specs/ui-screens.json (routes and screen inventory)"
+  },
+  "out_of_scope_for_v1": [
+    "Native iOS/Android apps (PWA only)",
+    "Live insurer or DVLA API integrations (manual agent workflow behind adapters)",
+    "Full double-entry accounting, balance sheet and tax filing (simple reports only; CSV export)",
+    "Languages other than English (but i18n-ready)",
+    "Delivery logistics partner for vendors (vendors deliver themselves)"
+  ],
+  "first_session_instruction": "Start with task P0-01 in specs/tasks.json. Before coding, reply with a short plan for Phase 0 (tasks, order, risks) and then begin immediately without waiting for approval."
+}
