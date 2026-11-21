@@ -129,6 +129,12 @@
   --radius-4xl: 36px;
   --radius-pill: 9999px;
 
+  /* Gradients — spec: ignite, ignite_glow, volt_success, carbon_hero */
+  --gradient-ignite: linear-gradient(135deg, #FF7A3D 0%, #FF5A1F 45%, #ED4410 100%);
+  --gradient-ignite-glow: radial-gradient(60% 60% at 50% 0%, rgba(255,90,31,0.35) 0%, rgba(255,90,31,0) 100%);
+  --gradient-volt-success: linear-gradient(135deg, #DCFA7A 0%, #C6F432 100%);
+  --gradient-carbon-hero: linear-gradient(180deg, #151C36 0%, #0A0F1E 100%);
+
   /* Elevation — soft layered shadows + hairline (spec levels 1–4, pop, glow) */
   --shadow-1: 0 1px 2px rgb(16 24 40 / 0.06), 0 0 0 1px var(--hairline, rgb(26 24 22 / 0.08));
   --shadow-2: 0 4px 12px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.04), 0 0 0 1px var(--hairline, rgb(26 24 22 / 0.08));
@@ -390,5 +396,18 @@
   }
   html {
     @apply font-sans;
+  }
+
+  /* Torq idle blink — 4–7s random-ish cadence via two keyframe loops */
+  .torq-eyes {
+    transform-origin: center;
+    animation: torq-blink 5.5s ease-in-out infinite;
+  }
+  @keyframes torq-blink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.15); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .torq-eyes { animation: none; }
   }
 }

@@ -1,17 +1,41 @@
+import { cva, type VariantProps } from "class-variance-authority"
 import type * as React from "react"
 import { cn } from "@/lib/utils"
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      className={cn(
-        "rounded-xl border-2 border-border bg-card text-card-foreground shadow-chunky transition-transform duration-base ease-spring",
-        "hover:-translate-y-0.5",
-        className
-      )}
-      {...props}
-    />
-  )
+const cardVariants = cva("rounded-2xl text-card-foreground", {
+  variants: {
+    variant: {
+      /** Elevation 1 — default work surface. */
+      default: "border border-border bg-card shadow-1",
+      /** Hover lift + press — tappable cards. */
+      interactive:
+        "border border-border bg-card shadow-1 transition-[transform,box-shadow] duration-fast hover:shadow-2 active:scale-[0.99]",
+      /** Elevation 2 — raised emphasis. */
+      raised: "border border-border bg-card shadow-2",
+      /** Gradient money card — white text. */
+      money: "border border-transparent bg-[image:var(--gradient-ignite)] text-white shadow-3",
+      /** Playful pop — chunky offset shadow for badges/empty states. */
+      pop: "border-2 border-foreground bg-card shadow-pop",
+      /** Glass — for bars over imagery. */
+      glass: "border border-white/20 bg-white/70 shadow-2 backdrop-blur-md",
+    },
+    padding: {
+      none: "",
+      sm: "p-4",
+      md: "p-5",
+      lg: "p-6",
+    },
+  },
+  defaultVariants: { variant: "default", padding: "none" },
+})
+
+function Card({
+  className,
+  variant,
+  padding,
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof cardVariants>) {
+  return <div className={cn(cardVariants({ variant, padding }), className)} {...props} />
 }
 
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
@@ -21,7 +45,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
 function CardTitle({ className, ...props }: React.ComponentProps<"h3">) {
   return (
     <h3
-      className={cn("font-display text-xl font-bold leading-tight tracking-tight", className)}
+      className={cn("font-display text-lg font-semibold leading-tight tracking-tight", className)}
       {...props}
     />
   )
@@ -36,7 +60,7 @@ function CardContent({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("flex items-center p-6 pt-0", className)} {...props} />
+  return <div className={cn("flex items-center gap-3 p-6 pt-0", className)} {...props} />
 }
 
-export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, cardVariants }

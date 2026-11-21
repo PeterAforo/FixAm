@@ -5,7 +5,7 @@ import { useReducedMotion } from "framer-motion"
 
 // Mirrors the Pit Stop Pop brand tokens — canvas-confetti needs literal
 // colours (CSS vars are not resolved for canvas fills).
-const BRAND_COLORS = ["#FF5A1F", "#00C2B8", "#C6F432", "#FFB020", "#FF3B5C", "#0B1B3F"]
+const BRAND_COLORS = ["#FF5A1F", "#00C2B8", "#C6F432", "#FFB020", "#FF3B5C", "#1A1816"]
 
 /** Fire a brand-colour confetti burst. No-op when reduced motion is preferred. */
 export function fireConfetti(origin?: { x: number; y: number }) {

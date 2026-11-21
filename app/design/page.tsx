@@ -3,10 +3,13 @@
 import { notFound } from "next/navigation"
 import type { ReactNode } from "react"
 import {
-  Button, Card, CardContent,
-  StatusPill, PlateChip, MoneyText, StatTile, Stepper, EmptyState,
-  CarAvatar, VehicleHealthCard, ThemeToggle, fireConfetti,
+  Avatar, Badge, Button, Card, CardContent, CarAvatar,
+  EmptyState, HealthRing, KenteDivider, MoneyCard, MoneyText,
+  OfflineBanner, PlateChip, ProgressBar, StatTile, StatusPill, Stepper,
+  StreakFlame, SyncBadge, Torq, VehicleHealthCard, ThemeToggle, fireConfetti,
 } from "@/components/brand"
+import type { TorqPose } from "@/components/brand/torq"
+import { CreditCard, Droplets, ShieldCheck, Wrench } from "lucide-react"
 
 const JOB_STATUSES = ["booked", "in_progress", "awaiting_approval", "approved", "completed"]
 const DUE_STATUSES = ["upcoming", "due_soon", "overdue", "done"]
@@ -211,24 +214,122 @@ export default function DesignPage() {
         </CardContent></Card>
       </Section>
 
-      <Section title="Buttons — variants & states">
-        <Card><CardContent className="flex flex-wrap items-center gap-4 p-6">
-          {(["primary", "secondary", "accent", "ghost", "danger"] as const).map((v) => (
-            <Button key={v} variant={v}>{v}</Button>
+      <Section title="Torq — mascot poses">
+        <Card><CardContent className="flex flex-wrap items-end gap-6 p-6">
+          {(["wave", "thumbs_up", "celebrate", "thinking", "sleeping", "magnifier", "toolbox", "delivery", "oops", "cool_shades"] as TorqPose[]).map((p) => (
+            <div key={p} className="flex flex-col items-center gap-1">
+              <Torq pose={p} size={72} />
+              <span className="font-mono text-[10px] text-muted-foreground">{p}</span>
+            </div>
           ))}
-          <Button size="sm">small</Button>
-          <Button size="lg">large</Button>
-          <Button disabled>disabled</Button>
-          <Button onClick={() => fireConfetti()}>Confetti!</Button>
         </CardContent></Card>
       </Section>
 
-      <Section title="Status pills — all domains">
-        <Card><CardContent className="space-y-3 p-6">
-          <div className="flex flex-wrap gap-2">{JOB_STATUSES.map((s) => <StatusPill key={s} status={s} />)}</div>
-          <div className="flex flex-wrap gap-2">{DUE_STATUSES.map((s) => <StatusPill key={s} status={s} />)}</div>
-          <div className="flex flex-wrap gap-2">{PAYMENT_STATUSES.map((s) => <StatusPill key={s} status={s} />)}</div>
+      <Section title="Buttons — variants, sizes & states">
+        <Card><CardContent className="space-y-4 p-6">
+          <div className="flex flex-wrap items-center gap-3">
+            {(["primary", "secondary", "tonal", "accent", "ghost", "danger", "success", "link"] as const).map((v) => (
+              <Button key={v} variant={v}>{v}</Button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button size="sm">sm · 36</Button>
+            <Button size="md">md · 44</Button>
+            <Button size="lg">lg · 52</Button>
+            <Button size="xl">xl · 60</Button>
+            <Button loading>loading</Button>
+            <Button disabled>disabled</Button>
+            <Button onClick={() => fireConfetti()}>Confetti!</Button>
+          </div>
         </CardContent></Card>
+      </Section>
+
+      <Section title="Cards — variants">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Card variant="default" className="p-5"><p className="font-bold">default · elevation 1</p><p className="text-sm text-muted-foreground">Standard work surface</p></Card>
+          <Card variant="interactive" className="p-5"><p className="font-bold">interactive</p><p className="text-sm text-muted-foreground">Hover lift, press 0.99</p></Card>
+          <Card variant="raised" className="p-5"><p className="font-bold">raised · elevation 2</p></Card>
+          <Card variant="money" className="p-5"><p className="font-bold">money · ignite gradient</p><p className="text-sm text-white/70">Revolut-style</p></Card>
+          <Card variant="pop" className="p-5"><p className="font-bold">pop</p><p className="text-sm text-muted-foreground">Playful offset shadow</p></Card>
+          <Card variant="glass" className="bg-ignition-100/40 p-5"><p className="font-bold">glass</p><p className="text-sm text-muted-foreground">For bars over imagery</p></Card>
+        </div>
+      </Section>
+
+      <Section title="Status pills — subtle & solid">
+        <Card><CardContent className="space-y-3 p-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="w-16 text-xs text-muted-foreground">subtle</span>
+            {JOB_STATUSES.map((s) => <StatusPill key={s} status={s} />)}
+            {DUE_STATUSES.map((s) => <StatusPill key={s} status={s} />)}
+            {PAYMENT_STATUSES.map((s) => <StatusPill key={s} status={s} />)}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="w-16 text-xs text-muted-foreground">solid</span>
+            {JOB_STATUSES.slice(0, 3).map((s) => <StatusPill key={s} status={s} variant="solid" />)}
+            {PAYMENT_STATUSES.map((s) => <StatusPill key={s} status={s} variant="solid" />)}
+          </div>
+        </CardContent></Card>
+      </Section>
+
+      <Section title="Money — cards, text & plan progress">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <MoneyCard label="Collected today" pesewas={425000n} delta={12} deltaLabel="vs yesterday" tone="ignite" sparkline={[10, 14, 9, 18, 22, 19, 25]} />
+          <MoneyCard label="Outstanding" pesewas={1830000n} tone="carbon" />
+          <MoneyCard label="On credit" pesewas={960000n} tone="turbo" />
+          <MoneyCard label="Plans active" pesewas={320000n} tone="violet" />
+        </div>
+        <Card><CardContent className="flex flex-wrap items-center gap-6 p-6">
+          <PlateChip plate="gr 1234-24" />
+          <PlateChip plate="GR 1234-24" size="lg" />
+          <MoneyText pesewas={125000n} className="text-2xl" />
+          <MoneyText pesewas={-5000n} />
+        </CardContent></Card>
+        <Card><CardContent className="space-y-3 p-6">
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Instalment plan · 4 of 6 paid</p>
+          <ProgressBar segments={[{ paid: 1 }, { paid: 1 }, { paid: 1 }, { paid: 0.6 }, { paid: 0, overdue: true }, { paid: 0 }]} />
+          <div className="flex gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-success" />paid</span>
+            <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-warning" />due</span>
+            <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-danger" />overdue</span>
+          </div>
+        </CardContent></Card>
+      </Section>
+
+      <Section title="Gamification — streak, badges, rings">
+        <Card><CardContent className="flex flex-wrap items-center gap-8 p-6">
+          <StreakFlame count={6} />
+          <StreakFlame count={2} atRisk />
+          <div className="flex gap-4">
+            <Badge label="First Fix" unlocked />
+            <Badge label="Speed Demon" unlocked={false} progress={0.6} />
+            <Badge label="Century" unlocked={false} progress={0.1} />
+          </div>
+          <div className="flex gap-4">
+            <HealthRing value={82} status="ok" label="Oil"><Droplets className="size-4 text-foreground" /></HealthRing>
+            <HealthRing value={55} status="soon" label="Insurance"><ShieldCheck className="size-4 text-foreground" /></HealthRing>
+            <HealthRing value={0} status="overdue" label="DVLA"><CreditCard className="size-4 text-foreground" /></HealthRing>
+            <HealthRing value={40} status="unknown" label="Issues"><Wrench className="size-4 text-foreground" /></HealthRing>
+          </div>
+        </CardContent></Card>
+      </Section>
+
+      <Section title="People & sync">
+        <Card><CardContent className="flex flex-wrap items-center gap-6 p-6">
+          <Avatar name="Kwame Mensah" online />
+          <Avatar name="Abena Owusu" />
+          <Avatar name="Yaw Boateng" online={false} size={48} />
+          <span className="flex flex-col gap-1">
+            <SyncBadge state="queued" />
+            <SyncBadge state="syncing" />
+            <SyncBadge state="synced" />
+            <SyncBadge state="failed" onRetry={() => {}} />
+          </span>
+        </CardContent></Card>
+        <OfflineBanner queueCount={3} />
+      </Section>
+
+      <Section title="Kente divider">
+        <KenteDivider />
       </Section>
 
       <Section title="Plates & money">

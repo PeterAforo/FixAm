@@ -17,7 +17,18 @@ describe("Button", () => {
       unmount()
     }
     render(<Button size="lg">big</Button>)
-    expect(screen.getByRole("button", { name: "big" }).className).toContain("min-h-14")
+    expect(screen.getByRole("button", { name: "big" }).className).toContain("min-h-[52px]")
+  })
+
+  it("supports premium variants and loading state", () => {
+    for (const v of ["tonal", "success", "link"] as const) {
+      const { unmount } = render(<Button variant={v}>{v}</Button>)
+      expect(screen.getByRole("button", { name: v })).toBeInTheDocument()
+      unmount()
+    }
+    render(<Button loading>Saving</Button>)
+    expect(screen.getByRole("button", { name: "Saving" })).toHaveAttribute("aria-busy", "true")
+    expect(screen.getByRole("button", { name: "Saving" })).toBeDisabled()
   })
 
   it("handles clicks and disabled state", async () => {
@@ -37,9 +48,14 @@ describe("StatusPill", () => {
         <StatusPill status="in_progress" />
       </>
     )
-    expect(screen.getByText("overdue")).toHaveClass("bg-danger")
+    expect(screen.getByText("overdue")).toHaveClass("bg-danger-subtle")
+    expect(screen.getByText("paid")).toHaveClass("bg-success-subtle")
+    expect(screen.getByText("in progress")).toHaveClass("bg-primary-subtle")
+  })
+
+  it("solid variant uses saturated tones", () => {
+    render(<StatusPill status="paid" variant="solid" />)
     expect(screen.getByText("paid")).toHaveClass("bg-success")
-    expect(screen.getByText("in progress")).toHaveClass("bg-accent")
   })
 })
 
@@ -47,7 +63,7 @@ describe("PlateChip", () => {
   it("normalizes and displays plates", () => {
     expect(normalizePlate("  gr 1234-24 ")).toBe("GR 1234-24")
     render(<PlateChip plate="gr-5678-25" />)
-    expect(screen.getByText("GR-5678-25")).toHaveClass("font-mono", "bg-plate")
+    expect(screen.getByText("GR-5678-25")).toHaveClass("font-mono", "border-carbon-800")
   })
 })
 
