@@ -36,6 +36,7 @@ import { uuidv7 } from "@/lib/id"
 import { canTransitionJob, type JobStatus } from "./transitions"
 import { buildInvoiceFromJob } from "@/lib/money/invoice-core"
 import { issueReservedStock } from "@/lib/parts/stock"
+import { closeDueItem } from "@/lib/reminders/engine"
 import { storageProvider } from "@/lib/integrations/storage"
 
 const staffPrincipal = (role: StaffRole, garageId: string, branchId: string | null) =>
@@ -503,6 +504,18 @@ export async function updateJobStatus(rawInput: unknown): Promise<ActionResult<{
           sourceId: jobId,
         })
       }
+    }
+  }
+
+  // delivered → complete the due item that triggered this job (via booking.dueItemId)
+  if (toStatus === "delivered" && job.bookingId) {
+    try {
+      const [b] = await db().select({ dueItemId: bookings.dueItemId }).from(bookings).where(eq(bookings.id, job.bookingId)).limit(1)
+      if (b?.dueItemId) {
+        await closeDueItem(b.dueItemId, "completed", "completed via job delivery")
+      }
+    } catch (e) {
+      console.error("[jobs] due-item completion on delivery failed", e)
     }
   }
 

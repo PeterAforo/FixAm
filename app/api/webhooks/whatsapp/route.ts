@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { verifyWhatsAppSignature } from "@/lib/integrations/webhooks"
+import { applyDeliveryStatus } from "@/lib/messaging/delivery-status"
 import {
   markWebhookError,
   markWebhookProcessed,
@@ -53,7 +54,16 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Status updates + inbound messages (mileage replies) — wired in P4.
+    // Status updates: entry[].changes[].value.statuses[] = {id, status, ...}
+    const statuses = (payload.entry ?? []).flatMap((e) =>
+      (e.changes ?? []).flatMap((c) =>
+        ((c.value as { statuses?: Array<{ id?: string; status?: string }> } | undefined)?.statuses ?? [])
+      )
+    )
+    for (const s of statuses) {
+      if (s.id && s.status) await applyDeliveryStatus(s.id, s.status)
+    }
+    // Inbound messages (mileage replies) handled in P4-03.
     await markWebhookProcessed("whatsapp", eventId)
     return NextResponse.json({ received: true })
   } catch (e) {

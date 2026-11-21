@@ -7,6 +7,7 @@ import {
   creditAccounts,
   creditStatements,
   customers,
+  dueItems,
   invoices,
   payments,
 } from "@/lib/db/schema"
@@ -254,6 +255,22 @@ export async function creditAccountPayment(rawInput: unknown): Promise<ActionRes
   await db().update(creditAccounts).set({
     balance: newBalance < 0n ? 0n : newBalance, updatedAt: new Date(),
   }).where(eq(creditAccounts.id, acct.id))
+
+  // auto-complete open credit_statement due items once the balance is cleared
+  if (newBalance <= 0n) {
+    try {
+      await db().update(dueItems).set({
+        status: "completed", completedAt: new Date(), updatedAt: new Date(),
+      }).where(and(
+        eq(dueItems.garageId, d.garageId),
+        eq(dueItems.customerId, acct.customerId),
+        eq(dueItems.type, "credit_statement"),
+        inArray(dueItems.status, ["scheduled", "due_soon", "due", "overdue"]),
+      ))
+    } catch (e) {
+      console.error("[credit] due-item completion failed", e)
+    }
+  }
 
   await writeAuditLog({
     garageId: d.garageId, actorUserId: userId, action: "credit_account.payment",

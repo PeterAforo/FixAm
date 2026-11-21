@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { verifySmsWebhook } from "@/lib/integrations/webhooks"
+import { applyDeliveryStatus } from "@/lib/messaging/delivery-status"
 import {
   markWebhookError,
   markWebhookProcessed,
@@ -38,7 +39,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Delivery reports — wired when the SMS provider lands (P0-08 real adapter).
+    // Delivery reports — update message_sends/message_logs by provider id.
+    const mid = body.messageId ?? (typeof body.id === "string" ? body.id : undefined)
+    if (mid && body.status) {
+      await applyDeliveryStatus(String(mid), String(body.status))
+    }
     await markWebhookProcessed("sms", eventId)
     return NextResponse.json({ received: true })
   } catch (e) {
