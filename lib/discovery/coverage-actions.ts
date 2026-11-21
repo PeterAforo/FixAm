@@ -2,7 +2,7 @@
 import { z } from "zod"
 import { and, eq } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { garageVehicleCoverage, vehicleMakes, vehicleModels } from "@/lib/db/schema"
+import { garageReviews, garageVehicleCoverage, vehicleMakes, vehicleModels } from "@/lib/db/schema"
 import { writeAuditLog, resolveMembership, type ActionResult } from "@/lib/actions"
 import { getSessionUserId } from "@/lib/auth/ensure-user"
 import { can, type StaffRole } from "@/lib/auth/permissions"
@@ -133,4 +133,37 @@ export async function removeGarageCoverage(rawInput: unknown): Promise<ActionRes
   await db().update(garageVehicleCoverage).set({ isActive: false, updatedAt: new Date() }).where(eq(garageVehicleCoverage.id, coverageId))
   await writeAuditLog({ garageId, actorUserId: userId, action: "coverage.remove", entityType: "garage_vehicle_coverage", entityId: coverageId, before: { make: row.make, model: row.model } })
   return { ok: true, data: { id: coverageId } }
+}
+
+const reviewStatusSchema = z.object({
+  garageId: z.string().uuid(),
+  reviewId: z.string().uuid(),
+  status: z.enum(["published", "hidden"]),
+})
+
+/** Hide or republish a customer review (owner moderation). */
+export async function setGarageReviewStatus(rawInput: unknown): Promise<ActionResult<{ id: string }>> {
+  const userId = await getSessionUserId()
+  if (!userId) return { ok: false, error: { code: "UNAUTHENTICATED", message: "Sign in first" } }
+
+  const parsed = reviewStatusSchema.safeParse(rawInput)
+  if (!parsed.success) {
+    return { ok: false, error: { code: "VALIDATION", message: "Invalid input" } }
+  }
+  const { garageId, reviewId, status } = parsed.data
+
+  const ctx = await requireManager(userId, garageId)
+  if (!ctx) return { ok: false, error: { code: "FORBIDDEN", message: "Only the garage owner can moderate reviews" } }
+
+  const [row] = await db()
+    .select({ id: garageReviews.id, status: garageReviews.status })
+    .from(garageReviews)
+    .where(and(eq(garageReviews.id, reviewId), eq(garageReviews.garageId, garageId)))
+    .limit(1)
+  if (!row) return { ok: false, error: { code: "NOT_FOUND", message: "Review not found" } }
+  if (row.status === status) return { ok: true, data: { id: reviewId } }
+
+  await db().update(garageReviews).set({ status, updatedAt: new Date() }).where(eq(garageReviews.id, reviewId))
+  await writeAuditLog({ garageId, actorUserId: userId, action: `review.${status === "hidden" ? "hide" : "publish"}`, entityType: "garage_review", entityId: reviewId })
+  return { ok: true, data: { id: reviewId } }
 }

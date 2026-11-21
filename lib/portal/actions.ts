@@ -156,6 +156,53 @@ export async function portalUpdateMileage(rawInput: unknown): Promise<ActionResu
 }
 
 /**
+ * P6-05 — customer review of a garage they have visited. One review per
+ * garage per portal phone; resubmitting updates it. Only garages where the
+ * portal user is a customer record can be reviewed.
+ */
+export async function submitGarageReview(rawInput: unknown): Promise<ActionResult<{ ok: true }>> {
+  const parsed = z.object({
+    garageId: z.string().uuid(),
+    rating: z.number().int().min(1).max(5),
+    comment: z.string().max(1000).optional().or(z.literal("")),
+  }).safeParse(rawInput)
+  if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Pick a rating from 1 to 5" } }
+
+  const phone = await getPortalPhone()
+  if (!phone) return { ok: false, error: { code: "UNAUTHENTICATED", message: "Portal session required" } }
+
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`portal-review:${phone}`, 10, 3600)
+  if (!rl.ok) return rateLimited(rl)
+
+  // Must be a customer of this garage
+  const [cust] = await db()
+    .select({ id: customers.id })
+    .from(customers)
+    .where(and(eq(customers.phone, phone), eq(customers.garageId, parsed.data.garageId)))
+    .limit(1)
+  if (!cust) return { ok: false, error: { code: "FORBIDDEN", message: "You can only review garages you've visited" } }
+
+  const { garageReviews } = await import("@/lib/db/schema")
+  const comment = parsed.data.comment?.trim() || null
+  await db()
+    .insert(garageReviews)
+    .values({
+      garageId: parsed.data.garageId,
+      portalPhone: phone,
+      customerId: cust.id,
+      rating: parsed.data.rating,
+      comment,
+      status: "published",
+    })
+    .onConflictDoUpdate({
+      target: [garageReviews.garageId, garageReviews.portalPhone],
+      set: { rating: parsed.data.rating, comment, customerId: cust.id, status: "published", updatedAt: new Date() },
+    })
+  return { ok: true, data: { ok: true as const } }
+}
+
+/**
  * P5-04 — fleet manager bulk approval. Approves every pending estimate on
  * vehicles owned by this portal user's fleet customer records.
  */

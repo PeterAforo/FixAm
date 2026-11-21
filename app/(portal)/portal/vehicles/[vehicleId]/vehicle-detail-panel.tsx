@@ -5,7 +5,7 @@ import { useState, useTransition } from "react"
 import { Button } from "@/components/brand/button"
 import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill } from "@/components/brand/status-pill"
-import { portalUpdateMileage } from "@/lib/portal/actions"
+import { portalUpdateMileage, submitGarageReview } from "@/lib/portal/actions"
 
 const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
 const fmtDate = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("en-GH", { day: "numeric", month: "short", year: "numeric" }) : "—")
@@ -22,11 +22,37 @@ type Data = {
 
 type MatchingGarage = { id: string; slug: string; name: string; city: string | null; region: string | null; ratingAvg: number | null; reviewCount: number }
 
-export function VehicleDetailPanel({ data, matchingGarages = [] }: { data: Data; matchingGarages?: MatchingGarage[] }) {
+export function VehicleDetailPanel({
+  data,
+  matchingGarages = [],
+  garageId,
+  garageName,
+  existingReview = null,
+}: {
+  data: Data
+  matchingGarages?: MatchingGarage[]
+  garageId: string
+  garageName: string
+  existingReview?: { rating: number; comment: string | null } | null
+}) {
   const [pending, startTransition] = useTransition()
   const [mileage, setMileage] = useState("")
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [rating, setRating] = useState(existingReview?.rating ?? 0)
+  const [reviewText, setReviewText] = useState(existingReview?.comment ?? "")
+  const [reviewMsg, setReviewMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const v = data.vehicle
+
+  function submitReview(e: React.FormEvent) {
+    e.preventDefault()
+    if (rating < 1) { setReviewMsg({ ok: false, text: "Pick a star rating" }); return }
+    setReviewMsg(null)
+    startTransition(async () => {
+      const res = await submitGarageReview({ garageId, rating, comment: reviewText })
+      if (!res.ok) { setReviewMsg({ ok: false, text: res.error.message }); return }
+      setReviewMsg({ ok: true, text: "Thanks — your review was posted." })
+    })
+  }
 
   function submitMileage(e: React.FormEvent) {
     e.preventDefault()
@@ -143,6 +169,35 @@ export function VehicleDetailPanel({ data, matchingGarages = [] }: { data: Data;
           </ul>
         </CardContent></Card>
       )}
+
+      {/* Rate this garage */}
+      <Card><CardContent className="p-4">
+        <h2 className="font-display text-base font-bold">Rate {garageName}</h2>
+        <form onSubmit={submitReview} className="mt-2 space-y-2">
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setRating(n)}
+                className={`text-2xl leading-none ${n <= rating ? "text-warning" : "text-muted-foreground/40"}`}
+                aria-label={`${n} star${n === 1 ? "" : "s"}`}
+              >
+                ★
+              </button>
+            ))}
+          </div>
+          <textarea
+            className={`${inputCls} min-h-20`}
+            placeholder="How was your experience? (optional)"
+            value={reviewText}
+            onChange={(e) => setReviewText(e.target.value)}
+            maxLength={1000}
+          />
+          <Button type="submit" disabled={pending || rating === 0}>{existingReview ? "Update review" : "Post review"}</Button>
+        </form>
+        {reviewMsg && <p className={`mt-2 text-sm font-semibold ${reviewMsg.ok ? "text-success" : "text-danger"}`}>{reviewMsg.text}</p>}
+      </CardContent></Card>
 
       {/* Garages that service this car */}
       {(data.vehicle.catalogMakeId || data.vehicle.catalogModelId) && matchingGarages.length > 0 && (
