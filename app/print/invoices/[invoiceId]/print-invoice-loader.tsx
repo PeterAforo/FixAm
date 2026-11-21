@@ -65,6 +65,14 @@ export async function PrintInvoiceLoader({
         <a href={`/print/invoices/${inv.id}${thermal ? "" : "?format=thermal"}`} className="rounded-lg border px-3 py-1.5 text-sm">
           {thermal ? "A4 view" : "80mm view"}
         </a>
+        <a
+          href={`/api/pdf/invoices/${inv.id}${thermal ? "?format=thermal" : ""}`}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-lg border px-3 py-1.5 text-sm font-semibold"
+        >
+          Download PDF
+        </a>
       </div>
 
       {/* Header */}
