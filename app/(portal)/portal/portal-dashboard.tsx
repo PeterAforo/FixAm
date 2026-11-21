@@ -6,7 +6,7 @@ import { Button } from "@/components/brand/button"
 import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill } from "@/components/brand/status-pill"
 import { VehicleHealthCard } from "@/components/brand/vehicle-health-card"
-import { portalLogout, updatePortalPreferences } from "@/lib/portal/actions"
+import { portalLogout, portalApproveFleetEstimates, updatePortalPreferences } from "@/lib/portal/actions"
 
 const gh = (n: number | null) => (n != null ? `GH₵ ${(n / 100).toLocaleString("en-GH", { minimumFractionDigits: 2 })}` : "—")
 const fmtDate = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("en-GH", { day: "numeric", month: "short", year: "numeric" }) : "—")
@@ -23,7 +23,16 @@ export type PortalData = {
   renewals: { id: string; garageId: string; kind: string; status: string; number: string; vehicleId: string; total: number | null; garageName: string }[]
 }
 
-export function PortalDashboard({ phone, data }: { phone: string; data: PortalData }) {
+export type FleetEstimate = { id: string; number: string; version: number; total: number; status: string; vehicleId: string; plateNumber: string }
+export type FleetData = {
+  customer: { id: string; garageId: string; fullName: string; companyName: string | null; phone: string; garageName: string; garageSlug: string }
+  featureEnabled: boolean
+  vehicles: { id: string; plateNumber: string; make: string; model: string; year: number | null; lastOdometerKm: number | null; jobsCount: number; totalSpend: number }[]
+  pendingEstimates: FleetEstimate[]
+  credit: { balance: number; creditLimit: number; status: string } | null
+}
+
+export function PortalDashboard({ phone, data, fleets = [] }: { phone: string; data: PortalData; fleets?: FleetData[] }) {
   const [pending, startTransition] = useTransition()
   const [msg, setMsg] = useState<string | null>(null)
   const first = data.customers[0]
@@ -49,6 +58,21 @@ export function PortalDashboard({ phone, data }: { phone: string; data: PortalDa
     startTransition(async () => { await portalLogout(); window.location.reload() })
   }
 
+  const [selectedEstimates, setSelectedEstimates] = useState<string[]>([])
+  const [approveMsg, setApproveMsg] = useState<string | null>(null)
+
+  function approveSelected() {
+    if (!selectedEstimates.length) return
+    setApproveMsg(null)
+    startTransition(async () => {
+      const res = await portalApproveFleetEstimates({ estimateIds: selectedEstimates })
+      if (!res.ok) { setApproveMsg(res.error.message); return }
+      setApproveMsg(`Approved ${res.data.approved} estimate${res.data.approved === 1 ? "" : "s"}.`)
+      setSelectedEstimates([])
+      window.location.reload()
+    })
+  }
+
   return (
     <main className="mx-auto max-w-5xl p-4 md:p-8">
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -61,6 +85,77 @@ export function PortalDashboard({ phone, data }: { phone: string; data: PortalDa
         </div>
       </header>
       {msg && <p className="mt-3 text-sm font-semibold text-success">{msg}</p>}
+
+      {/* Fleet view */}
+      {fleets.map((f) => (
+        <section key={f.customer.id} className="mt-8">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="font-display text-lg font-bold">Fleet · {f.customer.companyName ?? f.customer.fullName}</h2>
+              <p className="text-sm text-muted-foreground">{f.customer.garageName} · {f.vehicles.length} vehicles</p>
+            </div>
+            {f.credit && (
+              <p className="text-sm">
+                Credit balance <span className="font-bold">{gh(f.credit.balance)}</span>
+                <span className="text-muted-foreground"> / {gh(f.credit.creditLimit)} limit</span>
+              </p>
+            )}
+          </div>
+
+          {!f.featureEnabled && (
+            <p className="mt-3 rounded-xl border-2 border-border bg-card p-4 text-sm text-muted-foreground">
+              Fleet management isn&apos;t enabled on this garage&apos;s plan — ask them to upgrade to Pro.
+            </p>
+          )}
+
+          {f.featureEnabled && f.pendingEstimates.length > 0 && (
+            <Card className="mt-3"><CardContent className="p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-semibold">Estimates awaiting approval ({f.pendingEstimates.length})</h3>
+                <Button size="sm" onClick={approveSelected} disabled={pending || selectedEstimates.length === 0}>
+                  Approve selected ({selectedEstimates.length})
+                </Button>
+              </div>
+              {approveMsg && <p className="mt-2 text-sm font-semibold text-success">{approveMsg}</p>}
+              <ul className="mt-3 space-y-2">
+                {f.pendingEstimates.map((e) => (
+                  <li key={e.id} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2 text-sm">
+                    <input type="checkbox" checked={selectedEstimates.includes(e.id)}
+                      onChange={(ev) => setSelectedEstimates(ev.target.checked ? [...selectedEstimates, e.id] : selectedEstimates.filter((x) => x !== e.id))} />
+                    <span className="font-semibold">{e.number} v{e.version}</span>
+                    <span className="text-muted-foreground">{e.plateNumber}</span>
+                    <span className="ml-auto font-bold">{gh(e.total)}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent></Card>
+          )}
+
+          {/* Fleet report: per-vehicle jobs + spend */}
+          {f.featureEnabled && f.vehicles.length > 0 && (
+            <Card className="mt-3"><CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b-2 border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="px-4 py-3">Vehicle</th><th className="px-4 py-3 text-right">Jobs</th>
+                    <th className="px-4 py-3 text-right">Total spend</th><th className="px-4 py-3 text-right">Odometer</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {f.vehicles.map((v) => (
+                    <tr key={v.id} className="border-b border-border last:border-0">
+                      <td className="px-4 py-2 font-semibold">{v.plateNumber} · {v.make} {v.model}{v.year ? ` ${v.year}` : ""}</td>
+                      <td className="px-4 py-2 text-right">{v.jobsCount}</td>
+                      <td className="px-4 py-2 text-right">{gh(v.totalSpend)}</td>
+                      <td className="px-4 py-2 text-right text-muted-foreground">{v.lastOdometerKm != null ? `${v.lastOdometerKm.toLocaleString()} km` : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent></Card>
+          )}
+        </section>
+      ))}
 
       {/* Vehicles */}
       <section className="mt-8">

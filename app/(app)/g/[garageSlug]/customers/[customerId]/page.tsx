@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation"
 import { Suspense } from "react"
 import { connection } from "next/server"
 import Link from "next/link"
-import { and, desc, eq, isNull, sql } from "drizzle-orm"
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
 import {
   creditAccounts,
@@ -10,6 +10,7 @@ import {
   documents,
   garages,
   invoices,
+  jobItems,
   jobs,
   messageLogs,
   vehicles,
@@ -140,6 +141,26 @@ async function ProfileLoader({
         .limit(10),
     ])
 
+  // Fleet report: per-vehicle jobs + spend for fleet customers
+  const fleetRows = customer.type === "fleet" && vehicleRows.length
+    ? await db()
+        .select({
+          vehicleId: jobs.vehicleId,
+          jobsCount: sql<number>`count(distinct ${jobs.id})::int`,
+          spend: sql<string>`coalesce(sum(round(${jobItems.unitPrice} * ${jobItems.quantity}) - coalesce(${jobItems.discountAmount},0)),0)::text`,
+        })
+        .from(jobs)
+        .innerJoin(jobItems, eq(jobItems.jobId, jobs.id))
+        .where(and(
+          eq(jobs.garageId, garage.id),
+          inArray(jobs.vehicleId, vehicleRows.map((v) => v.id)),
+          inArray(jobs.status, ["delivered", "closed"]),
+          isNull(jobs.deletedAt),
+        ))
+        .groupBy(jobs.vehicleId)
+    : []
+  const fleetSpend = new Map(fleetRows.map((r) => [r.vehicleId, { jobs: r.jobsCount, spend: Number(r.spend) }]))
+
   return (
     <div className="space-y-6">
       <div>
@@ -229,6 +250,46 @@ async function ProfileLoader({
             )}
           </CardContent>
         </Card>
+
+        {customer.type === "fleet" && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Fleet report</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {vehicleRows.length === 0 ? (
+                <p className="px-6 pb-6 text-sm text-muted-foreground">No fleet vehicles yet.</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b-2 border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+                      <th className="px-6 py-2">Vehicle</th>
+                      <th className="px-3 py-2 text-right">Jobs</th>
+                      <th className="px-6 py-2 text-right">Total spend</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vehicleRows.map((v) => {
+                      const s = fleetSpend.get(v.id)
+                      return (
+                        <tr key={v.id} className="border-b border-border last:border-0">
+                          <td className="px-6 py-2">
+                            <Link href={`/g/${garageSlug}/vehicles/${v.id}`} className="font-semibold text-primary hover:underline">
+                              {v.plateNumber}
+                            </Link>
+                            <span className="text-muted-foreground"> · {v.make} {v.model}</span>
+                          </td>
+                          <td className="px-3 py-2 text-right">{s?.jobs ?? 0}</td>
+                          <td className="px-6 py-2 text-right"><MoneyText pesewas={s?.spend ?? 0} /></td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
