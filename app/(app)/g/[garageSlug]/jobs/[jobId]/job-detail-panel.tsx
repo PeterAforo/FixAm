@@ -18,6 +18,7 @@ import {
   updateJobStatus,
   uploadJobMedia,
 } from "@/lib/jobs/actions"
+import { createInvoiceFromJob } from "@/lib/money/actions"
 import type { JobStatus } from "@/lib/jobs/transitions"
 
 const inputCls =
@@ -81,13 +82,14 @@ export function JobDetailPanel(props: {
   canAssign: boolean
   canMediaUpload: boolean
   canTasksUpdate: boolean
+  canInvoice: boolean
   currentUserId: string
   trackerUrl: string | null
 }) {
   const {
     garageSlug, garageId, job, vehicle, customer, branchName, bayName,
     assignments, findings, items, tasks, media, events, nextStatuses,
-    canUpdate, canQcSignoff, canStatusUpdate, canMediaUpload, canTasksUpdate, currentUserId, trackerUrl,
+    canUpdate, canQcSignoff, canStatusUpdate, canMediaUpload, canTasksUpdate, canInvoice, currentUserId, trackerUrl,
   } = props
 
   const router = useRouter()
@@ -227,6 +229,21 @@ export function JobDetailPanel(props: {
             {" · "}{branchName}{bayName ? ` · Bay ${bayName}` : ""}
           </p>
         </div>
+
+        {canInvoice && !["booked", "cancelled", "closed"].includes(job.status) && (
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={pending}
+            onClick={() => startTransition(async () => {
+              const res = await createInvoiceFromJob({ garageId: props.garageId, jobId: job.id })
+              if (res.ok) router.push(`/g/${garageSlug}/invoices/${res.data.invoiceId}`)
+              else setMsg(res.error.message)
+            })}
+          >
+            Invoice
+          </Button>
+        )}
 
         {canStatusUpdate && nextStatuses.length > 0 && (
           <div className="flex flex-wrap gap-2">

@@ -32,6 +32,7 @@ import { inngest } from "@/lib/inngest/client"
 import { sendMessage } from "@/lib/messaging/send"
 import { uuidv7 } from "@/lib/id"
 import { canTransitionJob, type JobStatus } from "./transitions"
+import { buildInvoiceFromJob } from "@/lib/money/invoice-core"
 import { storageProvider } from "@/lib/integrations/storage"
 
 const staffPrincipal = (role: StaffRole, garageId: string, branchId: string | null) =>
@@ -467,6 +468,22 @@ export async function updateJobStatus(rawInput: unknown): Promise<ActionResult<{
           sourceId: jobId,
         })
       }
+    }
+  }
+
+  // ready → auto-create draft invoice from billable items (best-effort)
+  if (toStatus === "ready") {
+    try {
+      await buildInvoiceFromJob(db(), {
+        garageId,
+        jobId,
+        branchId: job.branchId,
+        customerId: job.customerId,
+        vehicleId: job.vehicleId,
+        actorUserId: userId,
+      })
+    } catch {
+      // invoicing is best-effort; can be created manually from the job
     }
   }
 

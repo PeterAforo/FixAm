@@ -199,6 +199,7 @@ async function JobLoader({
       canAssign={can(principal, "jobs.assign")}
       canMediaUpload={can(principal, "jobs.media.upload")}
       canTasksUpdate={can(principal, "jobs.tasks.update_own") || can(principal, "jobs.update")}
+      canInvoice={can(principal, "invoices.create")}
       currentUserId={userId}
       trackerUrl={tracker ?? null}
     />
