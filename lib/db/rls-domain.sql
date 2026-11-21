@@ -21,7 +21,8 @@ DECLARE
     'renewal_requests','renewal_events','due_items','message_sends','message_logs',
     'invoices','invoice_lines','payments','payment_allocations','refunds',
     'credit_notes','payment_plans','instalments','credit_accounts',
-    'credit_statements','expense_categories','expenses','cash_ups','report_snapshots'
+    'credit_statements','expense_categories','expenses','cash_ups','report_snapshots',
+    'garage_reviews','garage_vehicle_coverage'
   ];
   platform_tables text[] := ARRAY[
     'vendors','vendor_members','vendor_reviews','insurance_partners'
@@ -74,3 +75,11 @@ CREATE POLICY dvla_fees_select ON public.dvla_fees FOR SELECT TO authenticated U
 -- insurance_partners: platform directory; readable by authenticated staff, writes via service role only.
 DROP POLICY IF EXISTS insurance_partners_select ON public.insurance_partners;
 CREATE POLICY insurance_partners_select ON public.insurance_partners FOR SELECT TO authenticated USING (true);
+
+-- vehicle_makes / vehicle_models: platform catalogue; readable by authenticated users, writes via service role only.
+ALTER TABLE public.vehicle_makes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS vehicle_makes_select ON public.vehicle_makes;
+CREATE POLICY vehicle_makes_select ON public.vehicle_makes FOR SELECT TO authenticated USING (true);
+ALTER TABLE public.vehicle_models ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS vehicle_models_select ON public.vehicle_models;
+CREATE POLICY vehicle_models_select ON public.vehicle_models FOR SELECT TO authenticated USING (true);

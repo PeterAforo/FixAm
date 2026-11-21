@@ -8,6 +8,7 @@ import { getSessionUserId, ensureUser } from "@/lib/auth/ensure-user"
 import { resolveMembership } from "@/lib/actions"
 import { can, type StaffRole } from "@/lib/auth/permissions"
 import { plateSearchKey } from "@/lib/vehicles/plate"
+import { listCatalogueGrouped } from "@/lib/catalogue"
 import { VehiclesPanel } from "./vehicles-panel"
 
 async function VehiclesLoader({
@@ -100,6 +101,8 @@ async function VehiclesLoader({
     .orderBy(customers.fullName)
     .limit(500)
 
+  const catalogue = await listCatalogueGrouped()
+
   return (
     <VehiclesPanel
       garageSlug={garageSlug}
@@ -110,6 +113,7 @@ async function VehiclesLoader({
       canCreate={can(principal, "vehicles.create")}
       canUpdate={can(principal, "vehicles.update")}
       customerOptions={customerOptions}
+      catalogue={catalogue}
     />
   )
 }

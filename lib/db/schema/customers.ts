@@ -27,6 +27,7 @@ import {
   vehicleUsageEnum,
 } from "./enums"
 import { garages, users } from "./identity"
+import { vehicleMakes, vehicleModels } from "./platform"
 import { renewalRequests } from "./renewals"
 import { jobs } from "./workshop"
 
@@ -83,6 +84,8 @@ export const vehicles = pgTable(
     vin: text("vin"),
     make: text("make").notNull(),
     model: text("model").notNull(),
+    catalogMakeId: uuid("catalog_make_id").references(() => vehicleMakes.id),
+    catalogModelId: uuid("catalog_model_id").references(() => vehicleModels.id),
     year: integer("year"),
     color: text("color"),
     colorHex: text("color_hex"),

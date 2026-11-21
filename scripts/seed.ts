@@ -11,6 +11,7 @@ import postgres from "postgres"
 import seedDataJson from "../docs/devin-spec/specs/seed-data.json"
 import plansSpecJson from "../docs/devin-spec/specs/plans.json"
 import messageTemplatesSpecJson from "../docs/devin-spec/specs/message-templates.json"
+import { VEHICLE_CATALOGUE } from "../lib/catalogue/data"
 
 // Spec JSONs are heterogeneous; the seed maps fields defensively.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -546,6 +547,23 @@ async function main() {
       insert into public.job_status_events (garage_id, job_id, to_status, actor_user_id, note)
       values (${garageId}::uuid, ${jobId}::uuid, ${sj.status}, ${advisorId}::uuid, 'Seeded demo job')`
   }
+
+  // ── Vehicle catalogue (platform reference data) ──────────────────────
+  const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+  for (const make of VEHICLE_CATALOGUE) {
+    const [mk] = await sql`
+      insert into public.vehicle_makes (name, slug, country, sort_order)
+      values (${make.name}, ${make.slug}, ${make.country}, ${make.sortOrder})
+      on conflict (slug) do update set name = excluded.name
+      returning id`
+    for (const [i, m] of make.models.entries()) {
+      await sql`
+        insert into public.vehicle_models (make_id, name, slug, year_start, year_end, body_type, sort_order)
+        values (${mk.id}::uuid, ${m.name}, ${slugify(m.name)}, ${m.yearStart ?? null}, ${m.yearEnd ?? null}, ${m.bodyType ?? null}, ${i})
+        on conflict (make_id, slug) do nothing`
+    }
+  }
+  log("vehicle catalogue", `${VEHICLE_CATALOGUE.length} makes`)
 
   console.log(`\nDone. inserted=${counts.inserted} skipped(existing)=${counts.skipped}`)
   console.log(`Login: any seeded email + password '${SEED_PASSWORD}'`)

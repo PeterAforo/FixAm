@@ -22,6 +22,7 @@ import { can, type StaffRole } from "@/lib/auth/permissions"
 import { predictOdometer } from "@/lib/domain/mileage"
 import type { RingStatus } from "@/components/brand/vehicle-health-card"
 import { VehicleProfilePanel } from "./vehicle-profile-panel"
+import { listCatalogueGrouped } from "@/lib/catalogue"
 
 function daysUntil(date: Date | string | null): number | null {
   if (!date) return null
@@ -326,6 +327,7 @@ async function VehicleLoader({
           : null,
       }}
       customerOptions={allCustomers}
+      catalogue={await listCatalogueGrouped()}
       canRecordOdometer={can(principal, "vehicles.odometer.record")}
       canOverrideOdometer={can(principal, "vehicles.odometer.override")}
       canUpdateVehicle={can(principal, "vehicles.update")}

@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/brand/card"
 import { CarAvatar, type VehicleType } from "@/components/brand/car-avatar"
 import { EmptyState } from "@/components/brand/empty-state"
 import { PlateChip } from "@/components/brand/plate-chip"
-import { VehicleFormDrawer, type VehicleFormValues } from "./vehicle-form-drawer"
+import { VehicleFormDrawer, type CatalogueEntry, type VehicleFormValues } from "./vehicle-form-drawer"
 
 export type VehicleRow = {
   id: string
@@ -52,6 +52,7 @@ export function VehiclesPanel({
   filters,
   canCreate,
   customerOptions,
+  catalogue = [],
 }: {
   garageSlug: string
   garageId: string
@@ -61,6 +62,7 @@ export function VehiclesPanel({
   canCreate: boolean
   canUpdate: boolean
   customerOptions: { id: string; name: string; phone: string }[]
+  catalogue?: CatalogueEntry[]
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -194,6 +196,7 @@ export function VehiclesPanel({
         onClose={() => { setDrawerOpen(false); setEditing(null) }}
         initial={editing ?? undefined}
         customerOptions={customerOptions}
+        catalogue={catalogue}
         onSaved={(vehicleId) => {
           setDrawerOpen(false)
           setEditing(null)

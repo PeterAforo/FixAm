@@ -19,6 +19,7 @@ import { computeServiceDueDates, intervalForOilGrade, OIL_GRADES } from "@/lib/d
 import { inngest } from "@/lib/inngest/client"
 import { uuidv7 } from "@/lib/id"
 import { plateSearchKey } from "./plate"
+import { resolveCatalogueIds } from "@/lib/catalogue"
 
 const staffPrincipal = (role: StaffRole, garageId: string, branchId: string | null) =>
   ({ kind: "staff" as const, role, garageId, branchId })
@@ -35,6 +36,8 @@ const vehicleInput = z.object({
   vin: z.string().max(40).optional().or(z.literal("")),
   make: z.string().min(1).max(60),
   model: z.string().min(1).max(60),
+  catalogMakeId: z.string().uuid().optional().nullable(),
+  catalogModelId: z.string().uuid().optional().nullable(),
   year: z.number().int().min(1950).max(2100).optional().nullable(),
   color: z.string().max(40).optional().or(z.literal("")),
   colorHex: z.string().max(9).optional().or(z.literal("")),
@@ -150,6 +153,10 @@ export async function createVehicle(rawInput: unknown): Promise<
   }
 
   const vehicleId = uuidv7()
+  const cat =
+    v.catalogMakeId != null
+      ? { catalogMakeId: v.catalogMakeId, catalogModelId: v.catalogModelId ?? null }
+      : await resolveCatalogueIds(v.make, v.model)
   const values = clean({
     id: vehicleId,
     garageId,
@@ -158,6 +165,7 @@ export async function createVehicle(rawInput: unknown): Promise<
     vin: v.vin || null,
     make: v.make.trim(),
     model: v.model.trim(),
+    ...cat,
     year: v.year ?? null,
     color: v.color || null,
     colorHex: v.colorHex || null,
@@ -236,12 +244,17 @@ export async function updateVehicle(rawInput: unknown): Promise<
     return { ok: true, data: { vehicleId: dup.id, duplicate: { id: dup.id, plate: dup.plateNumber } } }
   }
 
+  const cat =
+    v.catalogMakeId != null
+      ? { catalogMakeId: v.catalogMakeId, catalogModelId: v.catalogModelId ?? null }
+      : await resolveCatalogueIds(v.make, v.model)
   const values = clean({
     plateNumber: v.plateNumber.toUpperCase().trim(),
     plateSearch,
     vin: v.vin || null,
     make: v.make.trim(),
     model: v.model.trim(),
+    ...cat,
     year: v.year ?? null,
     color: v.color || null,
     colorHex: v.colorHex || null,

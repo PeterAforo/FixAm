@@ -121,6 +121,7 @@ export function VehicleProfilePanel(props: {
     nextDue: { title: string; effectiveDueDate: string; predictedDueDate: string | null; dueMileageKm: number | null } | null
   }
   customerOptions: { id: string; name: string; phone: string }[]
+  catalogue?: import("../vehicle-form-drawer").CatalogueEntry[]
   canRecordOdometer: boolean
   canOverrideOdometer: boolean
   canUpdateVehicle: boolean
@@ -128,7 +129,7 @@ export function VehicleProfilePanel(props: {
   const {
     garageSlug, garageId, vehicle, owner, ownerships, readings, documents,
     dueItems, insurance, dvla, jobs, timeline, rings, mileage,
-    customerOptions, canRecordOdometer, canOverrideOdometer, canUpdateVehicle,
+    customerOptions, catalogue, canRecordOdometer, canOverrideOdometer, canUpdateVehicle,
   } = props
 
   const router = useRouter()
@@ -859,6 +860,7 @@ export function VehicleProfilePanel(props: {
         onClose={() => setEditOpen(false)}
         initial={editInitial}
         customerOptions={customerOptions}
+        catalogue={catalogue}
         onSaved={() => { setEditOpen(false); router.refresh() }}
       />
     </div>

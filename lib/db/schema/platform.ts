@@ -152,3 +152,40 @@ export const privacyRequests = pgTable(
   },
   (t) => [index("privacy_requests_status_idx").on(t.status, t.createdAt)]
 )
+
+
+/** Platform vehicle catalogue — public reference data (no tenant scope). */
+export const vehicleMakes = pgTable(
+  "vehicle_makes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull().unique(),
+    slug: text("slug").notNull().unique(),
+    country: text("country"),
+    isActive: boolean("is_active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    ...timestamps,
+  }
+)
+
+export const vehicleModels = pgTable(
+  "vehicle_models",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    makeId: uuid("make_id")
+      .notNull()
+      .references(() => vehicleMakes.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    yearStart: integer("year_start"),
+    yearEnd: integer("year_end"),
+    bodyType: text("body_type"),
+    isActive: boolean("is_active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("vehicle_models_make_slug_uniq").on(t.makeId, t.slug),
+    index("vehicle_models_make_idx").on(t.makeId),
+  ]
+)

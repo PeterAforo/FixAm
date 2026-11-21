@@ -41,41 +41,11 @@ const EMPTY: VehicleFormValues = {
   notes: "",
 }
 
-// Common makes/models in the Ghana market — datalist autocomplete.
-const MAKES = [
-  "Toyota", "Honda", "Nissan", "Hyundai", "Kia", "Suzuki", "Mitsubishi",
-  "Mazda", "Subaru", "Lexus", "Mercedes-Benz", "BMW", "Volkswagen",
-  "Ford", "Chevrolet", "Peugeot", "Renault", "Daihatsu", "Isuzu",
-  "Great Wall", "Chery", "BYD", "Jetour", "Haval", "FAW",
-]
-const MODELS: Record<string, string[]> = {
-  Toyota: ["Corolla", "Camry", "Hilux", "Land Cruiser", "Highlander", "RAV4", "Yaris", "Fortuner", "Avalon", "Tundra"],
-  Honda: ["Civic", "Accord", "CR-V", "HR-V", "Pilot", "Fit", "Insight"],
-  Nissan: ["Altima", "Sentra", "Patrol", "X-Trail", "Note", "Qashqai", "Navara", "Juke"],
-  Hyundai: ["Accent", "Elantra", "Tucson", "Santa Fe", "Sonata", "Venue", "Palisade"],
-  Kia: ["Picanto", "Rio", "Sportage", "Sorento", "Seltos", "Cerato", "Carnival"],
-  Suzuki: ["Swift", "Vitara", "SX4", "Jimny", "Ertiga", "Ciaz"],
-  Mitsubishi: ["Lancer", "Outlander", "ASX", "Pajero", "Montero Sport", "Attrage"],
-  Mazda: ["CX-5", "CX-30", "Mazda3", "Mazda6", "BT-50"],
-  Subaru: ["Forester", "Outback", "Impreza", "XV", "Legacy"],
-  Lexus: ["RX", "NX", "ES", "IS", "LX", "GX"],
-  "Mercedes-Benz": ["C-Class", "E-Class", "S-Class", "GLC", "GLE", "A-Class", "GLA"],
-  BMW: ["3 Series", "5 Series", "X1", "X3", "X5", "320i", "520i"],
-  Volkswagen: ["Golf", "Passat", "Tiguan", "Jetta", "Polo", "Atlas"],
-  Ford: ["Ranger", "F-150", "Escape", "Explorer", "Fiesta", "Everest"],
-  Chevrolet: ["Cruze", "Equinox", "Tahoe", "Silverado", "Malibu", "Traverse"],
-  Peugeot: ["208", "308", "3008", "508", "2008", "Partner"],
-  Renault: ["Clio", "Megane", "Duster", "Koleos", "Sandero", "Triber"],
-  Daihatsu: ["Charade", "Terios", "Copen", "Sirion"],
-  Isuzu: ["D-Max", "MU-X", "FVR", "Elf"],
-  "Great Wall": ["Wingle", "Steed", "Hover", "Poer"],
-  Chery: ["Tiggo 4", "Tiggo 7", "Tiggo 8", "Arrizo 8", "Tiggo 2"],
-  BYD: ["Atto 3", "Seal", "Dolphin", "Tang"],
-  Jetour: ["Dashing", "X70", "X90", "T2"],
-  Haval: ["H6", "Jolion", "F7"],
-  FAW: ["Bestune T77", "Bestune T33", "V5"],
+export type CatalogueEntry = {
+  id: string
+  name: string
+  models: { id: string; name: string; yearStart: number | null; yearEnd: number | null }[]
 }
-const MODEL_FALLBACK = Object.values(MODELS).flat()
 
 const COLORS = ["White", "Black", "Silver", "Grey", "Red", "Blue", "Gold", "Brown", "Green", "Yellow", "Orange", "Maroon"]
 
@@ -91,6 +61,7 @@ export function VehicleFormDrawer({
   onSaved,
   initial,
   customerOptions,
+  catalogue = [],
 }: {
   garageId: string
   garageSlug: string
@@ -99,6 +70,7 @@ export function VehicleFormDrawer({
   onSaved?: (vehicleId: string) => void
   initial?: VehicleFormValues
   customerOptions: { id: string; name: string; phone: string }[]
+  catalogue?: CatalogueEntry[]
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -118,7 +90,8 @@ export function VehicleFormDrawer({
     }
   }
 
-  const models = MODELS[form.make] ?? MODEL_FALLBACK
+  const matchedMake = catalogue.find((m) => m.name.toLowerCase() === form.make.trim().toLowerCase())
+  const models = matchedMake?.models.map((m) => m.name) ?? []
 
   function set<K extends keyof VehicleFormValues>(key: K, value: VehicleFormValues[K]) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -215,7 +188,7 @@ export function VehicleFormDrawer({
                 <div>
                   <label className={labelCls}>Make *</label>
                   <input className={inputCls} list="vehicle-makes" placeholder="Toyota" value={form.make} onChange={(e) => { set("make", e.target.value); set("model", "") }} />
-                  <datalist id="vehicle-makes">{MAKES.map((m) => <option key={m} value={m} />)}</datalist>
+                  <datalist id="vehicle-makes">{catalogue.map((m) => <option key={m.id} value={m.name} />)}</datalist>
                   {ferr("make") && <p className="mt-1 text-xs font-semibold text-danger">{ferr("make")}</p>}
                 </div>
                 <div>
