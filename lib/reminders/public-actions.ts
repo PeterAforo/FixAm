@@ -382,6 +382,11 @@ export async function startReminderRenewal(rawInput: unknown) {
   const map = KIND_FOR_TYPE[item.item.type as DueItemType]
   if (!map) return { ok: false as const, error: { code: "VALIDATION" as const, message: "This item can't be renewed here" } }
 
+  // plan feature + insurance partner gating
+  const { canOfferRenewal } = await import("@/lib/renewals/core")
+  const gate = await canOfferRenewal(item.item.garageId, map.kind)
+  if (!gate.ok) return { ok: false as const, error: { code: "FORBIDDEN" as const, message: gate.reason ?? "Renewals not available" } }
+
   const [existing] = await db().select({ id: renewalRequests.id }).from(renewalRequests)
     .where(and(eq(renewalRequests.dueItemId, d.dueItemId), sql`${renewalRequests.status} NOT IN ('completed','cancelled','failed')`))
     .limit(1)
@@ -395,6 +400,8 @@ export async function startReminderRenewal(rawInput: unknown) {
   const number = defBranch
     ? await nextDocNumber(item.item.garageId, defBranch.id, "REN", "REN")
     : `REN-${Date.now().toString(36).toUpperCase()}`
+  const [g] = await db().select({ insurancePartnerId: garages.insurancePartnerId })
+    .from(garages).where(eq(garages.id, item.item.garageId)).limit(1)
   const renewalId = uuidv7()
   await db().insert(renewalRequests).values({
     id: renewalId,
@@ -406,6 +413,7 @@ export async function startReminderRenewal(rawInput: unknown) {
     customerId: item.item.customerId,
     dueItemId: d.dueItemId,
     status: "requested",
+    partnerId: map.kind === "insurance" ? g?.insurancePartnerId ?? null : null,
     requiredDocuments: map.kind === "insurance"
       ? ["policy_document", "vehicle_details"]
       : ["vehicle_details", "inspection_report"],

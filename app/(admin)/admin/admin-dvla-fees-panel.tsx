@@ -51,7 +51,7 @@ export function AdminDvlaFeesPanel({ fees }: { fees: Fee[] }) {
           <select className={inputCls} value={form.recordType} onChange={(e) => setForm({ ...form, recordType: e.target.value })}>
             <option value="roadworthy">Roadworthy</option>
             <option value="registration_licence">Registration / licence</option>
-            <option value="drivers_licence">Driver's licence</option>
+            <option value="drivers_licence">Driver&apos;s licence</option>
           </select>
           <input className={inputCls} placeholder="Vehicle category *" required value={form.vehicleCategory} onChange={(e) => setForm({ ...form, vehicleCategory: e.target.value })} />
           <input className={inputCls} type="number" min={0} step="0.01" placeholder="Amount GH₵ *" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />

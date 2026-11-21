@@ -12,6 +12,11 @@ import {
   submitReminderDone,
   submitReminderMileage,
 } from "@/lib/reminders/public-actions"
+import {
+  acceptRenewalQuote,
+  getPublicRenewal,
+  submitRenewalDetails,
+} from "@/lib/renewals/public-actions"
 
 const inputCls = "min-h-11 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
 const labelCls = "text-xs font-bold uppercase tracking-wide text-muted-foreground"
@@ -105,6 +110,7 @@ function ReminderCard(props: {
 }) {
   const { token, garageId, item, garageName, garagePhone, customerName, customerPhone, branches, pending, startTransition, setMsg, onDone } = props
   const [mode, setMode] = useState<"idle" | "book" | "mileage" | "done" | "renewed">("idle")
+  const [renewalId, setRenewalId] = useState<string | null>(null)
   const action = item.primaryAction
 
   return (
@@ -139,7 +145,7 @@ function ReminderCard(props: {
               <Button onClick={() => {
                 startTransition(async () => {
                   const res = await startReminderRenewal({ token, dueItemId: item.id })
-                  if (res.ok) { setMode("renewed"); setMsg({ ok: true, text: "Renewal request sent â€” the garage will confirm shortly." }) }
+                  if (res.ok) { setRenewalId(res.data.renewalId); setMode("renewed"); setMsg({ ok: true, text: "Renewal request sent â€” the garage will confirm shortly." }) }
                   else setMsg({ ok: false, text: res.error.message })
                 })
               }} disabled={pending}>
@@ -156,10 +162,8 @@ function ReminderCard(props: {
           </div>
         )}
 
-        {mode === "renewed" && (
-          <p className="mt-3 rounded-lg bg-success/10 p-3 text-sm text-success">
-            Renewal request received â€” {garageName} will be in touch. No further reminders for this item.
-          </p>
+        {mode === "renewed" && renewalId && (
+          <RenewalTracker token={token} renewalId={renewalId} garageName={garageName} pending={pending} startTransition={startTransition} setMsg={setMsg} />
         )}
 
         {mode === "book" && (
@@ -392,6 +396,113 @@ function DoneForm(props: {
         <input className={`${inputCls} mt-1`} type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
       </div>
       <Button variant="secondary" disabled={pending} onClick={submit}>Confirm</Button>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Renewal tracker — customer view of an in-flight renewal request
+// ---------------------------------------------------------------------------
+
+type PublicRenewal = {
+  id: string
+  number: string
+  kind: string
+  status: string
+  dvlaRecordType: string | null
+  officialFee: number | null
+  serviceFee: number | null
+  total: number | null
+  requiredDocuments: string[]
+  vehicleLabel: string
+  garageName: string
+  payUrl: string | null
+  invoiceBalance: number | null
+}
+
+const RENEWAL_STEPS: Record<string, string> = {
+  requested: "Request received",
+  documents_pending: "Documents needed",
+  quote_pending: "Preparing your quote",
+  quote_sent: "Quote ready — review & pay",
+  awaiting_payment: "Awaiting payment",
+  paid: "Payment received",
+  processing: "Processing with provider",
+}
+
+function RenewalTracker(props: {
+  token: string
+  renewalId: string
+  garageName: string
+  pending: boolean
+  startTransition: (fn: () => void) => void
+  setMsg: (m: { ok: boolean; text: string } | null) => void
+}) {
+  const { token, renewalId, garageName, pending, startTransition, setMsg } = props
+  const [r, setR] = useState<PublicRenewal | null>(null)
+  const [loaded, setLoaded] = useState(false)
+  const [docNotes, setDocNotes] = useState("")
+
+  useEffect(() => {
+    let alive = true
+    getPublicRenewal({ token, renewalId }).then((res) => {
+      if (!alive) return
+      if (res.ok) setR(res.data)
+      setLoaded(true)
+    })
+    return () => { alive = false }
+  }, [token, renewalId])
+
+  if (!loaded) return <p className="mt-3 text-sm text-muted-foreground">Loading renewal…</p>
+  if (!r) return <p className="mt-3 rounded-lg bg-success/10 p-3 text-sm text-success">Renewal request received — {garageName} will be in touch. No further reminders for this item.</p>
+
+  const gh = (p: number | null) => (p != null ? `GH? ${(p / 100).toLocaleString("en-GH", { minimumFractionDigits: 2 })}` : "—")
+
+  return (
+    <div className="mt-3 space-y-3 rounded-lg border-2 border-border p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-bold">{r.number} · {r.vehicleLabel}</p>
+        <StatusPill status={r.status.replace(/_/g, " ")} />
+      </div>
+      <p className="text-sm text-muted-foreground">{RENEWAL_STEPS[r.status] ?? r.status}</p>
+
+      {r.requiredDocuments.length > 0 && ["requested", "documents_pending"].includes(r.status) && (
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Needed: {r.requiredDocuments.join(", ").replace(/_/g, " ")}</p>
+          <textarea className={`${inputCls} mt-1`} rows={2} placeholder="Share policy/certificate details or attach via the garage" value={docNotes} onChange={(e) => setDocNotes(e.target.value)} />
+          <Button size="sm" variant="secondary" className="mt-2" disabled={pending} onClick={() => {
+            startTransition(async () => {
+              const res = await submitRenewalDetails({ token, renewalId, documentNotes: docNotes || undefined })
+              if (res.ok) { setMsg({ ok: true, text: "Details sent to the garage." }); getPublicRenewal({ token, renewalId }).then((x) => x.ok && setR(x.data)) }
+              else setMsg({ ok: false, text: res.error.message })
+            })
+          }}>Submit details</Button>
+        </div>
+      )}
+
+      {r.status === "quote_sent" && r.total != null && (
+        <div className="rounded-lg bg-surface-muted p-3 text-sm">
+          <div className="flex justify-between"><span>Official fee</span><span>{gh(r.officialFee)}</span></div>
+          <div className="flex justify-between"><span>Service fee</span><span>{gh(r.serviceFee)}</span></div>
+          <div className="mt-1 flex justify-between border-t border-border pt-1 font-bold"><span>Total</span><span>{gh(r.total)}</span></div>
+          <div className="mt-2 flex gap-2">
+            <Button size="sm" disabled={pending} onClick={() => {
+              startTransition(async () => {
+                const res = await acceptRenewalQuote({ token, renewalId })
+                if (res.ok) { setMsg({ ok: true, text: "Quote accepted — please pay to proceed." }); getPublicRenewal({ token, renewalId }).then((x) => x.ok && setR(x.data)) }
+                else setMsg({ ok: false, text: res.error.message })
+              })
+            }}>Accept quote</Button>
+          </div>
+        </div>
+      )}
+
+      {(r.status === "awaiting_payment" || (r.status === "quote_sent")) && r.payUrl && (
+        <Button asChild><a href={r.payUrl}>Pay {gh(r.total ?? r.invoiceBalance)}</a></Button>
+      )}
+      {r.status === "paid" || r.status === "processing" ? (
+        <p className="text-sm text-muted-foreground">{RENEWAL_STEPS[r.status]} — we&apos;ll notify you when the new document is ready.</p>
+      ) : null}
     </div>
   )
 }

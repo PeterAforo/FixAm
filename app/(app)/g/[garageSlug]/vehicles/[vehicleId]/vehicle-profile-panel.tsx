@@ -79,7 +79,7 @@ const DOC_TYPES = [
   ["insurance_sticker", "Insurance sticker"],
   ["roadworthy_certificate", "Roadworthy certificate"],
   ["vehicle_registration", "Vehicle registration"],
-  ["drivers_licence", "Driver's licence"],
+  ["drivers_licence", "Driver&apos;s licence"],
   ["national_id", "National ID"],
   ["vehicle_photo", "Vehicle photo"],
   ["invoice_pdf", "Invoice PDF"],
@@ -768,7 +768,7 @@ export function VehicleProfilePanel(props: {
                   <select className={inputCls} value={dvlaForm.type} onChange={(e) => setDvlaForm({ ...dvlaForm, type: e.target.value })}>
                     <option value="roadworthy">Roadworthy certificate</option>
                     <option value="registration_licence">Registration / licence</option>
-                    <option value="drivers_licence">Driver's licence</option>
+                    <option value="drivers_licence">Driver&apos;s licence</option>
                   </select>
                   <input className={inputCls} placeholder="Reference number" value={dvlaForm.referenceNumber} onChange={(e) => setDvlaForm({ ...dvlaForm, referenceNumber: e.target.value })} />
                   <div><label className={labelCls}>Issue date</label><input className={inputCls} type="date" value={dvlaForm.issueDate} onChange={(e) => setDvlaForm({ ...dvlaForm, issueDate: e.target.value })} /></div>
