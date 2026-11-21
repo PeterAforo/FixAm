@@ -1,10 +1,11 @@
 "use client"
 
 import { useEffect, useState, type ReactNode } from "react"
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { stopImpersonation } from "@/lib/admin/actions"
-import { navForRole, bottomBarForRole, navItemForPath } from "@/lib/nav"
+import { navForRole, bottomBarForRole, navItemForPath, navLabelKey } from "@/lib/nav"
 import type { StaffRole } from "@/lib/auth/permissions"
 import { CommandPalette } from "./command-palette"
 import { type ShellNotification } from "./notifications-bell"
@@ -75,7 +76,12 @@ export function AppShell({
   children: ReactNode
 }) {
   const pathname = usePathname()
+  const tNav = useTranslations("nav")
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const labelFor = (label: string) => {
+    const key = navLabelKey(label)
+    return key ? tNav(key) : label
+  }
 
   const nav = navForRole(role)
   const bottom = bottomBarForRole(role)
@@ -122,7 +128,7 @@ export function AppShell({
                     }`}
                   >
                     <Icon className="size-4 shrink-0" />
-                    {item.label}
+                    {labelFor(item.label)}
                   </Link>
                 </li>
               )
@@ -182,7 +188,7 @@ export function AppShell({
                 <span className="flex flex-col items-center gap-0.5">
                   <Icon className="size-5" />
                   <span className="max-w-16 truncate text-[10px] font-bold">
-                    {label.replace("+ ", "")}
+                    {labelFor(label).replace("+ ", "")}
                   </span>
                 </span>
               )

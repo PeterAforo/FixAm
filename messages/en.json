@@ -5,14 +5,21 @@
   },
   "nav": {
     "dashboard": "Dashboard",
-    "jobs": "Jobs",
-    "customers": "Customers",
+    "jobBoard": "Job board",
+    "myJobs": "My jobs",
+    "bookings": "Bookings",
     "vehicles": "Vehicles",
-    "parts": "Parts",
-    "vendors": "Vendors",
-    "invoices": "Invoices",
+    "customers": "Customers",
+    "partsStock": "Parts & stock",
+    "pos": "POS",
+    "marketplace": "Marketplace",
+    "reminders": "Reminders",
+    "renewals": "Renewals",
+    "money": "Money",
     "reports": "Reports",
-    "settings": "Settings"
+    "myStats": "My stats",
+    "settings": "Settings",
+    "checkIn": "Check in"
   },
   "common": {
     "save": "Save",

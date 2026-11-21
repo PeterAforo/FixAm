@@ -48,3 +48,47 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
 - drizzle-kit migrate initially failed silently without sslmode; with it, migrations apply cleanly. scripts/apply-migrations.cjs remains as a manual fallback.
 - Plans seeded from specs/plans.json (starter/growth/pro); message_templates table lands with the reminders phase.
 
+## PDFs (`lib/pdf`, `/api/pdf/*`)
+
+- `@react-pdf/renderer` renders PDFs server-side in Node runtime route handlers.
+- Invoices: `/api/pdf/invoices/[id]?format=a4|thermal` — authenticated via session +
+  `resolveMembership`; A4 default, 80mm roll for thermal. The print-HTML view at
+  `/print/invoices/[id]` remains for browser printing; the PDF route is additive.
+- Receipts: `/api/pdf/receipts/[token]` — token-gated (same public token as `/r/[token]`),
+  no session required, since the token itself is the capability.
+- Credit statements: `/api/pdf/credit-statements/[id]` — authenticated + membership;
+  `credit_statements.pdf_path` remains for a future object-storage attachment flow.
+- `getPublicReceipt` was extended to return garage address/phone/TIN/brand colour so the
+  receipt PDF can render garage letterhead without extra queries.
+
+## i18n (next-intl)
+
+- `next-intl` plugin + `i18n/request.ts` (locale `en`, messages from `messages/en.json`)
+  and `NextIntlClientProvider` in the root layout are already wired.
+- Nav labels come from `specs/ui-screens.json` (English spec strings), so
+  `navLabelKey()` in `lib/nav.ts` maps spec labels → `nav.*` message keys and
+  `AppShell` translates them; unknown labels fall back to the spec string.
+- Remaining UI strings are still hardcoded English and migrate incrementally —
+  converting every panel in one pass was judged higher-risk than the value.
+
+## Dev tooling routes
+
+- `/design` and `/dev/messages` (and `/dev/payments`) call `notFound()` in production —
+  they are development-only surfaces, matching the spec's dev-inbox requirement.
+- `docs/new/` is kept as the verbatim reference copy of the latest spec bundle;
+  `docs/devin-spec/` is the merged working copy (it additionally carries the P6 phase
+  in `specs/tasks.json`, which the new bundle lacked).
+
+## P6 decisions (discovery & customer experience)
+
+- Directory listing is plan-gated on the `directory_listing` feature flag; live plan
+  rows for `growth`/`pro` were patched to include it (the spec plans file did not list it).
+- Garage GPS is captured once during onboarding with a "use my location" button that
+  requires explicit confirmation before saving; coordinates power near-me sorting.
+- Coverage can be a whole make (`catalog_model_id` null) or a specific model; dedupe
+  falls back to normalized make/model text when catalogue ids differ.
+- Reviews are unique per (garage, portal phone); portal accounts may exist before a
+  `customers` row — garage-less auth SMS uses a lazily-created `fixam-platform` garage
+  so the allowance of real garages is never consumed.
+- Portal passwords use scrypt with per-user salt + timing-safe compare (`lib/portal/password.ts`).
+

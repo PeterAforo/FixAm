@@ -1,25 +1,60 @@
 # Changelog
 
-## Unreleased — P0 foundation
+## Unreleased — hardening & launch gap closure
 
 ### Added
-- Next.js 16 App Router scaffold (TypeScript strict, Tailwind v4, ESLint,
-  pnpm) with route skeletons for marketing, auth, app, portal, vendor,
-  admin, magic-link, booking, and API routes.
-- Pit Stop Pop design system: full token set in `app/globals.css` (light +
-  workshop dark themes), brand fonts, `next-themes` toggle, and brand
-  components (`Button`, `Card`, `StatusPill`, `PlateChip`, `MoneyText`,
-  `StatTile`, `Stepper`, `EmptyState`, `CarAvatar`, `VehicleHealthCard`,
-  `Confetti`, motion helpers).
-- `/design` dev-only showcase route.
-- Drizzle schema for the 15 foundation tables (`lib/db/schema/*`), generated
-  SQL migration, and RLS policies/helpers migration (`drizzle/0001`).
-- `lib/money` (pesewa helpers: format/parse/round/sum) and `lib/id` (UUID v7).
-- Tooling: Vitest + Testing Library, Playwright, Prettier, Sentry
-  instrumentation, Vercel Analytics/Speed Insights, GitHub Actions CI,
-  `.env.example`, `messages/en.json`.
+- PDF generation via `@react-pdf/renderer`: invoices (A4 + 80mm thermal),
+  payment receipts, and credit statements under `/api/pdf/*`, with download
+  links on the print view, public receipt page, and credit account statements.
+- i18n scaffolding exercised end-to-end: `nav.*` message keys in
+  `messages/en.json` translated through `next-intl` in the app shell (desktop
+  sidebar + mobile bottom bar).
+- Spec bundle merge: `specs/ui-ux.json` (Premium UI/UX spec), updated
+  `ui-screens.json`, `seed-data.json`, `prompt.json`, `plans.json`, `PRD.md`.
 
-### Tests
-- WCAG contrast tests for all text/background token pairs (both themes).
-- Brand component unit tests; money and UUID v7 unit tests.
-- Tenant-isolation integration test (skips without `DATABASE_URL`).
+## P6 — Discovery & customer experience
+
+- Ghana vehicle make/model catalogue with database-backed pickers.
+- Customer self-registration: OTP + username/password, claimed vehicles,
+  profile settings, avatar upload.
+- Garage GPS capture during onboarding (with confirm-location step) and a
+  public directory with search, near-me distance sorting, and public profiles
+  gated on the `directory_listing` plan feature.
+- Garage vehicle coverage management and make/model service matching.
+- Customer reviews/ratings with garage-side moderation.
+- Vendor verification badge (admin-controlled).
+
+## P5 — Platform & launch
+
+- Subscription billing, plan limits, and plan-feature gating.
+- Platform admin console: garages, impersonation (audited), analytics.
+- Mechanic gamification: stats, badges, leaderboard.
+- Fleet accounts: portal fleet view, bulk approvals, reports.
+- Hardening: rate limits, privacy requests, Sentry, ops docs, launch checklist.
+
+## P4 — Renewals & reminders
+
+- Oil change records with grade-based intervals and mileage nudges.
+- Insurance policies and DVLA records with fee table and reminders.
+- Reminder action pages at `/t/[token]`; agent renewal workflow.
+- Customer portal.
+
+## P3 — Parts & vendors
+
+- Inventory, purchase orders, stock movements, vendors, marketplace orders.
+
+## P2 — Money
+
+- Invoices, payments (Paystack + manual), receipts, credit accounts,
+  credit statements, expenses, financial immutability rules.
+
+## P1 — Core workshop
+
+- Jobs/kanban, bookings, estimates, check-in, templates, staff/roles/branches.
+
+## P0 — Foundations
+
+- Next.js 16 App Router scaffold (TypeScript strict, Tailwind v4, ESLint,
+  pnpm); Pit Stop Pop design tokens + brand components; Drizzle schema with
+  RLS; `lib/money` (pesewa bigint) and `lib/id` (UUID v7); Vitest + Playwright
+  + CI; Supabase project wiring; seed data and demo garage.

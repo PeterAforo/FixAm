@@ -37,6 +37,29 @@ export function routeForLabel(
   return undefined
 }
 
+/** Map a spec nav label to its i18n key under `nav.*` (undefined = no key). */
+export function navLabelKey(label: string): string | undefined {
+  const map: Record<string, string> = {
+    Dashboard: "dashboard",
+    "Job board": "jobBoard",
+    "My jobs": "myJobs",
+    Bookings: "bookings",
+    Vehicles: "vehicles",
+    Customers: "customers",
+    "Parts & stock": "partsStock",
+    POS: "pos",
+    Marketplace: "marketplace",
+    Reminders: "reminders",
+    Renewals: "renewals",
+    Money: "money",
+    Reports: "reports",
+    "My stats": "myStats",
+    Settings: "settings",
+    "+ Check in": "checkIn",
+  }
+  return map[label]
+}
+
 export function navItemForPath(
   role: StaffRole,
   pathname: string,
