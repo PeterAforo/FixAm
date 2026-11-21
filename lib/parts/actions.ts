@@ -98,6 +98,7 @@ export async function listPartsPage(rawInput: unknown) {
       canManage: can(ctx.principal, "parts.manage"),
       canAdjust: can(ctx.principal, "stock.adjust"),
       canTransfer: can(ctx.principal, "stock.transfer"),
+      canOrder: can(ctx.principal, "purchase_orders.create") || can(ctx.principal, "stock.request_for_job"),
     },
   }
 }

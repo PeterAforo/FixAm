@@ -7,7 +7,9 @@ import {
   garages,
   goodsReceipts,
   jobAssignments,
+  jobStatusEvents,
   jobs,
+  notifications,
   parts,
   users,
   vendorOrderEvents,
@@ -465,21 +467,42 @@ export async function receiveVendorOrder(rawInput: unknown): Promise<ActionResul
     after: { number: order.number, receiptId },
   }).catch(() => {})
 
-  // notify assigned mechanic if job-linked
+  // job-linked receipt: move waiting_parts → in_progress and notify assignees
   if (order.jobId) {
     try {
-      const [job] = await db().select({ number: jobs.number }).from(jobs).where(eq(jobs.id, order.jobId)).limit(1)
-      const assignees = await db().select({ phone: users.phone }).from(jobAssignments)
+      const [job, garageRow] = await Promise.all([
+        db().select({ id: jobs.id, number: jobs.number, status: jobs.status }).from(jobs)
+          .where(and(eq(jobs.id, order.jobId), eq(jobs.garageId, d.garageId))).limit(1),
+        db().select({ slug: garages.slug }).from(garages).where(eq(garages.id, d.garageId)).limit(1),
+      ])
+      const jobLink = job[0] && garageRow[0] ? `/g/${garageRow[0].slug}/jobs/${job[0].id}` : null
+      if (job[0]?.status === "waiting_parts") {
+        await db().update(jobs).set({ status: "in_progress", updatedAt: new Date() }).where(eq(jobs.id, job[0].id))
+        await db().insert(jobStatusEvents).values({
+          garageId: d.garageId, jobId: job[0].id,
+          fromStatus: "waiting_parts", toStatus: "in_progress",
+          actorUserId: userId, note: `Parts from ${order.number} received`,
+        })
+      }
+      const assignees = await db().select({ userId: jobAssignments.userId, phone: users.phone }).from(jobAssignments)
         .innerJoin(users, eq(jobAssignments.userId, users.id))
         .where(and(eq(jobAssignments.jobId, order.jobId), eq(jobAssignments.garageId, d.garageId)))
       for (const a of assignees) {
-        if (!a.phone) continue
-        await sendMessage({
-          garageId: d.garageId, channel: "sms", to: a.phone,
-          templateKey: "job.part_received",
-          variables: { job_number: job?.number ?? order.number, order_number: order.number },
-          idempotencyKey: `vo-received:${order.id}:${a.phone}`,
-        })
+        await db().insert(notifications).values({
+          garageId: d.garageId, userId: a.userId,
+          kind: "part_arrived",
+          title: `Parts arrived for ${job[0]?.number ?? "job"}`,
+          body: `Order ${order.number} received into stock`,
+          link: jobLink,
+        }).catch(() => {})
+        if (a.phone) {
+          await sendMessage({
+            garageId: d.garageId, channel: "sms", to: a.phone,
+            templateKey: "job.part_received",
+            variables: { job_number: job[0]?.number ?? order.number, order_number: order.number },
+            idempotencyKey: `vo-received:${order.id}:${a.phone}`,
+          }).catch(() => {})
+        }
       }
     } catch {
       // notification failure must not block receiving

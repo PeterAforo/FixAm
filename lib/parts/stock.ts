@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { stockLevels, stockMovements, stockMovementTypeEnum } from "@/lib/db/schema"
 import { uuidv7 } from "@/lib/id"
+import { inngest } from "@/lib/inngest/client"
 
 export type StockMovementType = (typeof stockMovementTypeEnum.enumValues)[number]
 
@@ -77,6 +78,13 @@ export async function applyStockMovement(input: MovementInput) {
       reason: input.reason ?? null,
       actorUserId: input.actorUserId ?? null,
     })
+  }
+
+  // trigger debounced auto-reorder check for this garage (never block the movement)
+  try {
+    void inngest.send({ name: "fixam/stock.changed", data: { garageId } })
+  } catch {
+    // inngest unavailable — nightly sweep still covers it
   }
 }
 

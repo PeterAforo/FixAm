@@ -14,6 +14,7 @@ import {
   upsertPart,
 } from "@/lib/parts/actions"
 import { parsePartsCsv, type CsvIssue, type CsvRow } from "@/lib/parts/csv"
+import { ReorderDrawer } from "./reorder-drawer"
 
 type Part = {
   id: string; sku: string; name: string; brand: string | null; category: string | null
@@ -32,6 +33,7 @@ type Data = {
   canManage: boolean
   canAdjust: boolean
   canTransfer: boolean
+  canOrder: boolean
 }
 
 const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -53,6 +55,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
   const [adjustFor, setAdjustFor] = useState<Part | null>(null)
   const [transferFor, setTransferFor] = useState<Part | null>(null)
   const [configFor, setConfigFor] = useState<Part | null>(null)
+  const [reorderFor, setReorderFor] = useState<Part | null>(null)
   const csvRef = useRef<HTMLInputElement>(null)
   const [csvRows, setCsvRows] = useState<CsvRow[] | null>(null)
   const [csvIssues, setCsvIssues] = useState<CsvIssue[]>([])
@@ -268,6 +271,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
                             {data.canAdjust && p.branchId && <Button variant="ghost" className="!min-h-8 px-2 text-xs" onClick={() => { setAdjustFor(p); setAdjustForm({ quantity: "", reason: "", unitCost: "" }) }}>Stock</Button>}
                             {data.canTransfer && data.branches.length > 1 && p.branchId && <Button variant="ghost" className="!min-h-8 px-2 text-xs" onClick={() => { setTransferFor(p); setTransferForm({ toBranchId: "", quantity: "" }) }}>Move</Button>}
                             {data.canAdjust && p.branchId && <Button variant="ghost" className="!min-h-8 px-2 text-xs" onClick={() => { setConfigFor(p); setConfigForm({ reorderLevel: p.reorderLevel != null ? String(p.reorderLevel) : "", reorderQuantity: "", binLocation: p.binLocation ?? "" }) }}>Cfg</Button>}
+                            {low && data.canOrder && p.branchId && <Button variant="ghost" className="!min-h-8 px-2 text-xs text-primary" onClick={() => setReorderFor(p)}>Order</Button>}
                           </div>
                         </td>
                       </tr>
@@ -380,6 +384,17 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {reorderFor && reorderFor.branchId && (
+        <ReorderDrawer
+          garageId={garageId}
+          partId={reorderFor.id}
+          partName={reorderFor.name}
+          branchId={reorderFor.branchId}
+          canOrder={data.canOrder}
+          onClose={() => setReorderFor(null)}
+        />
       )}
     </div>
   )
