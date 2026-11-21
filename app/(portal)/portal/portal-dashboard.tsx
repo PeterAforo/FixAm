@@ -8,6 +8,7 @@ import { StatusPill } from "@/components/brand/status-pill"
 import { VehicleHealthCard } from "@/components/brand/vehicle-health-card"
 import { portalLogout, portalApproveFleetEstimates, updatePortalPreferences } from "@/lib/portal/actions"
 import { requestDataExport, requestDataDeletion } from "@/lib/privacy/actions"
+import { PortalVehiclesCard } from "./portal-vehicles"
 
 const gh = (n: number | null) => (n != null ? `GH₵ ${(n / 100).toLocaleString("en-GH", { minimumFractionDigits: 2 })}` : "—")
 const fmtDate = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("en-GH", { day: "numeric", month: "short", year: "numeric" }) : "—")
@@ -33,7 +34,13 @@ export type FleetData = {
   credit: { balance: number; creditLimit: number; status: string } | null
 }
 
-export function PortalDashboard({ phone, data, fleets = [] }: { phone: string; data: PortalData; fleets?: FleetData[] }) {
+export function PortalDashboard({ phone, data, fleets = [], claimedVehicles = [], catalogue = [] }: {
+  phone: string
+  data: PortalData
+  fleets?: FleetData[]
+  claimedVehicles?: import("./portal-vehicles").ClaimedVehicle[]
+  catalogue?: import("./portal-vehicles").CatalogueEntry[]
+}) {
   const [pending, startTransition] = useTransition()
   const [msg, setMsg] = useState<string | null>(null)
   const first = data.customers[0]
@@ -297,6 +304,11 @@ export function PortalDashboard({ phone, data, fleets = [] }: { phone: string; d
           <Button size="sm" onClick={savePrefs} disabled={pending || channels.length === 0}>Save preferences</Button>
           <InstallPrompt />
         </CardContent></Card>
+      </section>
+
+      {/* Claimed vehicles (self-registered customer) */}
+      <section className="mt-8">
+        <PortalVehiclesCard vehicles={claimedVehicles} catalogue={catalogue} />
       </section>
 
       {/* Privacy (Data Protection Act 843) */}
