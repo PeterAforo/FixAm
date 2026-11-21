@@ -6,8 +6,10 @@ import {
   branches,
   customers,
   garages,
+  instalments,
   invoiceLines,
   invoices,
+  paymentPlans,
   users,
   vehicles,
 } from "@/lib/db/schema"
@@ -59,6 +61,12 @@ export default async function InvoiceDetailPage({
       : Promise.resolve(null),
   ])
 
+  const [plan] = await db().select().from(paymentPlans)
+    .where(and(eq(paymentPlans.invoiceId, inv.id), eq(paymentPlans.garageId, garage.id))).limit(1)
+  const instList = plan
+    ? await db().select().from(instalments).where(eq(instalments.paymentPlanId, plan.id)).orderBy(instalments.sequence)
+    : []
+
   return (
     <div className="p-6 md:p-10">
       <div className="mx-auto max-w-4xl">
@@ -102,6 +110,25 @@ export default async function InvoiceDetailPage({
             discountAmount: Number(l.discountAmount ?? 0),
             lineTotal: Number(l.lineTotal),
             taxes: (l.taxBreakdown as { code: string; rate_bp: number; amount: number }[] | null) ?? [],
+          }))}
+          canPlan={can(principal, "payment_plans.create")}
+          plan={plan ? {
+            id: plan.id,
+            status: plan.status,
+            frequency: plan.frequency,
+            startDate: plan.startDate,
+            totalAmount: Number(plan.totalAmount),
+            downPayment: Number(plan.downPayment ?? 0),
+            lateFeeRule: plan.lateFeeRule,
+          } : null}
+          instalmentList={instList.map((i) => ({
+            id: i.id,
+            sequence: i.sequence,
+            dueDate: i.dueDate,
+            amount: Number(i.amount),
+            amountPaid: Number(i.amountPaid ?? 0),
+            lateFee: Number(i.lateFee ?? 0),
+            status: i.status,
           }))}
         />
       </div>

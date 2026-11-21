@@ -10,6 +10,7 @@ import { useConfetti } from "@/components/brand/confetti"
 import { formatGHS } from "@/lib/money"
 import { createCreditNote, issueInvoice, voidInvoice } from "@/lib/money/actions"
 import { recordPayment } from "@/lib/money/payments"
+import { createPaymentPlan, previewPaymentPlan, payInstalment, rotateInstalmentLink, cancelPaymentPlan } from "@/lib/money/instalments"
 
 type Invoice = {
   id: string; number: string | null; status: string; source: string; sourceId: string | null
@@ -26,6 +27,7 @@ type Line = {
 }
 
 const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const todayISO = () => new Date().toISOString().slice(0, 10)
 
 export function InvoiceDetailPanel(props: {
   garageSlug: string
@@ -34,6 +36,15 @@ export function InvoiceDetailPanel(props: {
   canVoid: boolean
   canCredit: boolean
   canRecordPayment: boolean
+  canPlan: boolean
+  plan: {
+    id: string; status: string; frequency: string; startDate: string
+    totalAmount: number; downPayment: number; lateFeeRule: unknown
+  } | null
+  instalmentList: {
+    id: string; sequence: number; dueDate: string
+    amount: number; amountPaid: number; lateFee: number; status: string
+  }[]
   invoice: Invoice
   customer: { fullName: string; phone: string | null } | null
   vehicle: { plateNumber: string; make: string | null; model: string | null } | null
@@ -52,6 +63,12 @@ export function InvoiceDetailPanel(props: {
   const [credit, setCredit] = useState({ amount: "", reason: "" })
   const [payOpen, setPayOpen] = useState(false)
   const [pay, setPay] = useState({ method: "cash" as string, amount: "", momoNetwork: "mtn", payerPhone: "" })
+  const [planOpen, setPlanOpen] = useState(false)
+  const [planForm, setPlanForm] = useState({ count: "3", frequency: "monthly", startDate: todayISO(), downPayment: "0", lateFeePct: "", lateFeeDays: "7" })
+  const [planPreview, setPlanPreview] = useState<{ sequence: number; dueDate: string; amount: number }[] | null>(null)
+  const [planLinks, setPlanLinks] = useState<{ instalmentId: string; sequence: number; url: string }[]>([])
+  const [instPayId, setInstPayId] = useState<string | null>(null)
+  const [instPayMsg, setInstPayMsg] = useState<string | null>(null)
   const confetti = useConfetti()
 
   const inv = p.invoice
@@ -100,6 +117,67 @@ export function InvoiceDetailPanel(props: {
     })
   }
 
+  function planPayload() {
+    const down = Math.round(parseFloat(planForm.downPayment || "0") * 100)
+    const lateFeeRule = planForm.lateFeePct
+      ? { kind: "percent" as const, rate_bp: Math.round(parseFloat(planForm.lateFeePct) * 100), after_days: parseInt(planForm.lateFeeDays || "7", 10) }
+      : null
+    return {
+      totalAmount: inv.balanceDue,
+      downPayment: down,
+      instalmentCount: parseInt(planForm.count, 10) || 1,
+      frequency: planForm.frequency as "weekly" | "fortnightly" | "monthly" | "custom",
+      startDate: planForm.startDate,
+      lateFeeRule,
+    }
+  }
+
+  function preview() {
+    startTransition(async () => {
+      const res = await previewPaymentPlan(planPayload())
+      if (res.ok) setPlanPreview(res.data)
+      else setMsg("Could not preview schedule")
+    })
+  }
+
+  function submitPlan() {
+    startTransition(async () => {
+      const res = await createPaymentPlan({ garageId: p.garageId, invoiceId: inv.id, ...planPayload() })
+      if (!res.ok) { setMsg(res.error.message); return }
+      setPlanLinks(res.data.links)
+      setPlanOpen(false); setPlanPreview(null); setMsg(null)
+      router.refresh()
+    })
+  }
+
+  function payInst(id: string) {
+    setInstPayId(id); setInstPayMsg(null)
+    startTransition(async () => {
+      const res = await payInstalment({ garageId: p.garageId, instalmentId: id, method: "cash" })
+      if (!res.ok) { setInstPayMsg(res.error.message); return }
+      setInstPayId(null); router.refresh()
+    })
+  }
+
+  function linkFor(id: string) {
+    startTransition(async () => {
+      const res = await rotateInstalmentLink({ garageId: p.garageId, instalmentId: id })
+      if (res.ok) {
+        await navigator.clipboard.writeText(res.data.url)
+        setInstPayMsg("Pay link copied to clipboard")
+      } else setInstPayMsg(res.error.message)
+    })
+  }
+
+  function cancelPlan() {
+    if (!p.plan) return
+    startTransition(async () => {
+      const res = await cancelPaymentPlan({ garageId: p.garageId, planId: p.plan!.id })
+      if (!res.ok) { setMsg(res.error.message); return }
+      router.refresh()
+    })
+  }
+
   function confirmCredit() {
     const amount = Math.round(parseFloat(credit.amount) * 100)
     if (!amount || !credit.reason.trim()) { setMsg("Enter an amount and reason"); return }
@@ -128,6 +206,11 @@ export function InvoiceDetailPanel(props: {
           {isLive && p.canRecordPayment && inv.balanceDue > 0 && (
             <Button onClick={() => { setPay({ method: "cash", amount: (inv.balanceDue / 100).toFixed(2), momoNetwork: "mtn", payerPhone: "" }); setPayOpen(true) }}>
               Record payment
+            </Button>
+          )}
+          {isLive && p.canPlan && !p.plan && inv.balanceDue > 0 && (
+            <Button variant="secondary" onClick={() => { setPlanForm({ count: "3", frequency: "monthly", startDate: todayISO(), downPayment: "0", lateFeePct: "", lateFeeDays: "7" }); setPlanPreview(null); setPlanOpen(true) }}>
+              Payment plan
             </Button>
           )}
           {isLive && p.canCredit && inv.balanceDue > 0 && (
@@ -228,6 +311,134 @@ export function InvoiceDetailPanel(props: {
             <div className="mt-4 flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setVoidOpen(false)}>Cancel</Button>
               <Button variant="danger" disabled={pending || voidReason.trim().length < 3} onClick={confirmVoid}>Void</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {planLinks.length > 0 && (
+        <div className="rounded-xl border-2 border-info bg-info/10 p-4 text-sm">
+          <p className="font-semibold">Payment plan created — instalment pay links:</p>
+          <ul className="mt-2 space-y-1">
+            {planLinks.map((l) => (
+              <li key={l.instalmentId} className="flex items-center justify-between gap-2">
+                <span>#{l.sequence}</span>
+                <code className="break-all text-xs text-muted-foreground">{l.url}</code>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {instPayMsg && <p className="rounded-lg bg-info/10 px-3 py-2 text-sm">{instPayMsg}</p>}
+
+      {p.plan && p.instalmentList.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold">
+                Payment plan · {p.plan.frequency} · {p.plan.status}
+              </h2>
+              {p.canPlan && p.plan.status === "active" && (
+                <Button variant="ghost" onClick={cancelPlan}>Cancel plan</Button>
+              )}
+            </div>
+            <table className="mt-3 w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="py-2">#</th>
+                  <th className="py-2">Due</th>
+                  <th className="py-2 text-right">Amount</th>
+                  <th className="py-2 text-right">Paid</th>
+                  <th className="py-2">Status</th>
+                  <th className="py-2" />
+                </tr>
+              </thead>
+              <tbody>
+                {p.instalmentList.map((i) => {
+                  const outstanding = i.amount + i.lateFee - i.amountPaid
+                  const payable = ["upcoming", "due", "overdue"].includes(i.status) && outstanding > 0
+                  return (
+                    <tr key={i.id} className="border-b last:border-0">
+                      <td className="py-2">{i.sequence}</td>
+                      <td className="py-2">{i.dueDate}</td>
+                      <td className="py-2 text-right tabular-nums">{formatGHS(i.amount)}{i.lateFee > 0 ? ` +${formatGHS(i.lateFee)} fee` : ""}</td>
+                      <td className="py-2 text-right tabular-nums">{formatGHS(i.amountPaid)}</td>
+                      <td className="py-2"><StatusPill status={i.status} tone={i.status === "paid" ? "ok" : i.status === "overdue" ? "danger" : "neutral"} /></td>
+                      <td className="py-2 text-right">
+                        {payable && p.canRecordPayment && (
+                          <Button size="sm" variant="secondary" disabled={pending || instPayId === i.id} onClick={() => payInst(i.id)}>
+                            {instPayId === i.id ? "…" : "Record"}
+                          </Button>
+                        )}
+                        {payable && (
+                          <Button size="sm" variant="ghost" disabled={pending} onClick={() => linkFor(i.id)}>Pay link</Button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      )}
+
+      {planOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-6 shadow-xl">
+            <h2 className="text-lg font-bold">Payment plan</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Balance: {formatGHS(inv.balanceDue)}</p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <label className="text-sm">
+                <span className="mb-1 block font-medium">Instalments</span>
+                <input value={planForm.count} onChange={(e) => setPlanForm({ ...planForm, count: e.target.value })} inputMode="numeric" className={inputCls} />
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block font-medium">Frequency</span>
+                <select value={planForm.frequency} onChange={(e) => setPlanForm({ ...planForm, frequency: e.target.value })} className={inputCls}>
+                  <option value="weekly">Weekly</option>
+                  <option value="fortnightly">Fortnightly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="custom">Custom days</option>
+                </select>
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block font-medium">First due</span>
+                <input type="date" value={planForm.startDate} onChange={(e) => setPlanForm({ ...planForm, startDate: e.target.value })} className={inputCls} />
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block font-medium">Down payment (GH₵)</span>
+                <input value={planForm.downPayment} onChange={(e) => setPlanForm({ ...planForm, downPayment: e.target.value })} inputMode="decimal" className={inputCls} />
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block font-medium">Late fee % (optional)</span>
+                <input value={planForm.lateFeePct} onChange={(e) => setPlanForm({ ...planForm, lateFeePct: e.target.value })} inputMode="decimal" placeholder="e.g. 5" className={inputCls} />
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block font-medium">After (days)</span>
+                <input value={planForm.lateFeeDays} onChange={(e) => setPlanForm({ ...planForm, lateFeeDays: e.target.value })} inputMode="numeric" className={inputCls} />
+              </label>
+            </div>
+
+            {planPreview && (
+              <div className="mt-4 rounded-xl border-2 border-border p-3">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">Schedule preview</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
+                  {planPreview.map((s) => (
+                    <div key={s.sequence} className="flex justify-between">
+                      <span className="text-muted-foreground">#{s.sequence} {s.dueDate}</span>
+                      <span className="tabular-nums font-medium">{formatGHS(s.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setPlanOpen(false)}>Cancel</Button>
+              <Button variant="secondary" disabled={pending} onClick={preview}>Preview</Button>
+              <Button disabled={pending || !planPreview} onClick={submitPlan}>Create plan</Button>
             </div>
           </div>
         </div>

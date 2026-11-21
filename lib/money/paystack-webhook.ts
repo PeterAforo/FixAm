@@ -70,12 +70,23 @@ export async function handlePaystackEvent(event: {
   }).where(eq(payments.id, p.id))
 
   if (p.invoiceId) {
-    await applyPaymentToInvoice(db(), {
-      garageId: p.garageId,
-      paymentId: p.id,
-      invoiceId: p.invoiceId,
-      amountPesewas: p.amount,
-    })
+    if (p.instalmentId) {
+      const { settleInstalmentPayment } = await import("./instalments")
+      await settleInstalmentPayment({
+        garageId: p.garageId,
+        instalmentId: p.instalmentId,
+        invoiceId: p.invoiceId,
+        paymentId: p.id,
+        amountPesewas: p.amount,
+      })
+    } else {
+      await applyPaymentToInvoice(db(), {
+        garageId: p.garageId,
+        paymentId: p.id,
+        invoiceId: p.invoiceId,
+        amountPesewas: p.amount,
+      })
+    }
   }
 
   await writeAuditLog({
