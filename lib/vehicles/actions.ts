@@ -703,7 +703,7 @@ export async function searchVehiclesAndCustomers(rawInput: unknown): Promise<
 }
 
 // ---------------------------------------------------------------------------
-// Manual "last oil change" entry (P4-02) — for new customers with no job history
+// Manual "last oil change" entry (P4-02) â€” for new customers with no job history
 // ---------------------------------------------------------------------------
 
 const oilChangeSchema = z.object({
@@ -764,7 +764,7 @@ export async function recordLastOilChange(rawInput: unknown): Promise<ActionResu
     })
   }
 
-  // complete any open oil_change items — this record IS the service
+  // complete any open oil_change items â€” this record IS the service
   await db().update(dueItems).set({
     status: "completed", completedAt: now, updatedAt: now,
   }).where(and(

@@ -1,15 +1,16 @@
 import Link from "next/link"
+import { Suspense } from "react"
+import { connection } from "next/server"
 import { notFound, redirect } from "next/navigation"
 import { getPortalPhone } from "@/lib/portal/session"
 import { getPortalVehicle } from "@/lib/portal/data"
 import { VehicleDetailPanel } from "./vehicle-detail-panel"
 
-export const dynamic = "force-dynamic"
-
-export default async function PortalVehiclePage({ params }: { params: Promise<{ vehicleId: string }> }) {
+async function PortalVehicleContent({ params }: { params: Promise<{ vehicleId: string }> }) {
+  await connection()
+  const { vehicleId } = await params
   const phone = await getPortalPhone()
   if (!phone) redirect("/portal")
-  const { vehicleId } = await params
   const data = await getPortalVehicle(phone, vehicleId)
   if (!data) notFound()
 
@@ -18,5 +19,13 @@ export default async function PortalVehiclePage({ params }: { params: Promise<{ 
       <Link href="/portal" className="text-sm text-muted-foreground underline">← Back to portal</Link>
       <VehicleDetailPanel data={data} />
     </main>
+  )
+}
+
+export default function PortalVehiclePage({ params }: { params: Promise<{ vehicleId: string }> }) {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-background" />}>
+      <PortalVehicleContent params={params} />
+    </Suspense>
   )
 }

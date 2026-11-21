@@ -201,9 +201,9 @@ async function transitionPO(rawInput: unknown, action: "submit" | "approve" | "c
   return { ok: true, data: { ok: true as const } }
 }
 
-export const submitPurchaseOrder = (i: unknown) => transitionPO(i, "submit")
-export const approvePurchaseOrder = (i: unknown) => transitionPO(i, "approve")
-export const cancelPurchaseOrder = (i: unknown) => transitionPO(i, "cancel")
+export async function submitPurchaseOrder(i: unknown) { return transitionPO(i, "submit") }
+export async function approvePurchaseOrder(i: unknown) { return transitionPO(i, "approve") }
+export async function cancelPurchaseOrder(i: unknown) { return transitionPO(i, "cancel") }
 
 // ---------------------------------------------------------------------------
 // Goods receiving (partial or full)

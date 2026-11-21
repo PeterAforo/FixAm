@@ -401,7 +401,7 @@ function DoneForm(props: {
 }
 
 // ---------------------------------------------------------------------------
-// Renewal tracker — customer view of an in-flight renewal request
+// Renewal tracker â€” customer view of an in-flight renewal request
 // ---------------------------------------------------------------------------
 
 type PublicRenewal = {
@@ -424,7 +424,7 @@ const RENEWAL_STEPS: Record<string, string> = {
   requested: "Request received",
   documents_pending: "Documents needed",
   quote_pending: "Preparing your quote",
-  quote_sent: "Quote ready — review & pay",
+  quote_sent: "Quote ready â€” review & pay",
   awaiting_payment: "Awaiting payment",
   paid: "Payment received",
   processing: "Processing with provider",
@@ -453,15 +453,15 @@ function RenewalTracker(props: {
     return () => { alive = false }
   }, [token, renewalId])
 
-  if (!loaded) return <p className="mt-3 text-sm text-muted-foreground">Loading renewal…</p>
-  if (!r) return <p className="mt-3 rounded-lg bg-success/10 p-3 text-sm text-success">Renewal request received — {garageName} will be in touch. No further reminders for this item.</p>
+  if (!loaded) return <p className="mt-3 text-sm text-muted-foreground">Loading renewalâ€¦</p>
+  if (!r) return <p className="mt-3 rounded-lg bg-success/10 p-3 text-sm text-success">Renewal request received â€” {garageName} will be in touch. No further reminders for this item.</p>
 
-  const gh = (p: number | null) => (p != null ? `GH? ${(p / 100).toLocaleString("en-GH", { minimumFractionDigits: 2 })}` : "—")
+  const gh = (p: number | null) => (p != null ? `GH? ${(p / 100).toLocaleString("en-GH", { minimumFractionDigits: 2 })}` : "â€”")
 
   return (
     <div className="mt-3 space-y-3 rounded-lg border-2 border-border p-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-bold">{r.number} · {r.vehicleLabel}</p>
+        <p className="text-sm font-bold">{r.number} ï¿½ {r.vehicleLabel}</p>
         <StatusPill status={r.status.replace(/_/g, " ")} />
       </div>
       <p className="text-sm text-muted-foreground">{RENEWAL_STEPS[r.status] ?? r.status}</p>
@@ -489,7 +489,7 @@ function RenewalTracker(props: {
             <Button size="sm" disabled={pending} onClick={() => {
               startTransition(async () => {
                 const res = await acceptRenewalQuote({ token, renewalId })
-                if (res.ok) { setMsg({ ok: true, text: "Quote accepted — please pay to proceed." }); getPublicRenewal({ token, renewalId }).then((x) => x.ok && setR(x.data)) }
+                if (res.ok) { setMsg({ ok: true, text: "Quote accepted â€” please pay to proceed." }); getPublicRenewal({ token, renewalId }).then((x) => x.ok && setR(x.data)) }
                 else setMsg({ ok: false, text: res.error.message })
               })
             }}>Accept quote</Button>
@@ -501,7 +501,7 @@ function RenewalTracker(props: {
         <Button asChild><a href={r.payUrl}>Pay {gh(r.total ?? r.invoiceBalance)}</a></Button>
       )}
       {r.status === "paid" || r.status === "processing" ? (
-        <p className="text-sm text-muted-foreground">{RENEWAL_STEPS[r.status]} — we&apos;ll notify you when the new document is ready.</p>
+        <p className="text-sm text-muted-foreground">{RENEWAL_STEPS[r.status]} â€” we&apos;ll notify you when the new document is ready.</p>
       ) : null}
     </div>
   )

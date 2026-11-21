@@ -439,7 +439,7 @@ export async function getInvoicePayLink(rawInput: unknown): Promise<ActionResult
     return { ok: false, error: { code: "VALIDATION", message: "Nothing left to pay" } }
   }
 
-  // raw token is never stored — rotate a fresh one so the link always works
+  // raw token is never stored â€” rotate a fresh one so the link always works
   const payToken = randomBytes(24).toString("hex")
   await db().update(invoices).set({ tokenHash: sha256(payToken), updatedAt: new Date() }).where(eq(invoices.id, inv.id))
 
