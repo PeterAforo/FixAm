@@ -4,6 +4,7 @@ import { z } from "zod"
 import { and, desc, eq, isNull, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
 import {
+  bookings,
   branches,
   customers,
   documentSequences,
@@ -185,6 +186,14 @@ export async function checkInJob(rawInput: unknown): Promise<ActionResult<{ jobI
     isWarranty: Boolean(d.warrantyParentJobId),
     trackerTokenHash,
   })
+
+  // link booking → job and mark it checked in
+  if (d.bookingId) {
+    await db()
+      .update(bookings)
+      .set({ status: "checked_in", jobId, updatedAt: new Date() })
+      .where(and(eq(bookings.id, d.bookingId), eq(bookings.garageId, d.garageId)))
+  }
 
   // status event (creation → checked_in)
   await db().insert(jobStatusEvents).values({

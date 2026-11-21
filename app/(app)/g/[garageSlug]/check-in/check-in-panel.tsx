@@ -28,6 +28,7 @@ export function CheckInPanel({
   garageSlug,
   garageId,
   defaultBranchId,
+  prefill,
   branches,
   bays,
   customers,
@@ -38,6 +39,14 @@ export function CheckInPanel({
   garageSlug: string
   garageId: string
   defaultBranchId: string | null
+  prefill: {
+    bookingId: string
+    branchId: string
+    customerId: string | null
+    vehicleId: string | null
+    serviceType: string
+    jobTemplateId: string | null
+  } | null
   branches: { id: string; name: string; code: string }[]
   bays: { id: string; name: string; branchId: string }[]
   customers: CustomerOpt[]
@@ -50,20 +59,20 @@ export function CheckInPanel({
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
 
-  const [customerId, setCustomerId] = useState("")
+  const [customerId, setCustomerId] = useState(prefill?.customerId ?? "")
   const [customerQ, setCustomerQ] = useState("")
-  const [vehicleId, setVehicleId] = useState("")
+  const [vehicleId, setVehicleId] = useState(prefill?.vehicleId ?? "")
   const [showNewCustomer, setShowNewCustomer] = useState(false)
   const [ncName, setNcName] = useState("")
   const [ncPhone, setNcPhone] = useState("")
   const [showNewVehicle, setShowNewVehicle] = useState(false)
   const [nv, setNv] = useState({ plate: "", make: "", model: "", year: "" })
 
-  const [branchId, setBranchId] = useState(defaultBranchId ?? branches[0]?.id ?? "")
+  const [branchId, setBranchId] = useState(prefill?.branchId ?? defaultBranchId ?? branches[0]?.id ?? "")
   const [bayId, setBayId] = useState("")
-  const [templateId, setTemplateId] = useState("")
+  const [templateId, setTemplateId] = useState(prefill?.jobTemplateId ?? "")
   const [mechanicIds, setMechanicIds] = useState<string[]>([])
-  const [complaint, setComplaint] = useState("")
+  const [complaint, setComplaint] = useState(prefill?.serviceType ?? "")
   const [odometer, setOdometer] = useState("")
   const [fuel, setFuel] = useState(50)
   const [itemsInCar, setItemsInCar] = useState("")
@@ -201,6 +210,7 @@ export function CheckInPanel({
       const res = await checkInJob({
         garageId,
         branchId,
+        bookingId: prefill?.bookingId,
         customerId,
         vehicleId,
         jobTemplateId: templateId || undefined,

@@ -5,6 +5,7 @@ import { and, asc, eq, isNull } from "drizzle-orm"
 import { db } from "@/lib/db"
 import {
   bays,
+  bookings,
   branches,
   customers,
   garages,
@@ -18,9 +19,16 @@ import { resolveMembership } from "@/lib/actions"
 import { can, type StaffRole } from "@/lib/auth/permissions"
 import { CheckInPanel } from "./check-in-panel"
 
-async function CheckInLoader({ params }: { params: Promise<{ garageSlug: string }> }) {
+async function CheckInLoader({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ garageSlug: string }>
+  searchParams: Promise<{ booking?: string }>
+}) {
   await connection()
   const { garageSlug } = await params
+  const { booking: bookingParam } = await searchParams
 
   const userId = await getSessionUserId()
   if (!userId) redirect(`/login?next=/g/${garageSlug}/check-in`)
@@ -85,8 +93,21 @@ async function CheckInLoader({ params }: { params: Promise<{ garageSlug: string 
       .where(and(eq(memberships.garageId, garage.id), eq(memberships.status, "active"))),
   ])
 
+  const [bookingRow] = bookingParam
+    ? await db().select().from(bookings).where(and(eq(bookings.id, bookingParam), eq(bookings.garageId, garage.id))).limit(1)
+    : [null]
+  const usableBooking = bookingRow && bookingRow.status !== "cancelled" && !bookingRow.jobId ? bookingRow : null
+
   return (
     <CheckInPanel
+      prefill={usableBooking ? {
+        bookingId: usableBooking.id,
+        branchId: usableBooking.branchId,
+        customerId: usableBooking.customerId,
+        vehicleId: usableBooking.vehicleId,
+        serviceType: usableBooking.serviceType,
+        jobTemplateId: usableBooking.jobTemplateId,
+      } : null}
       garageSlug={garageSlug}
       garageId={garage.id}
       defaultBranchId={membership.branchId}
@@ -108,12 +129,18 @@ async function CheckInLoader({ params }: { params: Promise<{ garageSlug: string 
   )
 }
 
-export default function CheckInPage({ params }: { params: Promise<{ garageSlug: string }> }) {
+export default function CheckInPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ garageSlug: string }>
+  searchParams: Promise<{ booking?: string }>
+}) {
   return (
     <div className="p-6 md:p-10">
       <div className="mx-auto max-w-4xl">
         <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-muted" />}>
-          <CheckInLoader params={params} />
+          <CheckInLoader params={params} searchParams={searchParams} />
         </Suspense>
       </div>
     </div>

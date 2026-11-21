@@ -78,6 +78,9 @@ export const bookings = pgTable(
     source: text("source").default("staff"), // public_page|reminder|staff|portal
     dueItemId: uuid("due_item_id").references(() => dueItems.id),
     jobId: uuid("job_id"), // fk:jobs self-ref added below via jobs.bookingId
+    otpHash: text("otp_hash"), // sha256 of SMS confirmation code (public bookings)
+    otpExpiresAt: timestamp("otp_expires_at", { withTimezone: true }),
+    confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
     ...timestamps,
   },
   (t) => [
