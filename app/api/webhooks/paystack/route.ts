@@ -5,6 +5,7 @@ import {
   markWebhookProcessed,
   recordWebhookEvent,
 } from "@/lib/webhook-events"
+import { handlePaystackEvent } from "@/lib/money/paystack-webhook"
 
 export async function POST(request: Request) {
   const rawBody = await request.text()
@@ -39,8 +40,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Dispatch to domain handlers (payments, subscriptions, transfers).
-    // Wired in P2-02 / P5-01.
+    await handlePaystackEvent({ event: event.event, data: event.data })
     await markWebhookProcessed("paystack", eventId)
     return NextResponse.json({ received: true })
   } catch (e) {

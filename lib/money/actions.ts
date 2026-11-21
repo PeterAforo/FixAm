@@ -1,20 +1,23 @@
 "use server"
 import { randomBytes, createHash } from "crypto"
 import { z } from "zod"
-import { and, desc, eq, isNull, sql } from "drizzle-orm"
+import { and, desc, eq, isNull } from "drizzle-orm"
 import { db } from "@/lib/db"
 import {
   branches,
   creditNotes,
   customers,
-  documentSequences,
+  estimates,
   invoices,
   jobs,
+  paymentAllocations,
+  payments,
 } from "@/lib/db/schema"
 import { writeAuditLog, resolveMembership, type ActionResult } from "@/lib/actions"
 import { getSessionUserId } from "@/lib/auth/ensure-user"
 import { can, type StaffRole } from "@/lib/auth/permissions"
 import { buildInvoiceFromJob } from "./invoice-core"
+import { nextDocNumber } from "./sequence"
 import { computeTaxTotals, type TaxRule } from "@/lib/domain/tax"
 import { uuidv7 } from "@/lib/id"
 import { garageSettings, invoiceLines } from "@/lib/db/schema"
@@ -154,16 +157,17 @@ export async function createManualInvoice(rawInput: unknown): Promise<ActionResu
 // Issue — gapless number via document_sequences, freezes totals
 // ---------------------------------------------------------------------------
 
-async function nextDocNumber(garageId: string, branchId: string | null, docType: string, prefix: string) {
-  const rows = await db()
-    .insert(documentSequences)
-    .values({ garageId, branchId, docType, nextNumber: 2n })
-    .onConflictDoUpdate({
-      target: [documentSequences.garageId, documentSequences.branchId, documentSequences.docType],
-      set: { nextNumber: sql`${documentSequences.nextNumber} + 1`, updatedAt: new Date() },
-    })
-    .returning({ nextNumber: documentSequences.nextNumber })
-  return `${prefix}-${String(Number(rows[0]!.nextNumber) - 1).padStart(5, "0")}`
+// nextDocNumber lives in ./sequence (shared with payments module).
+
+/** Resolve a concrete branch for document_sequences (default → any → null). */
+async function resolveSeqBranch(garageId: string, preferred: string | null): Promise<string | null> {
+  if (preferred) return preferred
+  const [def] = await db().select({ id: branches.id }).from(branches)
+    .where(and(eq(branches.garageId, garageId), eq(branches.isDefault, true))).limit(1)
+  if (def) return def.id
+  const [any] = await db().select({ id: branches.id }).from(branches)
+    .where(eq(branches.garageId, garageId)).limit(1)
+  return any?.id ?? null
 }
 
 export async function issueInvoice(rawInput: unknown): Promise<ActionResult<{ invoiceId: string; number: string; payToken: string }>> {
@@ -217,6 +221,55 @@ export async function issueInvoice(rawInput: unknown): Promise<ActionResult<{ in
     balanceDue: inv.total,
     updatedAt: new Date(),
   }).where(eq(invoices.id, inv.id))
+
+  // Apply estimate deposits: succeeded isDeposit payments against the job's
+  // approved estimate become allocations on this invoice.
+  if (inv.source === "job" && inv.sourceId) {
+    try {
+      const [est] = await db()
+        .select({ id: estimates.id, depositRequired: estimates.depositRequired })
+        .from(estimates)
+        .where(and(eq(estimates.jobId, inv.sourceId), eq(estimates.garageId, d.garageId), eq(estimates.status, "approved")))
+        .orderBy(desc(estimates.version))
+        .limit(1)
+      const depositCap = BigInt(est?.depositRequired ?? 0)
+      if (est && depositCap > 0n) {
+        const deps = await db()
+          .select()
+          .from(payments)
+          .where(and(
+            eq(payments.garageId, d.garageId),
+            eq(payments.estimateId, est.id),
+            eq(payments.isDeposit, true),
+            eq(payments.status, "succeeded"),
+          ))
+        let remaining = depositCap
+        let appliedTotal = 0n
+        for (const dep of deps) {
+          if (remaining <= 0n) break
+          const applied = dep.amount > remaining ? remaining : dep.amount
+          await db().insert(paymentAllocations).values({
+            garageId: d.garageId, paymentId: dep.id, invoiceId: inv.id, amount: applied,
+          })
+          remaining -= applied
+          appliedTotal += applied
+        }
+        if (appliedTotal > 0n) {
+          const newPaid = inv.amountPaid + appliedTotal
+          const newBalance = inv.total - newPaid < 0n ? 0n : inv.total - newPaid
+          await db().update(invoices).set({
+            amountPaid: newPaid,
+            balanceDue: newBalance,
+            depositApplied: (inv.depositApplied ?? 0n) + appliedTotal,
+            status: (newBalance <= 0n ? "paid" : newPaid > 0n ? "partially_paid" : "issued") as never,
+            updatedAt: new Date(),
+          }).where(eq(invoices.id, inv.id))
+        }
+      }
+    } catch {
+      // deposit application is best-effort
+    }
+  }
 
   // job → delivered requires invoice issued (P2-05 delivery gate); mark invoice linkage on job items implicitly via sourceId
   await writeAuditLog({
@@ -287,7 +340,9 @@ export async function createCreditNote(rawInput: unknown): Promise<ActionResult<
     return { ok: false, error: { code: "VALIDATION", message: "Credit exceeds balance due" } }
   }
 
-  const number = await nextDocNumber(d.garageId, inv.branchId, "CN", "CN")
+  const cnBranch = await resolveSeqBranch(d.garageId, inv.branchId)
+  if (!cnBranch) return { ok: false, error: { code: "VALIDATION", message: "Garage has no branch" } }
+  const number = await nextDocNumber(d.garageId, cnBranch, "CN", "CN")
   const cnId = uuidv7()
   await db().insert(creditNotes).values({
     id: cnId,

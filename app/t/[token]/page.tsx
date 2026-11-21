@@ -1,8 +1,10 @@
 import { Suspense } from "react"
 import { getPublicEstimate } from "@/lib/estimates/actions"
 import { getTrackerData } from "@/lib/tracker/actions"
+import { getPublicInvoiceByToken } from "@/lib/money/payments"
 import { ApprovalPanel } from "./approval-panel"
 import { TrackerPanel } from "./tracker-panel"
+import { InvoicePayPanel } from "./invoice-pay-panel"
 
 async function TokenView({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
@@ -26,6 +28,37 @@ async function TokenView({ params }: { params: Promise<{ token: string }> }) {
             {est.validUntil && <p className="mt-1 text-xs text-muted-foreground">Valid until {est.validUntil}</p>}
           </header>
           <ApprovalPanel token={token} estimate={est} />
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Powered by FixAm · Questions? Contact the garage directly.
+          </p>
+        </div>
+      </main>
+    )
+  }
+
+  const invRes = await getPublicInvoiceByToken({ token })
+  const inv = invRes.ok ? invRes.data : null
+
+  if (inv) {
+    return (
+      <main className="min-h-screen bg-background">
+        <div className="mx-auto max-w-lg px-4 py-8">
+          <header className="mb-6 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{inv.garageName}</p>
+            <h1 className="mt-1 font-display text-3xl font-bold">Invoice {inv.number}</h1>
+            {inv.customerName && <p className="mt-1 text-sm text-muted-foreground">{inv.customerName}</p>}
+            {inv.dueDate && <p className="mt-1 text-xs text-muted-foreground">Due {inv.dueDate}</p>}
+          </header>
+          <InvoicePayPanel
+            token={token}
+            invoice={{
+              id: inv.id,
+              number: inv.number,
+              status: inv.status,
+              balanceDue: inv.balanceDue,
+              formatted: inv.formatted,
+            }}
+          />
           <p className="mt-6 text-center text-xs text-muted-foreground">
             Powered by FixAm · Questions? Contact the garage directly.
           </p>

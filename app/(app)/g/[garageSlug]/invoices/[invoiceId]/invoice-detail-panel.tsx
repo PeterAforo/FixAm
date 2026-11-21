@@ -1,13 +1,15 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/brand/button"
 import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill } from "@/components/brand/status-pill"
+import { useConfetti } from "@/components/brand/confetti"
 import { formatGHS } from "@/lib/money"
 import { createCreditNote, issueInvoice, voidInvoice } from "@/lib/money/actions"
+import { recordPayment } from "@/lib/money/payments"
 
 type Invoice = {
   id: string; number: string | null; status: string; source: string; sourceId: string | null
@@ -48,8 +50,18 @@ export function InvoiceDetailPanel(props: {
   const [voidReason, setVoidReason] = useState("")
   const [creditOpen, setCreditOpen] = useState(false)
   const [credit, setCredit] = useState({ amount: "", reason: "" })
+  const [payOpen, setPayOpen] = useState(false)
+  const [pay, setPay] = useState({ method: "cash" as string, amount: "", momoNetwork: "mtn", payerPhone: "" })
+  const confetti = useConfetti()
 
   const inv = p.invoice
+  const wasPaid = useRef(false)
+  useEffect(() => {
+    if (inv.status === "paid" && !wasPaid.current) {
+      wasPaid.current = true
+      confetti()
+    }
+  }, [inv.status, confetti])
   const isDraft = inv.status === "draft"
   const isLive = ["issued", "partially_paid", "paid"].includes(inv.status)
 
@@ -67,6 +79,24 @@ export function InvoiceDetailPanel(props: {
       const res = await voidInvoice({ garageId: p.garageId, invoiceId: inv.id, reason: voidReason })
       if (!res.ok) { setMsg(res.error.message); return }
       setVoidOpen(false); router.refresh()
+    })
+  }
+
+  function submitPayment() {
+    const amount = Math.round(parseFloat(pay.amount || "0") * 100)
+    if (!amount || amount <= 0) { setMsg("Enter an amount"); return }
+    startTransition(async () => {
+      const res = await recordPayment({
+        garageId: p.garageId,
+        invoiceId: inv.id,
+        method: pay.method,
+        amount,
+        momoNetwork: pay.method === "momo" ? pay.momoNetwork : undefined,
+        payerPhone: pay.method === "momo" ? pay.payerPhone || undefined : undefined,
+      })
+      if (!res.ok) { setMsg(res.error.message); return }
+      setPayOpen(false); setMsg(null)
+      router.refresh()
     })
   }
 
@@ -95,6 +125,11 @@ export function InvoiceDetailPanel(props: {
         <div className="flex flex-wrap items-center gap-2">
           <StatusPill status={inv.status} tone={inv.status === "paid" ? "ok" : inv.status === "void" ? "danger" : inv.status === "draft" ? "neutral" : "info"} />
           {isDraft && p.canIssue && <Button disabled={pending} onClick={issue}>Issue invoice</Button>}
+          {isLive && p.canRecordPayment && inv.balanceDue > 0 && (
+            <Button onClick={() => { setPay({ method: "cash", amount: (inv.balanceDue / 100).toFixed(2), momoNetwork: "mtn", payerPhone: "" }); setPayOpen(true) }}>
+              Record payment
+            </Button>
+          )}
           {isLive && p.canCredit && inv.balanceDue > 0 && (
             <Button variant="secondary" onClick={() => setCreditOpen(true)}>Credit note</Button>
           )}
@@ -193,6 +228,57 @@ export function InvoiceDetailPanel(props: {
             <div className="mt-4 flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setVoidOpen(false)}>Cancel</Button>
               <Button variant="danger" disabled={pending || voidReason.trim().length < 3} onClick={confirmVoid}>Void</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {payOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
+            <h2 className="text-lg font-bold">Record payment</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Balance due: {formatGHS(inv.balanceDue)}</p>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {["cash", "momo", "card", "bank_transfer", "cheque", "other"].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setPay({ ...pay, method: m })}
+                  className={`rounded-lg border-2 px-2 py-2 text-xs font-bold capitalize ${pay.method === m ? "border-primary bg-primary/10" : "border-border"}`}
+                >
+                  {m.replace("_", " ")}
+                </button>
+              ))}
+            </div>
+            <input
+              value={pay.amount}
+              onChange={(e) => setPay({ ...pay, amount: e.target.value })}
+              placeholder="Amount (GH₵)"
+              inputMode="decimal"
+              className={`mt-3 ${inputCls}`}
+            />
+            {pay.method === "momo" && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <select
+                  value={pay.momoNetwork}
+                  onChange={(e) => setPay({ ...pay, momoNetwork: e.target.value })}
+                  className={inputCls}
+                >
+                  <option value="mtn">MTN</option>
+                  <option value="telecel">Telecel</option>
+                  <option value="airteltigo">AirtelTigo</option>
+                </select>
+                <input
+                  value={pay.payerPhone}
+                  onChange={(e) => setPay({ ...pay, payerPhone: e.target.value })}
+                  placeholder="Payer phone"
+                  inputMode="tel"
+                  className={inputCls}
+                />
+              </div>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setPayOpen(false)}>Cancel</Button>
+              <Button disabled={pending} onClick={submitPayment}>Record</Button>
             </div>
           </div>
         </div>
