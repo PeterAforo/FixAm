@@ -209,6 +209,9 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
           <p className="text-sm text-muted-foreground">
             {v.city ?? ""}{v.region ? `, ${v.region}` : ""} · ★ {v.ratingAvg ?? "—"} ({v.ratingCount ?? 0} reviews)
             {pendingApproval && <StatusPill status={v.status} tone={statusTone(v.status)} className="ml-2">{v.status}</StatusPill>}
+            {v.isVerified && !pendingApproval && (
+              <span className="ml-2 rounded-pill border border-success/40 bg-success/10 px-2 py-0.5 text-xs font-bold text-success">Verified seller</span>
+            )}
           </p>
         </div>
         <div className="flex gap-4 text-sm">

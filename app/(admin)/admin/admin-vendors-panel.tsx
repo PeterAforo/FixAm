@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill, statusTone } from "@/components/brand/status-pill"
 import { Button } from "@/components/brand/button"
-import { adminSetVendorStatus } from "@/lib/vendors/actions"
+import { adminSetVendorStatus, adminSetVendorVerified } from "@/lib/vendors/actions"
 
 type VendorRow = {
   id: string; businessName: string; slug: string; phone: string | null
   email: string | null; city: string | null; region: string | null
-  categories: string[] | null; status: string
+  categories: string[] | null; status: string; isVerified: boolean
   ratingAvg: number | null; ratingCount: number | null; createdAt: string
 }
 
@@ -25,6 +25,14 @@ export function AdminVendorsPanel({ vendors }: { vendors: VendorRow[] }) {
   function setStatus(vendorId: string, status: "approved" | "suspended" | "pending") {
     startTransition(async () => {
       const res = await adminSetVendorStatus({ vendorId, status })
+      if (!res.ok) { setMsg(res.error.message); return }
+      setMsg(null); router.refresh()
+    })
+  }
+
+  function setVerified(vendorId: string, verified: boolean) {
+    startTransition(async () => {
+      const res = await adminSetVendorVerified({ vendorId, verified })
       if (!res.ok) { setMsg(res.error.message); return }
       setMsg(null); router.refresh()
     })
@@ -58,7 +66,13 @@ export function AdminVendorsPanel({ vendors }: { vendors: VendorRow[] }) {
               {shown.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">No vendors</td></tr>}
               {shown.map((v) => (
                 <tr key={v.id} className="border-b last:border-0">
-                  <td className="px-4 py-3"><p className="font-medium">{v.businessName}</p><p className="text-xs text-muted-foreground">{v.slug}</p></td>
+                  <td className="px-4 py-3">
+                    <p className="font-medium">
+                      {v.businessName}
+                      {v.isVerified && <span className="ml-1 rounded-pill bg-success/15 px-1.5 py-0.5 text-[10px] font-bold text-success">Verified</span>}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{v.slug}</p>
+                  </td>
                   <td className="px-4 py-3 text-xs">{v.phone ?? "—"}<br />{v.email ?? ""}</td>
                   <td className="px-4 py-3 text-xs">{[v.city, v.region].filter(Boolean).join(", ") || "—"}</td>
                   <td className="px-4 py-3 text-xs">{(v.categories ?? []).join(", ") || "—"}</td>
@@ -73,6 +87,12 @@ export function AdminVendorsPanel({ vendors }: { vendors: VendorRow[] }) {
                       )}
                       {v.status === "suspended" && (
                         <Button variant="ghost" className="!min-h-8 px-2 text-xs" disabled={pending} onClick={() => setStatus(v.id, "pending")}>Re-review</Button>
+                      )}
+                      {v.status === "approved" && (
+                        <Button variant="ghost" className="!min-h-8 px-2 text-xs" disabled={pending}
+                          onClick={() => setVerified(v.id, !v.isVerified)}>
+                          {v.isVerified ? "Unverify" : "Verify"}
+                        </Button>
                       )}
                     </div>
                   </td>

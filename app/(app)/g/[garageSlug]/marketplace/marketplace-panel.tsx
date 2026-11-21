@@ -21,6 +21,7 @@ type Product = {
   leadTimeHours: number | null; vendorId: string; vendorName: string
   vendorRating: number | null; vendorRatingCount: number | null
   vendorCity: string | null; vendorRegion: string | null
+  vendorVerified: boolean | null
   compatibleVehicles: unknown
   zone: { region?: string; city?: string; fee?: number; etaHours?: number } | null
 }
@@ -71,13 +72,13 @@ export function MarketplacePanel(props: {
   const cartTotal = cartSubtotal + cartFees
 
   const groupedProducts = useMemo(() => {
-    const map = new Map<string, { vendor: string; rating: number | null; items: Product[] }>()
+    const map = new Map<string, { vendor: string; rating: number | null; verified: boolean; items: Product[] }>()
     for (const p of products) {
-      const g = map.get(p.vendorId) ?? { vendor: p.vendorName, rating: p.vendorRating, items: [] }
+      const g = map.get(p.vendorId) ?? { vendor: p.vendorName, rating: p.vendorRating, verified: p.vendorVerified === true, items: [] }
       g.items.push(p)
       map.set(p.vendorId, g)
     }
-    return [...map.values()]
+    return [...map.values()].sort((a, b) => Number(b.verified) - Number(a.verified))
   }, [products])
 
   function addToCart(p: Product) {
@@ -228,7 +229,14 @@ export function MarketplacePanel(props: {
           {groupedProducts.map((g) => (
             <section key={g.vendor}>
               <div className="mb-2 flex items-baseline gap-2">
-                <h2 className="font-display text-lg font-bold">{g.vendor}</h2>
+                <h2 className="font-display text-lg font-bold">
+                  {g.vendor}
+                  {g.verified && (
+                    <span className="ml-2 rounded-pill border border-success/40 bg-success/10 px-2 py-0.5 align-middle text-xs font-bold text-success">
+                      Verified
+                    </span>
+                  )}
+                </h2>
                 {g.rating != null && <span className="text-xs text-muted-foreground">★ {g.rating.toFixed(1)}</span>}
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

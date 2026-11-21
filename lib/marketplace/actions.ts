@@ -103,6 +103,7 @@ export async function browseMarketplace(rawInput: unknown) {
       ratingCount: vendors.ratingCount,
       vendorCity: vendors.city,
       vendorRegion: vendors.region,
+      vendorVerified: vendors.isVerified,
     })
     .from(vendorProducts)
     .innerJoin(vendors, eq(vendorProducts.vendorId, vendors.id))
@@ -145,6 +146,7 @@ export async function browseMarketplace(rawInput: unknown) {
         vendorRatingCount: r.ratingCount,
         vendorCity: r.vendorCity,
         vendorRegion: r.vendorRegion,
+        vendorVerified: r.vendorVerified,
         zone: zoneMap.get(r.vendorId) ?? null,
       })),
     },

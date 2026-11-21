@@ -185,7 +185,7 @@ export async function getVendorDashboard() {
     ok: true as const,
     data: {
       vendor: {
-        id: vendor.id, businessName: vendor.businessName, status: vendor.status,
+        id: vendor.id, businessName: vendor.businessName, status: vendor.status, isVerified: vendor.isVerified,
         phone: vendor.phone, email: vendor.email, city: vendor.city, region: vendor.region,
         categories: vendor.categories, deliveryZones: vendor.deliveryZones,
         payoutMethod: vendor.payoutMethod, ratingAvg: vendor.ratingAvg != null ? Number(vendor.ratingAvg) : null, ratingCount: vendor.ratingCount,
@@ -452,7 +452,7 @@ export async function adminListVendors(rawInput: unknown) {
     data: rows.map((v) => ({
       id: v.id, businessName: v.businessName, slug: v.slug, phone: v.phone,
       email: v.email, city: v.city, region: v.region, categories: v.categories,
-      status: v.status, ratingAvg: v.ratingAvg != null ? Number(v.ratingAvg) : null, ratingCount: v.ratingCount,
+      status: v.status, isVerified: v.isVerified, ratingAvg: v.ratingAvg != null ? Number(v.ratingAvg) : null, ratingCount: v.ratingCount,
       createdAt: v.createdAt.toISOString(),
     })),
   }
@@ -474,6 +474,38 @@ export async function adminSetVendorStatus(rawInput: unknown): Promise<ActionRes
   await writeAuditLog({
     garageId: null, actorUserId: userId, action: "admin.vendor.status",
     entityType: "vendor", entityId: d.vendorId, after: { status: d.status },
+  }).catch(() => {})
+  return { ok: true, data: { ok: true as const } }
+}
+
+/** P6-06 — grant or revoke the verified badge (business credentials checked). */
+export async function adminSetVendorVerified(rawInput: unknown): Promise<ActionResult<{ ok: true }>> {
+  const userId = await getSessionUserId()
+  if (!userId || !(await requirePlatformAdmin(userId))) {
+    return { ok: false, error: { code: "FORBIDDEN", message: "Platform admin only" } }
+  }
+  const parsed = z.object({
+    vendorId: z.string().uuid(),
+    verified: z.boolean(),
+  }).safeParse(rawInput)
+  if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Invalid input" } }
+  const d = parsed.data
+
+  const [v] = await db().select({ status: vendors.status }).from(vendors).where(eq(vendors.id, d.vendorId)).limit(1)
+  if (!v) return { ok: false, error: { code: "NOT_FOUND", message: "Vendor not found" } }
+  if (d.verified && v.status !== "approved") {
+    return { ok: false, error: { code: "CONFLICT", message: "Approve the vendor before verifying" } }
+  }
+
+  await db().update(vendors).set({
+    isVerified: d.verified,
+    verifiedAt: d.verified ? new Date() : null,
+    verifiedBy: d.verified ? userId : null,
+    updatedAt: new Date(),
+  }).where(eq(vendors.id, d.vendorId))
+  await writeAuditLog({
+    garageId: null, actorUserId: userId, action: d.verified ? "admin.vendor.verify" : "admin.vendor.unverify",
+    entityType: "vendor", entityId: d.vendorId, after: { verified: d.verified },
   }).catch(() => {})
   return { ok: true, data: { ok: true as const } }
 }
