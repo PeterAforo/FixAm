@@ -261,6 +261,7 @@ export function TemplatesPanel({
 
       {templates.length === 0 && !form ? (
         <EmptyState
+          pose="toolbox"
           title="No templates yet"
           description="Create templates like Oil service or Brake pads to speed up check-in and estimates."
           action={<Button onClick={() => setForm(EMPTY_FORM)}><Plus className="size-4" /> New template</Button>}

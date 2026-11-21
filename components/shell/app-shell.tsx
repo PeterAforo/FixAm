@@ -8,6 +8,7 @@ import { stopImpersonation } from "@/lib/admin/actions"
 import { navForRole, bottomBarForRole, navItemForPath, navLabelKey } from "@/lib/nav"
 import type { StaffRole } from "@/lib/auth/permissions"
 import { CommandPalette } from "./command-palette"
+import { OfflineBanner } from "@/components/brand/offline-banner"
 import { type ShellNotification } from "./notifications-bell"
 import { BranchSwitcher, type ShellBranch } from "./branch-switcher"
 import { ShellHeader } from "./shell-header"
@@ -162,6 +163,7 @@ export function AppShell({
             <ImpersonationExit />
           </div>
         )}
+        <OfflineBanner />
         <main className="flex-1 pb-24 md:pb-8">{children}</main>
       </div>
 

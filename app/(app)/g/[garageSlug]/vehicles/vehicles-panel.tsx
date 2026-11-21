@@ -129,6 +129,7 @@ export function VehiclesPanel({
 
       {vehicles.length === 0 ? (
         <EmptyState
+          pose={activeFilters ? "magnifier" : "wave"}
           title={activeFilters ? "No vehicles match" : "No vehicles yet"}
           description={
             activeFilters

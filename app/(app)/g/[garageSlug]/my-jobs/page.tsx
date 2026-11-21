@@ -57,7 +57,7 @@ async function MyJobsLoader({ params }: { params: Promise<{ garageSlug: string }
         <p className="text-muted-foreground">{rows.length} active assignments</p>
       </header>
       {rows.length === 0 ? (
-        <EmptyState title="No active jobs" description="Jobs assigned to you will appear here." />
+        <EmptyState pose="sleeping" title="No active jobs" description="Jobs assigned to you will appear here." />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {rows.map((j) => (

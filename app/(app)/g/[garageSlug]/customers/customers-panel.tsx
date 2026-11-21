@@ -135,6 +135,7 @@ export function CustomersPanel({
 
       {customers.length === 0 ? (
         <EmptyState
+          pose={activeFilters ? "magnifier" : "wave"}
           title={activeFilters ? "No customers match" : "No customers yet"}
           description={
             activeFilters

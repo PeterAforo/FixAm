@@ -59,6 +59,7 @@ async function Section({
   return (
     <div className="p-6 md:p-10">
       <EmptyState
+        pose="thinking"
         title={label}
         description="This screen is on the way — it lands in an upcoming phase. The shell, navigation and permissions are already live."
       />
