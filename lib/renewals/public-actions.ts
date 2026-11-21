@@ -54,6 +54,9 @@ async function renewalForToken(token: string, renewalId: string) {
 export async function getPublicRenewal(rawInput: unknown) {
   const parsed = z.object({ token: z.string().min(10).max(200), renewalId: z.string().uuid() }).safeParse(rawInput)
   if (!parsed.success) return { ok: false as const }
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`ren-view:${sha256(parsed.data.token).slice(0, 16)}`, 60, 3600)
+  if (!rl.ok) return rateLimited(rl)
   const row = await renewalForToken(parsed.data.token, parsed.data.renewalId)
   if (!row) return { ok: false as const }
   const r = row.renewal
@@ -104,6 +107,9 @@ export async function submitRenewalDetails(rawInput: unknown) {
     documentNotes: z.string().max(1000).optional(),
   }).safeParse(rawInput)
   if (!parsed.success) return { ok: false as const, error: { code: "VALIDATION" as const, message: "Invalid input" } }
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`ren-details:${sha256(parsed.data.token).slice(0, 16)}`, 20, 3600)
+  if (!rl.ok) return rateLimited(rl)
   const row = await renewalForToken(parsed.data.token, parsed.data.renewalId)
   if (!row) return { ok: false as const, error: { code: "NOT_FOUND" as const, message: "Link expired" } }
   const r = row.renewal
@@ -127,6 +133,9 @@ export async function submitRenewalDetails(rawInput: unknown) {
 export async function acceptRenewalQuote(rawInput: unknown) {
   const parsed = z.object({ token: z.string().min(10).max(200), renewalId: z.string().uuid() }).safeParse(rawInput)
   if (!parsed.success) return { ok: false as const, error: { code: "VALIDATION" as const, message: "Invalid input" } }
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`ren-accept:${sha256(parsed.data.token).slice(0, 16)}`, 20, 3600)
+  if (!rl.ok) return rateLimited(rl)
   const row = await renewalForToken(parsed.data.token, parsed.data.renewalId)
   if (!row) return { ok: false as const, error: { code: "NOT_FOUND" as const, message: "Link expired" } }
   const r = row.renewal

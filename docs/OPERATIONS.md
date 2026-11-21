@@ -43,9 +43,10 @@ Run quarterly and after any major migration.
 ## Monitoring & alerting
 
 - **Sentry**: `@sentry/nextjs` is wired via `instrumentation.ts`,
-  `sentry.server.config.ts`, `sentry.edge.config.ts`, `instrumentation-client.ts`.
-  Set `NEXT_PUBLIC_SENTRY_DSN` and `SENTRY_AUTH_TOKEN` (source-map uploads) in
-  Vercel env. Alerts: error rate > 1% of requests, new issue in production,
+  `sentry.server.config.ts`, `sentry.edge.config.ts`, `instrumentation-client.ts`,
+  and `withSentryConfig` in `next.config.ts`.
+  Set `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN` and — for source-map uploads —
+  `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` in Vercel env. Alerts: error rate > 1% of requests, new issue in production,
   webhook failures (`/api/webhooks/*` 5xx).
 - **Inngest**: scheduled functions (reminders, billing sweep, mechanic stats,
   instalments, credit statements, reports, auto-reorder) run via `/api/inngest`.
@@ -76,6 +77,13 @@ Fixed-window limits in `rate_limits` (Postgres), enforced in server actions:
 | Public booking confirm | 10/15min per booking |
 | Estimate respond (`/t/[token]`) | 30/hour per token |
 | Public invoice payment init | 10/hour per token |
+| Reminder page view | 60/hour per token |
+| Reminder booking request | 5/hour per token |
+| Reminder booking OTP confirm | 10/15min per booking |
+| Reminder mileage update | 30/hour per token |
+| Reminder mark-done | 20/hour per token |
+| Reminder start renewal | 10/hour per token |
+| Renewal view/details/accept | 60/20/20 per hour per token |
 
 ## Data protection (Act 843)
 

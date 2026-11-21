@@ -56,6 +56,9 @@ async function itemsForToken(token: string) {
 export async function getPublicReminder(rawInput: unknown) {
   const parsed = z.object({ token: z.string().min(10).max(200) }).safeParse(rawInput)
   if (!parsed.success) return { ok: false as const }
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`rem-view:${sha256(parsed.data.token).slice(0, 16)}`, 60, 3600)
+  if (!rl.ok) return rateLimited(rl)
   const rows = await itemsForToken(parsed.data.token)
   if (!rows.length) return { ok: false as const }
 
@@ -172,6 +175,10 @@ export async function requestReminderBooking(rawInput: unknown) {
   if (!parsed.success) return { ok: false as const, error: { code: "VALIDATION" as const, message: "Check the form" } }
   const d = parsed.data
 
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`rem-book:${sha256(d.token).slice(0, 16)}`, 5, 3600)
+  if (!rl.ok) return rateLimited(rl)
+
   const rows = await itemsForToken(d.token)
   const item = rows.find((r) => r.item.id === d.dueItemId)
   if (!item) return { ok: false as const, error: { code: "NOT_FOUND" as const, message: "Link expired" } }
@@ -235,6 +242,10 @@ export async function confirmReminderBooking(rawInput: unknown) {
   if (!parsed.success) return { ok: false as const, error: { code: "VALIDATION" as const, message: "Enter the 6-digit code" } }
   const d = parsed.data
 
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`rem-book-confirm:${d.bookingId}`, 10, 900)
+  if (!rl.ok) return rateLimited(rl)
+
   const [b] = await db().select().from(bookings).where(eq(bookings.id, d.bookingId)).limit(1)
   if (!b || b.source !== "reminder") return { ok: false as const, error: { code: "NOT_FOUND" as const, message: "Booking not found" } }
   if (b.status !== "requested") return { ok: false as const, error: { code: "VALIDATION" as const, message: "Booking already processed" } }
@@ -275,6 +286,10 @@ export async function submitReminderMileage(rawInput: unknown) {
   }).safeParse(rawInput)
   if (!parsed.success) return { ok: false as const, error: { code: "VALIDATION" as const, message: "Enter a valid mileage" } }
   const d = parsed.data
+
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`rem-mileage:${sha256(d.token).slice(0, 16)}`, 30, 3600)
+  if (!rl.ok) return rateLimited(rl)
 
   const rows = await itemsForToken(d.token)
   const item = rows.find((r) => r.item.vehicleId === d.vehicleId)
@@ -329,6 +344,10 @@ export async function submitReminderDone(rawInput: unknown) {
   if (!parsed.success) return { ok: false as const, error: { code: "VALIDATION" as const, message: "Invalid input" } }
   const d = parsed.data
 
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`rem-done:${sha256(d.token).slice(0, 16)}`, 20, 3600)
+  if (!rl.ok) return rateLimited(rl)
+
   const rows = await itemsForToken(d.token)
   const item = rows.find((r) => r.item.id === d.dueItemId)
   if (!item) return { ok: false as const, error: { code: "NOT_FOUND" as const, message: "Link expired" } }
@@ -375,6 +394,10 @@ export async function startReminderRenewal(rawInput: unknown) {
   }).safeParse(rawInput)
   if (!parsed.success) return { ok: false as const, error: { code: "VALIDATION" as const, message: "Invalid input" } }
   const d = parsed.data
+
+  const { rateLimit, rateLimited } = await import("@/lib/rate-limit")
+  const rl = await rateLimit(`rem-renew:${sha256(d.token).slice(0, 16)}`, 10, 3600)
+  if (!rl.ok) return rateLimited(rl)
 
   const rows = await itemsForToken(d.token)
   const item = rows.find((r) => r.item.id === d.dueItemId)

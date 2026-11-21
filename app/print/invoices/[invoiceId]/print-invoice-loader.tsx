@@ -70,6 +70,7 @@ export async function PrintInvoiceLoader({
       {/* Header */}
       <header className="flex items-start justify-between border-b-2 pb-3" style={{ borderColor: brand }}>
         <div className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- print view renders arbitrary garage logo URLs */}
           {garage.logoUrl && <img src={garage.logoUrl} alt="" className="h-12 w-12 rounded-lg object-contain" />}
           <div>
             <h1 className="text-xl font-bold" style={{ color: brand }}>{garage.name}</h1>
