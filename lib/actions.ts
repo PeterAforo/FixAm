@@ -44,6 +44,27 @@ export async function resolveMembership(
   userId: string,
   garageId: string
 ): Promise<MembershipRow | null> {
+  // Platform-admin impersonation: acts as the garage owner while the
+  // fixam_impersonate cookie is set (writes are audited with impersonated_by).
+  const { getImpersonation } = await import("@/lib/admin/impersonation")
+  const imp = await getImpersonation()
+  if (imp && imp.adminId === userId && imp.garageId === garageId) {
+    return {
+      id: `impersonated:${imp.adminId}`,
+      garageId,
+      userId,
+      branchId: null,
+      role: "owner",
+      status: "active",
+      invitedPhone: null,
+      invitedEmail: null,
+      inviteTokenHash: null,
+      invitedBy: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as MembershipRow
+  }
+
   const rows = await db()
     .select()
     .from(memberships)
@@ -92,9 +113,18 @@ export async function writeAuditLog(entry: {
   ip?: string | null
   userAgent?: string | null
 }) {
+  // Tag writes made while a platform admin is impersonating this garage.
+  let impersonatedBy: string | null = null
+  if (entry.garageId) {
+    const { getImpersonation } = await import("@/lib/admin/impersonation")
+    const imp = await getImpersonation()
+    if (imp && imp.garageId === entry.garageId) impersonatedBy = imp.adminId
+  }
+
   await db().insert(auditLogs).values({
     garageId: entry.garageId,
     actorUserId: entry.actorUserId ?? null,
+    impersonatedBy,
     action: entry.action,
     entityType: entry.entityType,
     entityId: entry.entityId ?? null,

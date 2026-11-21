@@ -1,6 +1,8 @@
 import { Suspense } from "react"
 import { AdminVendorsSection } from "./admin-vendors-section"
 import { AdminDvlaFeesSection } from "./admin-dvla-fees-section"
+import { AdminGaragesSection } from "./admin-garages-section"
+import { AdminPartnersSection } from "./admin-partners-section"
 
 export default function AdminPage() {
   return (
@@ -8,7 +10,12 @@ export default function AdminPage() {
       <h1 className="font-display text-3xl font-bold text-foreground">
         Platform admin
       </h1>
-      <p className="mt-2 text-muted-foreground">Builds out fully in P5-02.</p>
+      <Suspense fallback={null}>
+        <AdminGaragesSection />
+      </Suspense>
+      <Suspense fallback={null}>
+        <AdminPartnersSection />
+      </Suspense>
       <Suspense fallback={null}>
         <AdminVendorsSection />
       </Suspense>

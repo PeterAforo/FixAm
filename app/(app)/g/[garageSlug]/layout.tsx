@@ -9,6 +9,7 @@ import { createClient } from "@/lib/auth/supabase/server"
 import { ensureUser } from "@/lib/auth/ensure-user"
 import { resolveMembership, resolvePrincipal } from "@/lib/actions"
 import { AppShell } from "@/components/shell/app-shell"
+import { getImpersonation } from "@/lib/admin/impersonation"
 import type { StaffRole } from "@/lib/auth/permissions"
 import type { ShellNotification } from "@/components/shell/notifications-bell"
 
@@ -75,8 +76,12 @@ async function ShellLoader({
     readAt: n.readAt?.toISOString() ?? null,
   }))
 
+  const imp = await getImpersonation()
+  const impersonating = imp?.garageId === garage.id
+
   return (
     <AppShell
+      impersonating={impersonating}
       garageId={garage.id}
       garageSlug={garage.slug}
       garageName={garage.name}

@@ -2,7 +2,8 @@
 
 import { useEffect, useState, type ReactNode } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { stopImpersonation } from "@/lib/admin/actions"
 import { navForRole, bottomBarForRole, navItemForPath } from "@/lib/nav"
 import type { StaffRole } from "@/lib/auth/permissions"
 import { CommandPalette } from "./command-palette"
@@ -57,6 +58,7 @@ export function AppShell({
   branches,
   activeBranchId,
   notifications,
+  impersonating = false,
   children,
 }: {
   garageId: string
@@ -69,6 +71,7 @@ export function AppShell({
   branches: ShellBranch[]
   activeBranchId: string | null
   notifications: ShellNotification[]
+  impersonating?: boolean
   children: ReactNode
 }) {
   const pathname = usePathname()
@@ -147,6 +150,12 @@ export function AppShell({
           notifications={notifications}
           onOpenPalette={() => setPaletteOpen(true)}
         />
+        {impersonating && (
+          <div className="flex items-center justify-between gap-3 border-b-2 border-warning bg-warning/10 px-4 py-2 text-sm">
+            <p className="font-semibold text-warning">Platform admin view — actions are audited</p>
+            <ImpersonationExit />
+          </div>
+        )}
         <main className="flex-1 pb-24 md:pb-8">{children}</main>
       </div>
 
@@ -201,5 +210,22 @@ export function AppShell({
         garageId={garageId}
       />
     </div>
+  )
+}
+
+function ImpersonationExit() {
+  const router = useRouter()
+  return (
+    <button
+      type="button"
+      className="rounded-lg border-2 border-warning px-3 py-1 text-xs font-bold text-warning hover:bg-warning/10"
+      onClick={async () => {
+        await stopImpersonation()
+        router.push("/admin")
+        router.refresh()
+      }}
+    >
+      Exit impersonation
+    </button>
   )
 }
