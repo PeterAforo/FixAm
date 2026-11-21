@@ -11,6 +11,7 @@ import {
   jobFindings,
   jobItems,
   jobMedia,
+  garages,
   jobStatusEvents,
   jobTasks,
   jobTemplates,
@@ -26,6 +27,7 @@ import { getSessionUserId } from "@/lib/auth/ensure-user"
 import { can, type StaffRole } from "@/lib/auth/permissions"
 import { validateReading, type OdometerReading } from "@/lib/domain/mileage"
 import { inngest } from "@/lib/inngest/client"
+import { sendMessage } from "@/lib/messaging/send"
 import { uuidv7 } from "@/lib/id"
 import { canTransitionJob, type JobStatus } from "./transitions"
 import { storageProvider } from "@/lib/integrations/storage"
@@ -72,6 +74,7 @@ const checkInSchema = z.object({
   checkInItems: z.string().max(1000).optional().or(z.literal("")),
   promisedAt: z.string().datetime({ offset: true }).optional(),
   priority: z.enum(["low", "normal", "high", "urgent"]).default("normal"),
+  warrantyParentJobId: z.string().uuid().optional(),
   signatureDataUrl: z.string().max(500_000).optional(),
 })
 
@@ -139,6 +142,18 @@ export async function checkInJob(rawInput: unknown): Promise<ActionResult<{ jobI
     template = rows[0] ?? null
   }
 
+  // warranty/callback: parent must be a real job on the same vehicle
+  if (d.warrantyParentJobId) {
+    const [parent] = await db()
+      .select({ id: jobs.id, vehicleId: jobs.vehicleId })
+      .from(jobs)
+      .where(and(eq(jobs.id, d.warrantyParentJobId), eq(jobs.garageId, d.garageId), isNull(jobs.deletedAt)))
+      .limit(1)
+    if (!parent || parent.vehicleId !== d.vehicleId) {
+      return { ok: false, error: { code: "VALIDATION", message: "Warranty parent job must be on the same vehicle", fieldErrors: { warrantyParentJobId: ["Pick a previous job for this vehicle"] } } }
+    }
+  }
+
   const jobId = uuidv7()
   const number = await nextJobNumber(d.garageId, d.branchId)
   const signaturePath = d.signatureDataUrl ? await storeSignature(d.signatureDataUrl, d.garageId, jobId) : null
@@ -163,6 +178,8 @@ export async function checkInJob(rawInput: unknown): Promise<ActionResult<{ jobI
     promisedAt: d.promisedAt ? new Date(d.promisedAt) : null,
     checkedInAt: new Date(),
     serviceAdvisorId: userId,
+    warrantyParentJobId: d.warrantyParentJobId ?? null,
+    isWarranty: Boolean(d.warrantyParentJobId),
   })
 
   // status event (creation → checked_in)
@@ -411,6 +428,39 @@ export async function updateJobStatus(rawInput: unknown): Promise<ActionResult<{
     }
   }
 
+  // ready → notify customer with pickup message (best-effort)
+  if (toStatus === "ready") {
+    try {
+      const [cust] = await db()
+        .select({ phone: customers.phone, fullName: customers.fullName })
+        .from(customers)
+        .where(eq(customers.id, job.customerId))
+        .limit(1)
+      const [gr] = await db().select({ name: garages.name }).from(garages).where(eq(garages.id, garageId)).limit(1)
+      const [veh] = await db().select({ plateNumber: vehicles.plateNumber, make: vehicles.make, model: vehicles.model }).from(vehicles).where(eq(vehicles.id, job.vehicleId)).limit(1)
+      if (cust?.phone) {
+        const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+        await sendMessage({
+          garageId,
+          channel: "whatsapp",
+          to: cust.phone,
+          templateKey: "job_ready",
+          variables: {
+            customer_first_name: (cust.fullName ?? "there").split(" ")[0]!,
+            plate: veh?.plateNumber ?? "",
+            vehicle: veh ? `${veh.make} ${veh.model}` : "",
+            garage_name: gr?.name ?? "the garage",
+            balance: "GH₵ 0.00", // invoice gate lands in P2
+            action_link: `${base}/portal`,
+          },
+          idempotencyKey: `job-ready:${jobId}:${toStatus}`,
+        })
+      }
+    } catch {
+      // notification is best-effort; status change already committed
+    }
+  }
+
   await writeAuditLog({
     garageId,
     actorUserId: userId,
@@ -435,7 +485,7 @@ export async function signOffQc(rawInput: unknown): Promise<ActionResult<{ jobId
 
   const ctx = await requireMembership(userId, garageId)
   if (!ctx) return { ok: false, error: { code: "FORBIDDEN", message: "Not a member" } }
-  if (!can(ctx.principal, "jobs.update")) {
+  if (!can(ctx.principal, "jobs.quality_check.sign_off")) {
     return { ok: false, error: { code: "FORBIDDEN", message: "Can't sign off QC" } }
   }
   const job = await getJob(garageId, jobId)

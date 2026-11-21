@@ -3,7 +3,9 @@
 import { useRef, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Camera, CheckCircle2, Plus, ShieldCheck, Upload } from "lucide-react"
+import { Camera, CheckCircle2, PartyPopper, Plus, ShieldCheck, Upload } from "lucide-react"
+import { motion } from "framer-motion"
+import { statusBounce } from "@/components/brand/motion"
 import { Button } from "@/components/brand/button"
 import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill } from "@/components/brand/status-pill"
@@ -60,6 +62,7 @@ export function JobDetailPanel(props: {
     internalNotes: string | null
     qcSignedOff: boolean
     isWarranty: boolean
+    warrantyParentNumber: string | null
   }
   vehicle: { id: string; plateNumber: string; make: string; model: string; year: number | null } | null
   customer: { id: string; name: string; phone: string } | null
@@ -73,6 +76,7 @@ export function JobDetailPanel(props: {
   events: { id: string; fromStatus: JobStatus | null; toStatus: JobStatus; note: string | null; customerVisible: boolean; actorName: string | null; createdAt: string }[]
   nextStatuses: JobStatus[]
   canUpdate: boolean
+  canQcSignoff: boolean
   canStatusUpdate: boolean
   canAssign: boolean
   canMediaUpload: boolean
@@ -82,7 +86,7 @@ export function JobDetailPanel(props: {
   const {
     garageSlug, garageId, job, vehicle, customer, branchName, bayName,
     assignments, findings, items, tasks, media, events, nextStatuses,
-    canUpdate, canStatusUpdate, canMediaUpload, canTasksUpdate, currentUserId,
+    canUpdate, canQcSignoff, canStatusUpdate, canMediaUpload, canTasksUpdate, currentUserId,
   } = props
 
   const router = useRouter()
@@ -202,6 +206,11 @@ export function JobDetailPanel(props: {
             {job.priority !== "normal" && <StatusPill tone={job.priority === "urgent" ? "danger" : "warning"}>{job.priority}</StatusPill>}
             {job.isWarranty && <StatusPill tone="info">warranty</StatusPill>}
           </h1>
+          {job.warrantyParentNumber && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Comeback of <Link href={`/g/${garageSlug}/jobs`} className="font-semibold text-foreground hover:underline">{job.warrantyParentNumber}</Link>
+            </p>
+          )}
           <p className="mt-1 text-muted-foreground">
             {vehicle && (
               <Link href={`/g/${garageSlug}/vehicles/${vehicle.id}`} className="font-semibold text-foreground hover:underline">
@@ -237,7 +246,28 @@ export function JobDetailPanel(props: {
 
       {msg && <p className="rounded-lg border-2 border-danger bg-danger/10 px-4 py-2 text-sm font-semibold text-danger">{msg}</p>}
 
-      {!job.qcSignedOff && ["quality_check", "ready"].includes(job.status) === false && canUpdate && job.status !== "closed" && job.status !== "cancelled" && job.status !== "delivered" && (
+      {job.status === "ready" && (
+        <motion.div
+          variants={statusBounce}
+          initial="initial"
+          animate="animate"
+          className="flex items-center gap-3 rounded-xl border-2 border-success bg-success/10 px-4 py-3"
+        >
+          <PartyPopper className="size-5 text-success" />
+          <p className="text-sm font-bold text-success">Ready for pickup — the customer has been notified.</p>
+        </motion.div>
+      )}
+
+      {job.status === "quality_check" && !job.qcSignedOff && canQcSignoff && (
+        <div className="flex items-center justify-between rounded-xl border-2 border-warning bg-warning/10 px-4 py-3">
+          <p className="text-sm text-muted-foreground">Run through the QC checklist, then sign off to unlock <b>Ready</b>.</p>
+          <Button size="sm" variant="secondary" disabled={pending} onClick={qc}>
+            <ShieldCheck className="size-4" /> Sign off QC
+          </Button>
+        </div>
+      )}
+
+      {!job.qcSignedOff && ["quality_check", "ready"].includes(job.status) === false && canQcSignoff && job.status !== "closed" && job.status !== "cancelled" && job.status !== "delivered" && (
         <div className="flex items-center justify-between rounded-xl border-2 border-border bg-surface-muted/50 px-4 py-3">
           <p className="text-sm text-muted-foreground">QC sign-off unlocks the <b>Ready</b> transition.</p>
           <Button size="sm" variant="secondary" disabled={pending} onClick={qc}>

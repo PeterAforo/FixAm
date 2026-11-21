@@ -115,6 +115,10 @@ async function JobLoader({
   const v = vehicle[0]
   const c = customer[0]
 
+  const [parentJob] = job.warrantyParentJobId
+    ? await db().select({ number: jobs.number }).from(jobs).where(eq(jobs.id, job.warrantyParentJobId)).limit(1)
+    : [null]
+
   return (
     <JobDetailPanel
       garageSlug={garageSlug}
@@ -135,6 +139,7 @@ async function JobLoader({
         internalNotes: job.internalNotes,
         qcSignedOff: Boolean(job.qcSignedOffAt),
         isWarranty: job.isWarranty ?? false,
+        warrantyParentNumber: parentJob?.number ?? null,
       }}
       vehicle={v ? { id: v.id, plateNumber: v.plateNumber, make: v.make, model: v.model, year: v.year } : null}
       customer={c ? { id: c.id, name: c.fullName || c.companyName || c.phone, phone: c.phone } : null}
@@ -186,6 +191,7 @@ async function JobLoader({
       }))}
       nextStatuses={nextStatuses(job.status)}
       canUpdate={can(principal, "jobs.update")}
+      canQcSignoff={can(principal, "jobs.quality_check.sign_off")}
       canStatusUpdate={can(principal, "jobs.status.update")}
       canAssign={can(principal, "jobs.assign")}
       canMediaUpload={can(principal, "jobs.media.upload")}
