@@ -1,32 +1,50 @@
 import { notFound, redirect } from "next/navigation"
 import { Suspense } from "react"
 import { connection } from "next/server"
-import Link from "next/link"
-import { and, desc, eq, ilike, isNull, or, sql } from "drizzle-orm"
+import { and, asc, eq, isNull, sql, type SQL } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { customers, garages, jobs, vehicles } from "@/lib/db/schema"
+import {
+  bays,
+  branches,
+  customers,
+  garages,
+  jobAssignments,
+  jobs,
+  users,
+  vehicles,
+} from "@/lib/db/schema"
 import { getSessionUserId, ensureUser } from "@/lib/auth/ensure-user"
 import { resolveMembership } from "@/lib/actions"
 import { can, type StaffRole } from "@/lib/auth/permissions"
-import { Card, CardContent } from "@/components/brand/card"
-import { EmptyState } from "@/components/brand/empty-state"
-import { StatusPill } from "@/components/brand/status-pill"
-import { PlateChip } from "@/components/brand/plate-chip"
-import { Button } from "@/components/brand/button"
+import { JobsBoard } from "./jobs-board"
 import type { JobStatus } from "@/lib/jobs/transitions"
 
-const OPEN_STATUSES = ["booked", "checked_in", "diagnosing", "estimate_sent", "approved", "in_progress", "waiting_parts", "quality_check", "ready"] as const
+const BOARD_STATUSES: JobStatus[] = [
+  "booked",
+  "checked_in",
+  "diagnosing",
+  "estimate_sent",
+  "approved",
+  "declined",
+  "in_progress",
+  "waiting_parts",
+  "quality_check",
+  "ready",
+  "delivered",
+  "closed",
+  "cancelled",
+]
 
 async function JobsLoader({
   params,
   searchParams,
 }: {
   params: Promise<{ garageSlug: string }>
-  searchParams: Promise<{ q?: string; status?: string }>
+  searchParams: Promise<{ mechanic?: string; priority?: string; branch?: string; swimlane?: string; q?: string; status?: string }>
 }) {
   await connection()
   const { garageSlug } = await params
-  const { q = "", status = "" } = await searchParams
+  const filters = await searchParams
 
   const userId = await getSessionUserId()
   if (!userId) redirect(`/login?next=/g/${garageSlug}/jobs`)
@@ -44,27 +62,31 @@ async function JobsLoader({
     garageId: garage.id,
     branchId: membership.branchId,
   }
-  // mechanics see their own jobs via /my-jobs; board viewers see all
   if (membership.role === "mechanic") redirect(`/g/${garageSlug}/my-jobs`)
   if (!can(principal, "jobs.view")) notFound()
 
-  const conditions = [eq(jobs.garageId, garage.id), isNull(jobs.deletedAt)]
-  const term = q.trim()
-  if (term) {
-    const like = `%${term}%`
-    conditions.push(
-      or(
-        ilike(jobs.number, like),
-        ilike(jobs.complaint, like),
-        ilike(vehicles.plateNumber, like),
-        ilike(customers.fullName, like)
-      )!
-    )
+  const conditions: SQL[] = [
+    eq(jobs.garageId, garage.id),
+    isNull(jobs.deletedAt),
+  ]
+
+  // default: exclude terminal statuses unless explicitly filtered
+  if (filters.status) {
+    conditions.push(eq(jobs.status, filters.status as JobStatus))
+  } else {
+    conditions.push(sql`${jobs.status} NOT IN ('closed','cancelled')`)
   }
-  if (status === "open") {
-    conditions.push(sql`${jobs.status} = ANY(${[...OPEN_STATUSES]}::job_status[])`)
-  } else if (status) {
-    conditions.push(eq(jobs.status, status as JobStatus))
+  if (filters.priority && ["low", "normal", "high", "urgent"].includes(filters.priority)) {
+    conditions.push(eq(jobs.priority, filters.priority as "low" | "normal" | "high" | "urgent"))
+  }
+  if (filters.branch) {
+    conditions.push(eq(jobs.branchId, filters.branch))
+  }
+  if (filters.q?.trim()) {
+    const like = `%${filters.q.trim()}%`
+    conditions.push(
+      sql`(${jobs.number} ILIKE ${like} OR ${jobs.complaint} ILIKE ${like} OR ${vehicles.plateNumber} ILIKE ${like} OR ${customers.fullName} ILIKE ${like})`
+    )
   }
 
   const rows = await db()
@@ -76,106 +98,100 @@ async function JobsLoader({
       complaint: jobs.complaint,
       promisedAt: jobs.promisedAt,
       checkedInAt: jobs.checkedInAt,
+      branchId: jobs.branchId,
+      bayId: jobs.bayId,
       plateNumber: vehicles.plateNumber,
+      make: vehicles.make,
+      model: vehicles.model,
+      year: vehicles.year,
+      bodyType: vehicles.bodyType,
+      colorHex: vehicles.colorHex,
       customerName: customers.fullName,
-      bayName: sql<string | null>`(select name from bays where id = ${jobs.bayId})`,
+      customerId: customers.id,
     })
     .from(jobs)
     .innerJoin(vehicles, eq(jobs.vehicleId, vehicles.id))
     .innerJoin(customers, eq(jobs.customerId, customers.id))
     .where(and(...conditions))
-    .orderBy(desc(jobs.createdAt))
-    .limit(200)
+    .orderBy(asc(jobs.promisedAt))
+    .limit(400)
 
-  const [counts] = await db()
-    .select({
-      open: sql<number>`count(*) filter (where ${jobs.status} = ANY(${[...OPEN_STATUSES]}::job_status[]))::int`,
-      total: sql<number>`count(*)::int`,
-    })
-    .from(jobs)
-    .where(and(eq(jobs.garageId, garage.id), isNull(jobs.deletedAt)))
+  // mechanic filter → restrict to jobs assigned to that user
+  let filtered = rows
+  if (filters.mechanic) {
+    const assigned = await db()
+      .select({ jobId: jobAssignments.jobId })
+      .from(jobAssignments)
+      .where(and(eq(jobAssignments.garageId, garage.id), eq(jobAssignments.userId, filters.mechanic)))
+    const ids = new Set(assigned.map((a) => a.jobId))
+    filtered = rows.filter((r) => ids.has(r.id))
+  }
 
-  const canCheckIn = can(principal, "jobs.create")
+  const assignmentRows = filtered.length
+    ? await db()
+        .select({ jobId: jobAssignments.jobId, userId: jobAssignments.userId, name: users.fullName, isLead: jobAssignments.isLead })
+        .from(jobAssignments)
+        .innerJoin(users, eq(jobAssignments.userId, users.id))
+        .where(and(eq(jobAssignments.garageId, garage.id), sql`${jobAssignments.jobId} = ANY(${filtered.map((f) => f.id)}::uuid[])`))
+    : []
+
+  const assigneesByJob = new Map<string, { userId: string; name: string; isLead: boolean }[]>()
+  for (const a of assignmentRows) {
+    const list = assigneesByJob.get(a.jobId) ?? []
+    list.push({ userId: a.userId ?? "", name: a.name, isLead: a.isLead ?? false })
+    assigneesByJob.set(a.jobId, list)
+  }
+
+  const [branchRows, mechanicRows, bayRows] = await Promise.all([
+    db().select({ id: branches.id, name: branches.name }).from(branches).where(and(eq(branches.garageId, garage.id), isNull(branches.deletedAt))).orderBy(asc(branches.name)),
+    db()
+      .select({ userId: jobAssignments.userId, name: users.fullName })
+      .from(jobAssignments)
+      .innerJoin(users, eq(jobAssignments.userId, users.id))
+      .where(eq(jobAssignments.garageId, garage.id))
+      .groupBy(jobAssignments.userId, users.fullName)
+      .orderBy(users.fullName),
+    db()
+      .select({ id: bays.id, name: bays.name, branchId: bays.branchId })
+      .from(bays)
+      .where(and(eq(bays.garageId, garage.id), eq(bays.isActive, true), isNull(bays.deletedAt)))
+      .orderBy(asc(bays.name)),
+  ])
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-bold">Job board</h1>
-          <p className="text-muted-foreground">
-            {counts?.open ?? 0} open · {counts?.total ?? 0} total
-          </p>
-        </div>
-        {canCheckIn && (
-          <Button asChild>
-            <Link href={`/g/${garageSlug}/check-in`}>+ Check in</Link>
-          </Button>
-        )}
-      </header>
-
-      <form className="flex flex-wrap items-center gap-3" action={`/g/${garageSlug}/jobs`}>
-        <input
-          name="q"
-          defaultValue={term}
-          placeholder="Search job #, plate, customer, complaint…"
-          className="min-h-11 min-w-64 flex-1 rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-        <select name="status" defaultValue={status} className="min-h-11 rounded-lg border-2 border-border bg-surface px-3 text-sm">
-          <option value="">All jobs</option>
-          <option value="open">Open only</option>
-          <option value="booked">Booked</option>
-          <option value="checked_in">Checked in</option>
-          <option value="in_progress">In progress</option>
-          <option value="quality_check">Quality check</option>
-          <option value="ready">Ready</option>
-          <option value="delivered">Delivered</option>
-          <option value="closed">Closed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        <Button type="submit" variant="secondary">Filter</Button>
-      </form>
-
-      {rows.length === 0 ? (
-        <EmptyState
-          title="No jobs found"
-          description={term || status ? "Try a different search or filter." : "Check in a vehicle to create the first job."}
-          action={canCheckIn ? <Button asChild><Link href={`/g/${garageSlug}/check-in`}>+ Check in</Link></Button> : undefined}
-        />
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <ul className="divide-y divide-border">
-              {rows.map((j) => (
-                <li key={j.id}>
-                  <Link
-                    href={`/g/${garageSlug}/jobs/${j.id}`}
-                    className="flex flex-wrap items-center gap-3 px-5 py-4 transition-colors hover:bg-surface-muted/60"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="flex items-center gap-2 font-bold">
-                        <span className="font-mono">{j.number}</span>
-                        <PlateChip plate={j.plateNumber} />
-                        {j.priority !== "normal" && (
-                          <StatusPill tone={j.priority === "urgent" ? "danger" : "warning"}>{j.priority}</StatusPill>
-                        )}
-                      </p>
-                      <p className="truncate text-sm text-muted-foreground">
-                        {j.customerName} · {j.complaint ?? "—"}
-                        {j.bayName ? ` · Bay ${j.bayName}` : ""}
-                      </p>
-                    </div>
-                    <div className="text-right text-xs text-muted-foreground">
-                      {j.promisedAt ? <p>Promised {new Date(j.promisedAt).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p> : null}
-                    </div>
-                    <StatusPill status={j.status} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    <JobsBoard
+      garageSlug={garageSlug}
+      garageId={garage.id}
+      statuses={BOARD_STATUSES}
+      jobs={filtered.map((j) => ({
+        id: j.id,
+        number: j.number,
+        status: j.status,
+        priority: j.priority ?? "normal",
+        complaint: j.complaint,
+        promisedAt: j.promisedAt?.toISOString() ?? null,
+        plateNumber: j.plateNumber,
+        vehicleLabel: `${j.make} ${j.model}${j.year ? ` ${j.year}` : ""}`,
+        bodyType: j.bodyType,
+        colorHex: j.colorHex,
+        customerName: j.customerName,
+        customerId: j.customerId,
+        branchId: j.branchId,
+        bayId: j.bayId,
+        assignees: assigneesByJob.get(j.id) ?? [],
+      }))}
+      branches={branchRows}
+      mechanics={[...new Map(mechanicRows.filter((m) => m.userId).map((m) => [m.userId!, m])).values()].map((m) => ({ userId: m.userId!, name: m.name }))}
+      bays={bayRows.map((b) => ({ id: b.id, name: b.name, branchId: b.branchId }))}
+      filters={{
+        mechanic: filters.mechanic ?? "",
+        priority: filters.priority ?? "",
+        branch: filters.branch ?? "",
+        swimlane: filters.swimlane ?? "",
+        q: filters.q ?? "",
+      }}
+      canStatusUpdate={can(principal, "jobs.status.update")}
+    />
   )
 }
 
@@ -184,11 +200,11 @@ export default function JobsPage({
   searchParams,
 }: {
   params: Promise<{ garageSlug: string }>
-  searchParams: Promise<{ q?: string; status?: string }>
+  searchParams: Promise<{ mechanic?: string; priority?: string; branch?: string; swimlane?: string; q?: string; status?: string }>
 }) {
   return (
     <div className="p-6 md:p-10">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-[1400px]">
         <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-muted" />}>
           <JobsLoader params={params} searchParams={searchParams} />
         </Suspense>
