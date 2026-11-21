@@ -97,6 +97,12 @@ export async function loadDueCandidates(): Promise<DueRow[]> {
       inArray(dueItems.status, [...OPEN_STATUSES]),
       or(isNull(dueItems.nextReminderAt), lte(dueItems.nextReminderAt, now)),
       sql`${customers.deletedAt} IS NULL`,
+      // pause reminders while a renewal request is open for the item
+      sql`NOT EXISTS (
+        SELECT 1 FROM renewal_requests rr
+        WHERE rr.due_item_id = ${dueItems.id}
+          AND rr.status NOT IN ('completed','cancelled','failed')
+      )`,
     ))
     .then((rows) => rows.map((r) => ({
       ...r.item,

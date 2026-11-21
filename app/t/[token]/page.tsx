@@ -2,9 +2,11 @@ import { Suspense } from "react"
 import { getPublicEstimate } from "@/lib/estimates/actions"
 import { getTrackerData } from "@/lib/tracker/actions"
 import { getPublicInvoiceByToken } from "@/lib/money/payments"
+import { getPublicReminder } from "@/lib/reminders/public-actions"
 import { ApprovalPanel } from "./approval-panel"
 import { TrackerPanel } from "./tracker-panel"
 import { InvoicePayPanel } from "./invoice-pay-panel"
+import { ReminderPanel } from "./reminder-panel"
 
 async function TokenView({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
@@ -58,6 +60,37 @@ async function TokenView({ params }: { params: Promise<{ token: string }> }) {
               balanceDue: inv.balanceDue,
               formatted: inv.formatted,
             }}
+          />
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Powered by FixAm · Questions? Contact the garage directly.
+          </p>
+        </div>
+      </main>
+    )
+  }
+
+  const remRes = await getPublicReminder({ token })
+  const rem = remRes.ok ? remRes.data : null
+
+  if (rem) {
+    return (
+      <main className="min-h-screen bg-background">
+        <div className="mx-auto max-w-lg px-4 py-8">
+          <header className="mb-6 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{rem.garageName}</p>
+            <h1 className="mt-1 font-display text-3xl font-bold">Service reminders</h1>
+            {rem.customerName && <p className="mt-1 text-sm text-muted-foreground">Hi {rem.customerName}</p>}
+          </header>
+          <ReminderPanel
+            token={token}
+            garageId={rem.garageId}
+            garageName={rem.garageName}
+            garageSlug={rem.garageSlug}
+            garagePhone={rem.garagePhone}
+            customerName={rem.customerName}
+            customerPhone={rem.customerPhone}
+            branches={rem.branches}
+            items={rem.items}
           />
           <p className="mt-6 text-center text-xs text-muted-foreground">
             Powered by FixAm · Questions? Contact the garage directly.
