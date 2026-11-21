@@ -1,15 +1,17 @@
 import { Suspense } from "react"
 import { connection } from "next/server"
 import { notFound, redirect } from "next/navigation"
-import { eq } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 import Link from "next/link"
 import { db } from "@/lib/db"
-import { garages } from "@/lib/db/schema"
+import { garageVehicleCoverage, garages } from "@/lib/db/schema"
 import { getSessionUserId, ensureUser } from "@/lib/auth/ensure-user"
 import { resolveMembership } from "@/lib/actions"
 import { can } from "@/lib/auth/permissions"
 import { getGarageBilling } from "@/lib/billing/actions"
+import { listCatalogueGrouped } from "@/lib/catalogue"
 import { BillingPanel } from "./billing-panel"
+import { CoveragePanel } from "./coverage-panel"
 
 async function Loader({ garageSlug }: { garageSlug: string }) {
   await connection()
@@ -22,9 +24,19 @@ async function Loader({ garageSlug }: { garageSlug: string }) {
   const m = await resolveMembership(userId, garage.id)
   if (!m) redirect("/onboarding")
   const principal = { kind: "staff" as const, role: m.role as never, garageId: garage.id, branchId: m.branchId }
-  if (!can(principal, "garage.settings.manage") && !can(principal, "garage.subscription.manage")) notFound()
+  const canManageSettings = can(principal, "garage.settings.manage")
+  if (!canManageSettings && !can(principal, "garage.subscription.manage")) notFound()
 
-  const billing = await getGarageBilling({ garageId: garage.id })
+  const [billing, coverageRows, catalogue] = await Promise.all([
+    getGarageBilling({ garageId: garage.id }),
+    canManageSettings
+      ? db()
+          .select()
+          .from(garageVehicleCoverage)
+          .where(and(eq(garageVehicleCoverage.garageId, garage.id), eq(garageVehicleCoverage.isActive, true)))
+      : Promise.resolve([]),
+    canManageSettings ? listCatalogueGrouped() : Promise.resolve([]),
+  ])
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -40,6 +52,20 @@ async function Loader({ garageSlug }: { garageSlug: string }) {
           <Link href={`/g/${garageSlug}/settings/templates`} className="rounded-xl border-2 border-border bg-card p-4 text-sm font-semibold hover:bg-surface-muted">Message templates →</Link>
         </div>
       </section>
+
+      {canManageSettings && (
+        <section>
+          <h2 className="font-display text-lg font-bold">Directory &amp; vehicle coverage</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Appear in the public garage directory and tell customers which vehicles you service.
+          </p>
+          <CoveragePanel
+            garageId={garage.id}
+            coverage={coverageRows}
+            makes={catalogue.map((m) => ({ id: m.id, name: m.name, models: m.models.map((v) => ({ id: v.id, name: v.name })) }))}
+          />
+        </section>
+      )}
 
       <section>
         <h2 className="font-display text-lg font-bold">Billing &amp; plan</h2>

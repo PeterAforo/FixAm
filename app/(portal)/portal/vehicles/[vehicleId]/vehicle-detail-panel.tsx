@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useTransition } from "react"
 import { Button } from "@/components/brand/button"
 import { Card, CardContent } from "@/components/brand/card"
@@ -10,7 +11,7 @@ const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface p
 const fmtDate = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("en-GH", { day: "numeric", month: "short", year: "numeric" }) : "—")
 
 type Data = {
-  vehicle: { id: string; plateNumber: string; make: string; model: string; year: number | null; garageName: string; lastOdometerKm: number | null; lastOdometerAt: string | null }
+  vehicle: { id: string; plateNumber: string; make: string; model: string; year: number | null; garageName: string; lastOdometerKm: number | null; lastOdometerAt: string | null; catalogMakeId?: string | null; catalogModelId?: string | null }
   jobs: { id: string; number: string; status: string; complaint: string | null; createdAt: string; promisedAt: string | null; deliveredAt: string | null }[]
   odometer: { id: string; readingKm: number; readAt: string; source: string }[]
   documents: { id: string; type: string; fileName: string | null; expiresOn: string | null }[]
@@ -19,7 +20,9 @@ type Data = {
   dvla: { id: string; type: string; expiryDate: string; referenceNumber: string | null }[]
 }
 
-export function VehicleDetailPanel({ data }: { data: Data }) {
+type MatchingGarage = { id: string; slug: string; name: string; city: string | null; region: string | null; ratingAvg: number | null; reviewCount: number }
+
+export function VehicleDetailPanel({ data, matchingGarages = [] }: { data: Data; matchingGarages?: MatchingGarage[] }) {
   const [pending, startTransition] = useTransition()
   const [mileage, setMileage] = useState("")
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
@@ -138,6 +141,27 @@ export function VehicleDetailPanel({ data }: { data: Data }) {
               </li>
             ))}
           </ul>
+        </CardContent></Card>
+      )}
+
+      {/* Garages that service this car */}
+      {(data.vehicle.catalogMakeId || data.vehicle.catalogModelId) && matchingGarages.length > 0 && (
+        <Card><CardContent className="p-4">
+          <h2 className="font-display text-base font-bold">Other garages that service this car</h2>
+          <ul className="mt-2 space-y-2">
+            {matchingGarages.map((g) => (
+              <li key={g.id}>
+                <Link href={`/garages/${g.slug}`} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm hover:bg-surface-muted">
+                  <div>
+                    <p className="font-semibold">{g.name}</p>
+                    <p className="text-xs text-muted-foreground">{[g.city, g.region].filter(Boolean).join(", ") || "Ghana"}</p>
+                  </div>
+                  {g.ratingAvg != null && <span className="text-xs font-bold">★ {g.ratingAvg}</span>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Link href="/garages" className="mt-2 inline-block text-xs font-semibold text-primary underline">Search all garages →</Link>
         </CardContent></Card>
       )}
 

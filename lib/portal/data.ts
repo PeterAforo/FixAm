@@ -252,6 +252,7 @@ export async function getPortalVehicle(phone: string, vehicleId: string) {
       id: v.id, plateNumber: v.plateNumber, make: v.make, model: v.model, year: v.year,
       color: v.color, bodyType: v.bodyType, fuelType: v.fuelType, vin: v.vin,
       lastOdometerKm: v.lastOdometerKm, lastOdometerAt: v.lastOdometerAt?.toISOString() ?? null,
+      catalogMakeId: v.catalogMakeId, catalogModelId: v.catalogModelId,
       garageId: v.garageId, garageName,
     },
     jobs: jobRows.map((j) => ({
