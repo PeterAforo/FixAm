@@ -198,6 +198,7 @@ export function AppShell({
         onClose={() => setPaletteOpen(false)}
         role={role}
         garageSlug={garageSlug}
+        garageId={garageId}
       />
     </div>
   )
