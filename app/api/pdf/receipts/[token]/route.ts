@@ -2,8 +2,6 @@ import { NextResponse } from "next/server"
 import { getPublicReceipt } from "@/lib/money/paystack-webhook"
 import { renderReceiptPdf } from "@/lib/pdf/receipts"
 
-export const runtime = "nodejs"
-
 /** GET /api/pdf/receipts/[token] — token-gated public receipt PDF. */
 export async function GET(
   _req: Request,

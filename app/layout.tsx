@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
-import { Bricolage_Grotesque, Inter, JetBrains_Mono } from "next/font/google"
+import { Bricolage_Grotesque } from "next/font/google"
+import { GeistSans } from "geist/font/sans"
+import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ThemeProvider } from "@/components/providers/theme-provider"
@@ -11,19 +13,7 @@ import "./globals.css"
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
-})
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-})
-
-const jetbrains = JetBrains_Mono({
-  variable: "--font-jetbrains",
-  subsets: ["latin"],
-  weight: ["500"],
+  weight: ["500", "600", "700"],
 })
 
 export const metadata: Metadata = {
@@ -45,12 +35,13 @@ export default async function RootLayout({
     <html
       lang="en-GH"
       suppressHydrationWarning
-      className={`${bricolage.variable} ${inter.variable} ${jetbrains.variable} h-full antialiased`}
+      className={`${bricolage.variable} ${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
+          themes={["light", "dark", "sunlight"]}
           enableSystem
           disableTransitionOnChange
         >

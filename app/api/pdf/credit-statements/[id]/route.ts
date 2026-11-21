@@ -6,8 +6,6 @@ import { getSessionUserId, ensureUser } from "@/lib/auth/ensure-user"
 import { resolveMembership } from "@/lib/actions"
 import { renderCreditStatementPdf } from "@/lib/pdf/statements"
 
-export const runtime = "nodejs"
-
 /** GET /api/pdf/credit-statements/[id] — authenticated statement PDF download. */
 export async function GET(
   _req: Request,

@@ -5,24 +5,105 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ────────────────────────────────────────────────────────────────────
-   Pit Stop Pop — design tokens (specs/design-tokens.json)
+   FixAm Premium UI/UX — tokens (specs/ui-ux.json, "Pit Stop Pop · Premium")
    Brand ramps are theme-independent; semantic colours switch between
-   light (front office) and .dark "workshop mode" (the floor).
+   light (sand front office), .dark "Workshop" (carbon floor) and
+   .sunlight high-contrast outdoor mode.
    ──────────────────────────────────────────────────────────────────── */
 
 @theme {
-  /* Brand ramps */
-  --color-ignition-50: #fff1eb;
-  --color-ignition-100: #ffdccc;
-  --color-ignition-200: #ffb899;
-  --color-ignition-300: #ff9366;
-  --color-ignition-400: #ff7640;
+  /* ── Brand: ignition ─────────────────────────────────────────────── */
+  --color-ignition-50: #fff3ed;
+  --color-ignition-100: #ffe2d3;
+  --color-ignition-200: #ffc2a6;
+  --color-ignition-300: #ff9b70;
+  --color-ignition-400: #ff7a3d;
   --color-ignition-500: #ff5a1f;
-  --color-ignition-600: #e64510;
-  --color-ignition-700: #bf360b;
-  --color-ignition-800: #992a09;
-  --color-ignition-900: #7a2208;
+  --color-ignition-600: #ed4410;
+  --color-ignition-700: #c4350c;
+  --color-ignition-800: #9c2b0e;
+  --color-ignition-900: #7e2610;
+  --color-ignition-950: #441005;
 
+  /* ── Brand: volt (success) ───────────────────────────────────────── */
+  --color-volt-50: #f8fde6;
+  --color-volt-100: #eefbbf;
+  --color-volt-200: #e1f88f;
+  --color-volt-300: #dcfa7a;
+  --color-volt-400: #c6f432;
+  --color-volt-500: #a6d914;
+  --color-volt-600: #7fa80c;
+  --color-volt-700: #62800c;
+  --color-volt-800: #465c0a;
+  --color-volt-900: #2f3e07;
+
+  /* ── Brand: turbo (info) ─────────────────────────────────────────── */
+  --color-turbo-50: #e6faf9;
+  --color-turbo-100: #bff2ef;
+  --color-turbo-200: #85e6e1;
+  --color-turbo-300: #5fe3da;
+  --color-turbo-400: #00c2b8;
+  --color-turbo-500: #00a39b;
+  --color-turbo-600: #008079;
+  --color-turbo-700: #00655f;
+  --color-turbo-800: #004a46;
+  --color-turbo-900: #00322f;
+
+  /* ── Brand: sun (warning) ────────────────────────────────────────── */
+  --color-sun-50: #fff8e6;
+  --color-sun-100: #ffefc2;
+  --color-sun-200: #ffe08a;
+  --color-sun-300: #ffd454;
+  --color-sun-400: #ffc53d;
+  --color-sun-500: #ffb020;
+  --color-sun-600: #e09200;
+
+  /* ── Brand: brake (danger) ───────────────────────────────────────── */
+  --color-brake-50: #ffeef1;
+  --color-brake-100: #ffdbe1;
+  --color-brake-200: #ffb3c0;
+  --color-brake-300: #ff8597;
+  --color-brake-400: #ff6680;
+  --color-brake-500: #ff3b5c;
+  --color-brake-600: #e01e43;
+
+  /* ── Brand: violet (gamification only) ───────────────────────────── */
+  --color-violet-50: #f1efff;
+  --color-violet-100: #e3deff;
+  --color-violet-200: #c9beff;
+  --color-violet-300: #ab98ff;
+  --color-violet-400: #9b8cff;
+  --color-violet-500: #7c6cff;
+  --color-violet-600: #5e4df0;
+
+  /* ── Neutrals: sand (light surfaces/text) ────────────────────────── */
+  --color-sand-0: #ffffff;
+  --color-sand-25: #fdfbf8;
+  --color-sand-50: #faf7f2;
+  --color-sand-100: #f3eee6;
+  --color-sand-200: #e7e0d5;
+  --color-sand-300: #d3cabc;
+  --color-sand-400: #a79e91;
+  --color-sand-500: #7d766c;
+  --color-sand-600: #5b554d;
+  --color-sand-700: #3f3b36;
+  --color-sand-800: #2a2724;
+  --color-sand-900: #1a1816;
+
+  /* ── Neutrals: carbon (dark surfaces/text) ───────────────────────── */
+  --color-carbon-50: #e9ecf5;
+  --color-carbon-100: #c9d0e3;
+  --color-carbon-200: #9aa5c4;
+  --color-carbon-300: #6b78a0;
+  --color-carbon-400: #46527a;
+  --color-carbon-500: #2d375b;
+  --color-carbon-600: #1e2645;
+  --color-carbon-700: #151c36;
+  --color-carbon-800: #0f1529;
+  --color-carbon-900: #0a0f1e;
+  --color-carbon-950: #060914;
+
+  /* Legacy ramps kept for existing references */
   --color-midnight-50: #eef1f8;
   --color-midnight-100: #d3daeb;
   --color-midnight-200: #a7b4d6;
@@ -34,34 +115,13 @@
   --color-midnight-800: #081430;
   --color-midnight-900: #050d20;
 
-  --color-volt-50: #f8fde6;
-  --color-volt-100: #eefbbf;
-  --color-volt-200: #e1f88f;
-  --color-volt-300: #d4f65f;
-  --color-volt-400: #c6f432;
-  --color-volt-500: #a8d61a;
-  --color-volt-600: #84aa10;
-  --color-volt-700: #62800c;
-  --color-volt-800: #465c0a;
-  --color-volt-900: #2f3e07;
-
-  --color-turbo-50: #e6faf9;
-  --color-turbo-100: #bff2ef;
-  --color-turbo-200: #85e6e1;
-  --color-turbo-300: #45d9d1;
-  --color-turbo-400: #00c2b8;
-  --color-turbo-500: #00a39b;
-  --color-turbo-600: #00837c;
-  --color-turbo-700: #00655f;
-  --color-turbo-800: #004a46;
-  --color-turbo-900: #00322f;
-
-  --color-cream: #fff6ec;
+  --color-cream: #faf7f2;
   --color-plate: #ffd43b;
 
-  /* Radius — spec: sm 8 / md 12 / lg 20 / xl 28 / pill */
-  --radius-sm: 8px;
-  --radius-md: 12px;
+  /* Radius — spec: xs 6 / sm 10 / md 14 / lg 20 / xl 28 / pill */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
   --radius-lg: 20px;
   --radius-xl: 28px;
   --radius-2xl: 28px;
@@ -69,7 +129,15 @@
   --radius-4xl: 36px;
   --radius-pill: 9999px;
 
-  /* Chunky offset shadows (use current theme border colour) */
+  /* Elevation — soft layered shadows + hairline (spec levels 1–4, pop, glow) */
+  --shadow-1: 0 1px 2px rgb(16 24 40 / 0.06), 0 0 0 1px var(--hairline, rgb(26 24 22 / 0.08));
+  --shadow-2: 0 4px 12px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.04), 0 0 0 1px var(--hairline, rgb(26 24 22 / 0.08));
+  --shadow-3: 0 12px 32px -8px rgb(16 24 40 / 0.16), 0 4px 8px -4px rgb(16 24 40 / 0.06), 0 0 0 1px var(--hairline, rgb(26 24 22 / 0.08));
+  --shadow-4: 0 24px 64px -12px rgb(16 24 40 / 0.28), 0 0 0 1px var(--hairline, rgb(26 24 22 / 0.08));
+  --shadow-pop: 4px 4px 0 0 var(--foreground);
+  --shadow-glow-primary: 0 8px 24px -6px rgb(255 90 31 / 0.55);
+
+  /* Chunky offset shadows retained as the "pop" accent (badges, mascot, empty states) */
   --shadow-chunky-sm: 3px 3px 0 0 var(--color-border);
   --shadow-chunky: 5px 5px 0 0 var(--color-border);
   --shadow-chunky-lg: 8px 8px 0 0 var(--color-border);
@@ -81,6 +149,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
   --color-surface-muted: var(--surface-muted);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -89,6 +159,8 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-pressed: var(--primary-pressed);
+  --color-primary-subtle: var(--primary-subtle);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -97,17 +169,23 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+  --color-info-subtle: var(--info-subtle);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-success-subtle: var(--success-subtle);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-warning-subtle: var(--warning-subtle);
   --color-danger: var(--danger);
   --color-danger-foreground: var(--danger-foreground);
+  --color-danger-subtle: var(--danger-subtle);
   --color-destructive: var(--danger);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-border-subtle: var(--border-subtle);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-hairline: var(--hairline);
 
   /* Sidebar (shadcn) */
   --color-sidebar: var(--sidebar);
@@ -123,100 +201,183 @@
   --color-chart-1: #ff5a1f;
   --color-chart-2: #00c2b8;
   --color-chart-3: #c6f432;
-  --color-chart-4: #1e3266;
+  --color-chart-4: #1e2645;
   --color-chart-5: #ffb020;
   --color-chart-6: #ff3b5c;
 
-  /* Typography — loaded via next/font in app/layout.tsx */
-  --font-sans: var(--font-inter);
+  /* Typography — Geist Sans/Mono via geist package, Bricolage display */
+  --font-sans: var(--font-geist-sans);
   --font-display: var(--font-bricolage);
-  --font-mono: var(--font-jetbrains);
+  --font-mono: var(--font-geist-mono);
 }
 
-/* ── Light theme (front office) ─────────────────────────────────────── */
+/* ── Light theme (front office) — sand surfaces ────────────────────── */
 :root {
-  --radius: 20px;
+  --radius: 14px;
 
-  --background: #fff6ec;
-  --foreground: #0b1b3f;
-  --surface: #ffffff;
-  --surface-muted: #fbefe2;
+  --background: #faf7f2;          /* sand.50 */
+  --foreground: #1a1816;          /* sand.900 */
+  --surface: #ffffff;             /* sand.0 */
+  --surface-raised: #ffffff;
+  --surface-sunken: #f3eee6;      /* sand.100 */
+  --surface-muted: #f3eee6;
   --card: #ffffff;
-  --card-foreground: #0b1b3f;
+  --card-foreground: #1a1816;
   --popover: #ffffff;
-  --popover-foreground: #0b1b3f;
-  --primary: #ff5a1f;
+  --popover-foreground: #1a1816;
+  --primary: #ff5a1f;             /* ignition.500 */
   --primary-foreground: #ffffff;
-  --primary-hover: #e64510;
-  --secondary: #0b1b3f;
+  --primary-hover: #ed4410;       /* ignition.600 */
+  --primary-pressed: #c4350c;     /* ignition.700 */
+  --primary-subtle: #fff3ed;      /* ignition.50 */
+  --secondary: #1a1816;
   --secondary-foreground: #ffffff;
-  --muted: #fbefe2;
-  --muted-foreground: #4a5677;
-  --accent: #c6f432;
-  --accent-foreground: #0b1b3f;
+  --muted: #f3eee6;
+  --muted-foreground: #5b554d;    /* sand.600 */
+  --accent: #c6f432;              /* volt.400 */
+  --accent-foreground: #0a0f1e;
   --info: #00c2b8;
-  --info-foreground: #0b1b3f;
-  --success: #c6f432;
-  --success-foreground: #0b1b3f;
-  --warning: #ffb020;
-  --warning-foreground: #0b1b3f;
-  --danger: #ff3b5c;
+  --info-foreground: #00322f;
+  --info-subtle: #e3f9f7;
+  --success: #a6d914;             /* volt.500 */
+  --success-foreground: #0a0f1e;
+  --success-subtle: #f4fcd9;
+  --warning: #ffb020;             /* sun.500 */
+  --warning-foreground: #0a0f1e;
+  --warning-subtle: #fff5dc;
+  --danger: #ff3b5c;              /* brake.500 */
   --danger-foreground: #ffffff;
-  --border: #0b1b3f;
-  --border-subtle: #e8dccd;
-  --input: #e8dccd;
+  --danger-subtle: #ffe8ec;
+  --border: #e7e0d5;              /* sand.200 */
+  --border-strong: #d3cabc;       /* sand.300 */
+  --border-subtle: #f3eee6;
+  --input: #d3cabc;
   --ring: #00c2b8;
+  --hairline: rgb(26 24 22 / 0.08);
 
   --sidebar: #ffffff;
-  --sidebar-foreground: #0b1b3f;
+  --sidebar-foreground: #1a1816;
   --sidebar-primary: #ff5a1f;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #fbefe2;
-  --sidebar-accent-foreground: #0b1b3f;
-  --sidebar-border: #e8dccd;
+  --sidebar-accent: #f3eee6;
+  --sidebar-accent-foreground: #1a1816;
+  --sidebar-border: #e7e0d5;
   --sidebar-ring: #00c2b8;
 }
 
-/* ── Dark "workshop mode" (the floor) ──────────────────────────────── */
+/* ── Dark "Workshop" theme — carbon surfaces ───────────────────────── */
 .dark {
-  --background: #050d20;
-  --foreground: #fff6ec;
-  --surface: #0b1b3f;
-  --surface-muted: #142650;
-  --card: #0b1b3f;
-  --card-foreground: #fff6ec;
-  --popover: #0b1b3f;
-  --popover-foreground: #fff6ec;
-  --primary: #ff7640;
-  --primary-foreground: #050d20;
-  --primary-hover: #ff9366;
-  --secondary: #fff6ec;
-  --secondary-foreground: #050d20;
-  --muted: #142650;
-  --muted-foreground: #a7b4d6;
+  --background: #060914;          /* carbon.950 */
+  --foreground: #e9ecf5;          /* carbon.50 */
+  --surface: #0f1529;             /* carbon.800 */
+  --surface-raised: #151c36;      /* carbon.700 */
+  --surface-sunken: #0a0f1e;      /* carbon.900 */
+  --surface-muted: #151c36;
+  --card: #0f1529;
+  --card-foreground: #e9ecf5;
+  --popover: #151c36;
+  --popover-foreground: #e9ecf5;
+  --primary: #ff7a3d;             /* ignition.400 */
+  --primary-foreground: #060914;
+  --primary-hover: #ff9b70;       /* ignition.300 */
+  --primary-pressed: #ff5a1f;
+  --primary-subtle: rgb(255 122 61 / 0.14);
+  --secondary: #e9ecf5;
+  --secondary-foreground: #060914;
+  --muted: #151c36;
+  --muted-foreground: #9aa5c4;    /* carbon.200 */
   --accent: #c6f432;
-  --accent-foreground: #050d20;
-  --info: #45d9d1;
-  --info-foreground: #050d20;
-  --success: #c6f432;
-  --success-foreground: #050d20;
-  --warning: #ffc24d;
-  --warning-foreground: #050d20;
-  --danger: #ff5c77;
-  --danger-foreground: #050d20;
-  --border: #3d528c;
-  --border-subtle: #1e3266;
-  --input: #3d528c;
+  --accent-foreground: #060914;
+  --info: #5fe3da;                /* turbo.300 */
+  --info-foreground: #00322f;
+  --info-subtle: rgb(0 194 184 / 0.14);
+  --success: #c6f432;             /* volt.400 */
+  --success-foreground: #060914;
+  --success-subtle: rgb(198 244 50 / 0.12);
+  --warning: #ffc53d;             /* sun.400 */
+  --warning-foreground: #060914;
+  --warning-subtle: rgb(255 197 61 / 0.14);
+  --danger: #ff6680;              /* brake.400 */
+  --danger-foreground: #060914;
+  --danger-subtle: rgb(255 102 128 / 0.14);
+  --border: #1e2645;              /* carbon.600 */
+  --border-strong: #2d375b;       /* carbon.500 */
+  --border-subtle: #0a0f1e;
+  --input: #2d375b;
   --ring: #c6f432;
+  --hairline: rgb(233 236 245 / 0.08);
 
-  --sidebar: #0b1b3f;
-  --sidebar-foreground: #fff6ec;
-  --sidebar-primary: #ff7640;
-  --sidebar-primary-foreground: #050d20;
-  --sidebar-accent: #142650;
-  --sidebar-accent-foreground: #fff6ec;
-  --sidebar-border: #1e3266;
+  --sidebar: #0f1529;
+  --sidebar-foreground: #e9ecf5;
+  --sidebar-primary: #ff7a3d;
+  --sidebar-primary-foreground: #060914;
+  --sidebar-accent: #151c36;
+  --sidebar-accent-foreground: #e9ecf5;
+  --sidebar-border: #0a0f1e;
   --sidebar-ring: #c6f432;
+}
+
+/* ── Sunlight theme — high contrast for outdoor yard use ───────────── */
+.sunlight {
+  --background: #ffffff;
+  --foreground: #000000;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f3eee6;
+  --surface-muted: #f3eee6;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #c4350c;             /* ignition.700 — 7:1+ on white */
+  --primary-foreground: #ffffff;
+  --primary-hover: #9c2b0e;
+  --primary-pressed: #7e2610;
+  --primary-subtle: #ffe2d3;
+  --secondary: #000000;
+  --secondary-foreground: #ffffff;
+  --muted: #f3eee6;
+  --muted-foreground: #2a2724;    /* sand.800 */
+  --accent: #7fa80c;              /* volt.600 — readable on white */
+  --accent-foreground: #ffffff;
+  --info: #008079;                /* turbo.600 */
+  --info-foreground: #ffffff;
+  --info-subtle: #e3f9f7;
+  --success: #7fa80c;
+  --success-foreground: #ffffff;
+  --success-subtle: #f4fcd9;
+  --warning: #e09200;             /* sun.600 */
+  --warning-foreground: #ffffff;
+  --warning-subtle: #fff5dc;
+  --danger: #e01e43;              /* brake.600 */
+  --danger-foreground: #ffffff;
+  --danger-subtle: #ffe8ec;
+  --border: #3f3b36;              /* sand.700 — strong borders */
+  --border-strong: #2a2724;
+  --border-subtle: #d3cabc;
+  --input: #3f3b36;
+  --ring: #008079;
+  --hairline: rgb(0 0 0 / 0.24);
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #000000;
+  --sidebar-primary: #c4350c;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f3eee6;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #3f3b36;
+  --sidebar-ring: #008079;
+}
+
+/* Sunlight rules: heavier weights, no translucency, stronger borders */
+.sunlight body {
+  font-weight: 500;
+}
+.sunlight [class*="shadow"] {
+  box-shadow: none;
+}
+.sunlight .border {
+  border-width: 2px;
 }
 
 @layer base {

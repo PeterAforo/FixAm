@@ -13,8 +13,6 @@ import { getSessionUserId, ensureUser } from "@/lib/auth/ensure-user"
 import { resolveMembership } from "@/lib/actions"
 import { renderInvoicePdf, type InvoicePdfData } from "@/lib/pdf/invoice"
 
-export const runtime = "nodejs"
-
 /** GET /api/pdf/invoices/[id]?format=a4|thermal — authenticated PDF download. */
 export async function GET(
   req: Request,
