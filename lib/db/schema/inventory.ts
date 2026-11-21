@@ -172,7 +172,9 @@ export const vendorMembers = pgTable(
 export const vendorProducts = pgTable(
   "vendor_products",
   {
-    ...tenant, // garage_id nullable? spec: vendor-scoped product; keep garage_id null for platform catalog? use vendorId instead
+    id: uuid("id").primaryKey().defaultRandom(),
+    // null = platform vendor catalogue; set when a garage overrides/imports
+    garageId: uuid("garage_id").references(() => garages.id),
     vendorId: uuid("vendor_id")
       .notNull()
       .references(() => vendors.id),

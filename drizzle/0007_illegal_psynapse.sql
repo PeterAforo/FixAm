@@ -1,0 +1,1 @@
+ALTER TABLE "vendor_products" ALTER COLUMN "garage_id" DROP NOT NULL;
