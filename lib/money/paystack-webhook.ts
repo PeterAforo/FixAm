@@ -108,7 +108,10 @@ export async function getPublicReceipt(token: string) {
   const [inv] = p.invoiceId
     ? await db().select().from(invoices).where(eq(invoices.id, p.invoiceId)).limit(1)
     : [null]
-  const [gr] = await db().select({ name: garages.name }).from(garages)
+  const [gr] = await db().select({
+    name: garages.name, address: garages.address, city: garages.city,
+    phone: garages.phone, tin: garages.tin, brandColor: garages.brandColor,
+  }).from(garages)
     .where(eq(garages.id, p.garageId)).limit(1)
   return {
     receiptNumber: p.receiptNumber,
@@ -118,5 +121,9 @@ export async function getPublicReceipt(token: string) {
     invoiceNumber: inv?.number ?? null,
     invoiceBalance: inv ? Number(inv.balanceDue) : null,
     garageName: gr?.name ?? "Garage",
+    garageAddress: [gr?.address, gr?.city].filter(Boolean).join(", ") || null,
+    garagePhone: gr?.phone ?? null,
+    garageTin: gr?.tin ?? null,
+    garageBrandColor: gr?.brandColor ?? null,
   }
 }

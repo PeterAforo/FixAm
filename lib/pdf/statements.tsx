@@ -1,0 +1,90 @@
+import "server-only"
+import { Document, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer"
+import { formatGHS } from "@/lib/money"
+
+export type CreditStatementPdfData = {
+  garage: { name: string; address: string | null; city: string | null; phone: string | null; tin: string | null; brandColor: string | null }
+  customer: { fullName: string; phone: string | null } | null
+  statement: {
+    periodStart: string
+    periodEnd: string
+    openingBalance: bigint | number
+    charges: bigint | number
+    payments: bigint | number
+    closingBalance: bigint | number
+    ageing: { current?: number; d31_60?: number; d61_90?: number; d90_plus?: number } | null
+    sentAt: string | null
+  }
+  account: { paymentTermsDays: number }
+}
+
+const styles = StyleSheet.create({
+  page: { padding: 36, fontSize: 10, fontFamily: "Helvetica", color: "#171717" },
+  header: { flexDirection: "row", justifyContent: "space-between", borderBottomWidth: 2, paddingBottom: 8, marginBottom: 14 },
+  garageName: { fontSize: 15, fontWeight: "bold" },
+  garageMeta: { fontSize: 8, color: "#525252", marginTop: 2 },
+  title: { fontSize: 12, fontWeight: "bold", textTransform: "uppercase", letterSpacing: 1 },
+  period: { fontSize: 9, marginTop: 3 },
+  section: { marginBottom: 14 },
+  label: { fontSize: 7, textTransform: "uppercase", color: "#737373", marginBottom: 2 },
+  row: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 2.5, borderBottomWidth: 0.5, borderBottomColor: "#e5e5e5" },
+  grand: { fontWeight: "bold", fontSize: 11, borderTopWidth: 1, paddingTop: 3, marginTop: 2 },
+  ageingRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 2 },
+  ageingLabel: { fontSize: 9, color: "#525252" },
+  footer: { position: "absolute", bottom: 28, left: 36, right: 36, fontSize: 8, color: "#a3a3a3", textAlign: "center" },
+})
+
+export async function renderCreditStatementPdf(data: CreditStatementPdfData): Promise<Buffer> {
+  const brand = data.garage.brandColor ?? "#0f172a"
+  const g = data.garage
+  const s = data.statement
+  const a = s.ageing ?? {}
+
+  const doc = (
+    <Document title={`Statement ${s.periodStart} – ${s.periodEnd} — ${g.name}`} author="FixAm">
+      <Page size="A4" style={styles.page}>
+        <View style={styles.header}>
+          <View>
+            <Text style={[styles.garageName, { color: brand }]}>{g.name}</Text>
+            <Text style={styles.garageMeta}>{[g.address, g.city].filter(Boolean).join(", ")}{g.phone ? ` · ${g.phone}` : ""}</Text>
+            {g.tin ? <Text style={styles.garageMeta}>TIN: {g.tin}</Text> : null}
+          </View>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={[styles.title, { color: brand }]}>Credit statement</Text>
+            <Text style={styles.period}>{s.periodStart} → {s.periodEnd}</Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>Account holder</Text>
+          <Text style={{ fontWeight: "bold", fontSize: 12 }}>{data.customer?.fullName ?? "Customer"}</Text>
+          {data.customer?.phone ? <Text style={styles.garageMeta}>{data.customer.phone}</Text> : null}
+          <Text style={styles.garageMeta}>Payment terms: {data.account.paymentTermsDays} days{s.sentAt ? ` · Sent ${new Date(s.sentAt).toLocaleDateString("en-GH", { timeZone: "Africa/Accra" })}` : ""}</Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>Summary</Text>
+          <View style={styles.row}><Text>Opening balance</Text><Text>{formatGHS(s.openingBalance)}</Text></View>
+          <View style={styles.row}><Text>Charges</Text><Text>{formatGHS(s.charges)}</Text></View>
+          <View style={styles.row}><Text>Payments received</Text><Text>−{formatGHS(s.payments)}</Text></View>
+          <View style={[styles.row, styles.grand]}>
+            <Text style={{ color: brand }}>Closing balance</Text><Text>{formatGHS(s.closingBalance)}</Text>
+          </View>
+        </View>
+
+        {(a.current != null || a.d31_60 != null || a.d61_90 != null || a.d90_plus != null) && (
+          <View style={styles.section}>
+            <Text style={styles.label}>Ageing of outstanding balance</Text>
+            {a.current != null ? <View style={styles.ageingRow}><Text style={styles.ageingLabel}>Current</Text><Text>{formatGHS(a.current)}</Text></View> : null}
+            {a.d31_60 != null ? <View style={styles.ageingRow}><Text style={styles.ageingLabel}>31–60 days</Text><Text>{formatGHS(a.d31_60)}</Text></View> : null}
+            {a.d61_90 != null ? <View style={styles.ageingRow}><Text style={styles.ageingLabel}>61–90 days</Text><Text>{formatGHS(a.d61_90)}</Text></View> : null}
+            {a.d90_plus != null ? <View style={styles.ageingRow}><Text style={styles.ageingLabel}>90+ days</Text><Text>{formatGHS(a.d90_plus)}</Text></View> : null}
+          </View>
+        )}
+
+        <Text style={styles.footer}>Generated by FixAm · Please quote your account reference when paying</Text>
+      </Page>
+    </Document>
+  )
+  return renderToBuffer(doc)
+}

@@ -38,6 +38,14 @@ async function ReceiptView({ params }: { params: Promise<{ token: string }> }) {
         </dl>
 
         <p className="mt-4 text-xs text-muted-foreground">Powered by FixAm · Keep this link as your receipt.</p>
+        <a
+          href={`/api/pdf/receipts/${token}`}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-block rounded-lg border px-3 py-1.5 text-sm font-semibold"
+        >
+          Download PDF
+        </a>
       </div>
     </main>
   )

@@ -202,17 +202,23 @@ export function CreditAccountPanel(p: Props) {
                 <th className="px-4 py-3">Period</th>
                 <th className="px-4 py-3 text-right">Closing balance</th>
                 <th className="px-4 py-3">Sent</th>
+                <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody>
               {p.statements.length === 0 && (
-                <tr><td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">No statements yet — generated monthly on day {p.account.statementDay ?? "—"}</td></tr>
+                <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">No statements yet — generated monthly on day {p.account.statementDay ?? "—"}</td></tr>
               )}
               {p.statements.map((s) => (
                 <tr key={s.id} className="border-b last:border-0">
                   <td className="px-4 py-3">{s.periodStart} → {s.periodEnd}</td>
                   <td className="px-4 py-3 text-right tabular-nums">{formatGHS(s.closingBalance)}</td>
                   <td className="px-4 py-3">{s.sentAt ? new Date(s.sentAt).toLocaleDateString("en-GH") : "—"}</td>
+                  <td className="px-4 py-3 text-right">
+                    <a href={`/api/pdf/credit-statements/${s.id}`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-primary hover:underline">
+                      PDF
+                    </a>
+                  </td>
                 </tr>
               ))}
             </tbody>
