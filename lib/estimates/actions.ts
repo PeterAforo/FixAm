@@ -19,6 +19,7 @@ import { writeAuditLog, resolveMembership, type ActionResult } from "@/lib/actio
 import { getSessionUserId } from "@/lib/auth/ensure-user"
 import { can, type StaffRole } from "@/lib/auth/permissions"
 import { computeTaxTotals, type TaxRule } from "@/lib/domain/tax"
+import { reserveStock, releaseReservation } from "@/lib/parts/stock"
 import { sendMessage } from "@/lib/messaging/send"
 import { uuidv7 } from "@/lib/id"
 
@@ -417,6 +418,23 @@ async function finalizeApproval(args: {
   for (const i of items) {
     const s = statusFor(i.id)
     if (s) await db().update(jobItems).set({ approvalStatus: s as "approved" | "declined", updatedAt: new Date() }).where(eq(jobItems.id, i.id))
+  }
+
+  // Stock reservation: newly approved part lines reserve stock at the job's
+  // branch; previously approved lines now declined release their reservation.
+  const stockItems = items.filter((i) => i.partId && i.type === "part")
+  if (stockItems.length > 0) {
+    const [job] = await db().select({ branchId: jobs.branchId }).from(jobs).where(eq(jobs.id, est.jobId)).limit(1)
+    if (job) {
+      for (const i of stockItems) {
+        const qty = Number(i.quantity)
+        if (approvedSet.has(i.id) && i.approvalStatus !== "approved") {
+          await reserveStock({ garageId: args.garageId, branchId: job.branchId, partId: i.partId!, quantity: qty })
+        } else if (declinedSet.has(i.id) && i.approvalStatus === "approved") {
+          await releaseReservation({ garageId: args.garageId, branchId: job.branchId, partId: i.partId!, quantity: qty })
+        }
+      }
+    }
   }
 
   // Estimate status: approved only when every item approved; declined when all declined; else partial

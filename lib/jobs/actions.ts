@@ -35,6 +35,7 @@ import { sendMessage } from "@/lib/messaging/send"
 import { uuidv7 } from "@/lib/id"
 import { canTransitionJob, type JobStatus } from "./transitions"
 import { buildInvoiceFromJob } from "@/lib/money/invoice-core"
+import { issueReservedStock } from "@/lib/parts/stock"
 import { storageProvider } from "@/lib/integrations/storage"
 
 const staffPrincipal = (role: StaffRole, garageId: string, branchId: string | null) =>
@@ -502,6 +503,31 @@ export async function updateJobStatus(rawInput: unknown): Promise<ActionResult<{
           sourceId: jobId,
         })
       }
+    }
+  }
+
+  // delivered → issue approved part stock (reserved at estimate approval)
+  if (toStatus === "delivered") {
+    try {
+      const partItems = await db()
+        .select({ id: jobItems.id, partId: jobItems.partId, quantity: jobItems.quantity })
+        .from(jobItems)
+        .where(and(
+          eq(jobItems.jobId, jobId),
+          eq(jobItems.garageId, garageId),
+          eq(jobItems.type, "part"),
+          eq(jobItems.approvalStatus, "approved"),
+          sql`${jobItems.partId} IS NOT NULL`,
+        ))
+      for (const i of partItems) {
+        await issueReservedStock({
+          garageId, branchId: job.branchId, partId: i.partId!,
+          quantity: Number(i.quantity), jobId, actorUserId: userId,
+        })
+        await db().update(jobItems).set({ isIssuedFromStock: true, updatedAt: now }).where(eq(jobItems.id, i.id))
+      }
+    } catch (e) {
+      console.error("[jobs] stock issue on delivery failed", e)
     }
   }
 
