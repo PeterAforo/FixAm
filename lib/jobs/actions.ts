@@ -1,7 +1,7 @@
 "use server"
 import { randomBytes, createHash } from "crypto"
 import { z } from "zod"
-import { and, desc, eq, isNull, sql } from "drizzle-orm"
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
 import {
   bookings,
@@ -19,6 +19,8 @@ import {
   jobTemplates,
   jobs,
   memberships,
+  invoices,
+  paymentPlans,
   odometerReadings,
   parts,
   users,
@@ -415,6 +417,38 @@ export async function updateJobStatus(rawInput: unknown): Promise<ActionResult<{
   }
   if (toStatus === "ready" && !job.qcSignedOffAt) {
     return { ok: false, error: { code: "VALIDATION", message: "QC sign-off is required before marking ready" } }
+  }
+
+  // Delivery gate: invoice must be issued AND settled (paid in full, charged
+  // to a credit account, or covered by an active payment plan).
+  if (toStatus === "delivered") {
+    const [inv] = await db()
+      .select({
+        id: invoices.id,
+        status: invoices.status,
+        balanceDue: invoices.balanceDue,
+        creditAccountId: invoices.creditAccountId,
+        paymentPlanId: invoices.paymentPlanId,
+      })
+      .from(invoices)
+      .where(and(eq(invoices.garageId, garageId), eq(invoices.source, "job"), eq(invoices.sourceId, jobId), inArray(invoices.status, ["issued", "partially_paid", "paid"])))
+      .orderBy(desc(invoices.createdAt))
+      .limit(1)
+    let planActive = false
+    if (inv?.paymentPlanId) {
+      const [plan] = await db().select({ status: paymentPlans.status }).from(paymentPlans)
+        .where(and(eq(paymentPlans.id, inv.paymentPlanId), eq(paymentPlans.garageId, garageId))).limit(1)
+      planActive = plan?.status === "active"
+    }
+    const settled =
+      !!inv &&
+      (inv.status === "paid" ||
+        Number(inv.balanceDue) <= 0 ||
+        inv.creditAccountId != null ||
+        planActive)
+    if (!settled) {
+      return { ok: false, error: { code: "VALIDATION", message: "Invoice must be issued and settled (paid, on credit, or on a payment plan) before delivery" } }
+    }
   }
 
   const now = new Date()
