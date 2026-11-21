@@ -64,6 +64,13 @@
       "when": 1795231904525,
       "tag": "0008_clear_punisher",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795233491774,
+      "tag": "0009_outgoing_cobalt_man",
+      "breakpoints": true
     }
   ]
 }

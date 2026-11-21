@@ -1,10 +1,14 @@
-export default function PortalPage() {
-  return (
-    <main className="min-h-screen bg-background p-8">
-      <h1 className="font-display text-3xl font-bold text-foreground">
-        Customer portal
-      </h1>
-      <p className="mt-2 text-muted-foreground">Builds in P4-07.</p>
-    </main>
-  )
+import { getPortalPhone } from "@/lib/portal/session"
+import { getPortalOverview } from "@/lib/portal/data"
+import { PortalLogin } from "./portal-login"
+import { PortalDashboard } from "./portal-dashboard"
+
+export const dynamic = "force-dynamic"
+
+export default async function PortalPage() {
+  const phone = await getPortalPhone()
+  if (!phone) return <PortalLogin />
+
+  const data = await getPortalOverview(phone)
+  return <PortalDashboard phone={phone} data={data} />
 }
