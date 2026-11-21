@@ -22,7 +22,9 @@
         {
           "id": "P0-02",
           "title": "Design system: tokens, fonts, core components",
-          "depends_on": ["P0-01"],
+          "depends_on": [
+            "P0-01"
+          ],
           "description": "Implement design-tokens.json as CSS variables (light + dark 'workshop' themes) mapped into Tailwind. Load Bricolage Grotesque, Inter, JetBrains Mono via next/font. Theme shadcn components to Pit Stop Pop (pill buttons, 2px borders, chunky shadows). Build brand components: Button variants, Card, StatusPill, PlateChip, MoneyText, StatTile, Stepper, EmptyState, CarAvatar (SVG per body type, tinted), VehicleHealthCard, Confetti helper, theme toggle. Create a /design route (dev only) showcasing every component in both themes.",
           "acceptance_criteria": [
             "No hardcoded hex colours outside the token files",
@@ -34,7 +36,9 @@
         {
           "id": "P0-03",
           "title": "Database, Drizzle and RLS foundation",
-          "depends_on": ["P0-01"],
+          "depends_on": [
+            "P0-01"
+          ],
           "description": "Set up Supabase (local via CLI + staging project), Drizzle config, and migrations for: users, garages, garage_settings, branches, bays, memberships, document_sequences, audit_logs, webhook_events, plans, subscriptions, message_usage, magic_links, notifications, push_subscriptions. Write RLS helper SQL functions (current_user_id(), is_member(garage_id), member_role(garage_id), member_branch(garage_id)) and policies. Money helpers in lib/money with tests. UUID v7 helper.",
           "acceptance_criteria": [
             "Migrations apply cleanly on an empty database",
@@ -46,7 +50,9 @@
         {
           "id": "P0-04",
           "title": "Authentication and sessions",
-          "depends_on": ["P0-03"],
+          "depends_on": [
+            "P0-03"
+          ],
           "description": "Supabase Auth for staff (email+password and phone OTP), customers (phone OTP) and vendors (email+password). Login, OTP verify, forgot password, sign-out. Middleware that resolves the session and, for /g/[garageSlug] routes, the active membership. Rate limit OTP requests. Phone normalisation to E.164 (+233).",
           "acceptance_criteria": [
             "Staff can sign in with email/password and with phone OTP",
@@ -58,7 +64,9 @@
         {
           "id": "P0-05",
           "title": "Permissions engine and audit logging",
-          "depends_on": ["P0-04"],
+          "depends_on": [
+            "P0-04"
+          ],
           "description": "Implement can(principal, permission, context) from roles-permissions.json, including discount limits and field-level rules; garageHasFeature() from plans.json. A withAction() wrapper for Server Actions: Zod validation → membership → permission → plan feature → transaction → audit log → typed result. UI helpers <Can permission> and useCan().",
           "acceptance_criteria": [
             "Unit tests cover every role against a sample of permissions",
@@ -69,7 +77,9 @@
         {
           "id": "P0-06",
           "title": "Garage onboarding and staff invites",
-          "depends_on": ["P0-05"],
+          "depends_on": [
+            "P0-05"
+          ],
           "description": "Sign-up flow creating user + garage + default branch + owner membership + trial subscription (Pro, complimentary flag for pilot). Onboarding wizard: garage details & logo, branches, bays, invite staff by phone/email with role and branch (invite link via SMS/WhatsApp/email using mock provider locally), labour rate and tax rules, finish. Staff management page (list, change role, suspend).",
           "acceptance_criteria": [
             "New garage can complete onboarding in under 5 minutes",
@@ -80,7 +90,10 @@
         {
           "id": "P0-07",
           "title": "App shell, navigation, command palette, notifications centre",
-          "depends_on": ["P0-02", "P0-05"],
+          "depends_on": [
+            "P0-02",
+            "P0-05"
+          ],
           "description": "Responsive shell: sidebar on desktop, bottom tab bar on mobile, role-aware nav from ui-screens.json, branch switcher, theme toggle, user menu. Command palette (Cmd/Ctrl+K) with search stubs. Notifications bell with realtime updates via Supabase Realtime. i18n with next-intl (en).",
           "acceptance_criteria": [
             "Nav items match the role (mechanic sees only My jobs, Vehicles lookup, Stats)",
@@ -91,7 +104,9 @@
         {
           "id": "P0-08",
           "title": "Integration adapters, Inngest and messaging core",
-          "depends_on": ["P0-03"],
+          "depends_on": [
+            "P0-03"
+          ],
           "description": "Inngest client and /api/inngest route. Adapter interfaces and mock implementations per integrations.json (MessagingProvider for sms/whatsapp/email/push, PaymentProvider, StorageProvider, InsuranceProvider, DvlaProvider). sendMessage Inngest function: render template, quiet hours, allowance check, provider call, message_log, retries, WhatsApp→SMS fallback. Webhook routes with signature verification and idempotency. Seed platform message_templates from message-templates.json. PWA manifest and service worker with push subscription.",
           "acceptance_criteria": [
             "With providers set to 'mock', messages appear in a dev inbox page /dev/messages",
@@ -103,9 +118,14 @@
         {
           "id": "P0-09",
           "title": "Seed script",
-          "depends_on": ["P0-06"],
+          "depends_on": [
+            "P0-06"
+          ],
           "description": "scripts/seed.ts that loads seed-data.json: platform admin, plans, demo garage with branches/bays/staff, customers, vehicles with odometer history, parts and stock, vendors and products, insurance partner, DVLA fee table. Idempotent.",
-          "acceptance_criteria": ["pnpm db:seed runs twice without duplicates", "Logging in as each seeded role works"]
+          "acceptance_criteria": [
+            "pnpm db:seed runs twice without duplicates",
+            "Logging in as each seeded role works"
+          ]
         }
       ]
     },
@@ -117,79 +137,138 @@
         {
           "id": "P1-01",
           "title": "Customers",
-          "depends_on": ["P0-07"],
+          "depends_on": [
+            "P0-07"
+          ],
           "description": "Migrations for customers. List with search (name, phone), filters (type, tags), create/edit drawer, duplicate detection by phone, customer profile (vehicles, jobs, invoices, balance, documents, messages, preferences).",
-          "acceptance_criteria": ["Creating a customer with an existing phone offers to open the existing record", "Search returns results in < 300ms on 10k seeded customers"]
+          "acceptance_criteria": [
+            "Creating a customer with an existing phone offers to open the existing record",
+            "Search returns results in < 300ms on 10k seeded customers"
+          ]
         },
         {
           "id": "P1-02",
           "title": "Vehicles, ownership and odometer",
-          "depends_on": ["P1-01"],
+          "depends_on": [
+            "P1-01"
+          ],
           "description": "Migrations for vehicles, vehicle_ownerships, odometer_readings, documents. Vehicle create (plate normalisation, make/model autocomplete), transfer ownership, document uploads, vehicle profile with VehicleHealthCard and timeline. Odometer recording with validation rules from reminder-rules.json and flagged-reading review. Command palette searches plates (ignoring spaces/hyphens) and phones.",
-          "acceptance_criteria": ["'gr1234 24' finds 'GR 1234-24'", "Lower odometer reading is flagged and excluded", "Ownership transfer keeps history on the vehicle"]
+          "acceptance_criteria": [
+            "'gr1234 24' finds 'GR 1234-24'",
+            "Lower odometer reading is flagged and excluded",
+            "Ownership transfer keeps history on the vehicle"
+          ]
         },
         {
           "id": "P1-03",
           "title": "Mileage prediction service",
-          "depends_on": ["P1-02"],
+          "depends_on": [
+            "P1-02"
+          ],
           "description": "lib/domain/mileage.ts per reminder-rules.json mileage_prediction, including all test_cases. Inngest function on vehicle/odometer.recorded and nightly recalculation updating vehicles.km_per_day and confidence. Show estimate on vehicle profile.",
-          "acceptance_criteria": ["All mileage test_cases in reminder-rules.json pass", "Vehicle profile shows km/day and confidence"]
+          "acceptance_criteria": [
+            "All mileage test_cases in reminder-rules.json pass",
+            "Vehicle profile shows km/day and confidence"
+          ]
         },
         {
           "id": "P1-04",
           "title": "Job templates",
-          "depends_on": ["P0-07"],
+          "depends_on": [
+            "P0-07"
+          ],
           "description": "CRUD for job templates (default items, checklist, estimated time, deposit %, creates_due_item_type). Seed common templates: Oil service (mineral / semi / full synthetic), Full service, Brake pads, Diagnostics, Roadworthy pre-inspection, Tyre change, Battery replacement.",
-          "acceptance_criteria": ["Templates selectable during check-in and estimate building"]
+          "acceptance_criteria": [
+            "Templates selectable during check-in and estimate building"
+          ]
         },
         {
           "id": "P1-05",
           "title": "Check-in wizard and job cards",
-          "depends_on": ["P1-02", "P1-04"],
+          "depends_on": [
+            "P1-02",
+            "P1-04"
+          ],
           "description": "Migrations for jobs, job_status_events, job_assignments, job_findings, job_media, job_tasks, time_logs. Tablet-friendly check-in wizard: find/create customer & vehicle, odometer (required) with photo, fuel level slider, complaint, walk-around photos, items left in car, template, assign mechanic & bay, promised time, customer signature pad. Job detail page with tabs (overview, findings, items, tasks, media, timeline). Enforce job_status_transitions and side effects from data-model.json.",
-          "acceptance_criteria": ["Check-in completes in under 2 minutes on a tablet", "Invalid status transition is rejected server-side", "Every status change writes job_status_events"]
+          "acceptance_criteria": [
+            "Check-in completes in under 2 minutes on a tablet",
+            "Invalid status transition is rejected server-side",
+            "Every status change writes job_status_events"
+          ]
         },
         {
           "id": "P1-06",
           "title": "Kanban job board (realtime)",
-          "depends_on": ["P1-05"],
+          "depends_on": [
+            "P1-05"
+          ],
           "description": "Board by status columns with optional bay swimlanes; drag-and-drop updates status (validated), filters (mechanic, priority, branch), card shows plate chip, car avatar, customer, promised time countdown, assignees. Realtime sync across devices. Satisfying spring animations.",
-          "acceptance_criteria": ["Two browsers see a card move within 1 second", "Dropping into a disallowed column snaps back with a friendly message"]
+          "acceptance_criteria": [
+            "Two browsers see a card move within 1 second",
+            "Dropping into a disallowed column snaps back with a friendly message"
+          ]
         },
         {
           "id": "P1-07",
           "title": "Mechanic mobile experience (offline-tolerant)",
-          "depends_on": ["P1-05"],
+          "depends_on": [
+            "P1-05"
+          ],
           "description": "'My jobs' for mechanics: today's assigned jobs, job detail with checklist, start/pause timer per task, add findings with photo/video/voice note, request parts, mark task done, move to quality_check. Offline queue (IndexedDB) for timer events, checklist ticks, notes and photos with client_id idempotency; sync indicator. 48px touch targets, dark workshop mode default.",
-          "acceptance_criteria": ["In airplane mode a mechanic can tick checklist items and start/stop timers; they sync when back online without duplicates", "Photos upload with progress and retry"]
+          "acceptance_criteria": [
+            "In airplane mode a mechanic can tick checklist items and start/stop timers; they sync when back online without duplicates",
+            "Photos upload with progress and retry"
+          ]
         },
         {
           "id": "P1-08",
           "title": "Estimates and customer approval",
-          "depends_on": ["P1-05"],
+          "depends_on": [
+            "P1-05"
+          ],
           "description": "Migrations for job_items, estimates, approvals. Estimate builder: labour (hours × rate or flat), parts (from catalogue placeholder until P3, or free text), sundries, line discounts within permission limits, tax calculation (lib/domain/tax.ts), deposit required. Send via magic link (SMS/WhatsApp/email). Public approval page /t/[token]: branded, photos of findings, approve/decline per line, signature, pay deposit (Paystack, wired in P2 — show 'pay at garage' until then). Approve-on-behalf with reason. Versioning when re-sent.",
-          "acceptance_criteria": ["Customer approves 2 of 3 lines; job shows partial approval and totals update", "Approve-on-behalf requires a reason and is audited", "Tax unit tests cover compound and inclusive pricing"]
+          "acceptance_criteria": [
+            "Customer approves 2 of 3 lines; job shows partial approval and totals update",
+            "Approve-on-behalf requires a reason and is audited",
+            "Tax unit tests cover compound and inclusive pricing"
+          ]
         },
         {
           "id": "P1-09",
           "title": "Quality check, ready and delivery",
-          "depends_on": ["P1-08"],
+          "depends_on": [
+            "P1-08"
+          ],
           "description": "QC checklist sign-off by owner/manager, move to Ready (engine-rev animation), notify customer with pickup message. Delivery step (invoice gate stubbed until P2). Warranty/comeback linking to a previous job.",
-          "acceptance_criteria": ["Cannot reach Ready without QC sign-off", "Comeback job links to parent and counts in mechanic stats"]
+          "acceptance_criteria": [
+            "Cannot reach Ready without QC sign-off",
+            "Comeback job links to parent and counts in mechanic stats"
+          ]
         },
         {
           "id": "P1-10",
           "title": "Customer live tracker",
-          "depends_on": ["P1-05"],
+          "depends_on": [
+            "P1-05"
+          ],
           "description": "/t/[token] tracker page: Stepper with job progress, customer-visible notes and photos, mechanic first name, ETA, garage contact buttons (call, WhatsApp, directions). Realtime updates. Link sent at check-in.",
-          "acceptance_criteria": ["Tracker updates live when status changes", "Internal notes and non-visible media never appear", "Expired token shows a friendly expired page"]
+          "acceptance_criteria": [
+            "Tracker updates live when status changes",
+            "Internal notes and non-visible media never appear",
+            "Expired token shows a friendly expired page"
+          ]
         },
         {
           "id": "P1-11",
           "title": "Bookings and public booking page",
-          "depends_on": ["P1-04"],
+          "depends_on": [
+            "P1-04"
+          ],
           "description": "Migrations for bookings. Staff calendar (day/week by bay), create/confirm/cancel bookings, convert booking to check-in. Public page /b/[garageSlug]: choose service, vehicle details, slot from capacity, phone OTP-lite (SMS code) to confirm. Confirmation + day-before reminder.",
-          "acceptance_criteria": ["Fully booked slots are not offered", "Booking converts to a job with customer and vehicle pre-filled"]
+          "acceptance_criteria": [
+            "Fully booked slots are not offered",
+            "Booking converts to a job with customer and vehicle pre-filled"
+          ]
         }
       ]
     },
@@ -201,58 +280,104 @@
         {
           "id": "P2-01",
           "title": "Invoices and PDFs",
-          "depends_on": ["P1-09"],
+          "depends_on": [
+            "P1-09"
+          ],
           "description": "Migrations for invoices, invoice_lines, credit_notes. Draft invoice auto-created from approved job items at Ready; manual invoices. Issue (assigns gapless number, freezes totals). Void (owner, reason). Credit notes. PDF (A4 + 80mm thermal) via @react-pdf/renderer in an Inngest function; share via WhatsApp/SMS link/email; print. Invoice list with filters and status chips.",
-          "acceptance_criteria": ["Two invoices issued concurrently get consecutive numbers with no gaps or duplicates", "Issued invoice cannot be edited", "PDF matches garage branding"]
+          "acceptance_criteria": [
+            "Two invoices issued concurrently get consecutive numbers with no gaps or duplicates",
+            "Issued invoice cannot be edited",
+            "PDF matches garage branding"
+          ]
         },
         {
           "id": "P2-02",
           "title": "Payments: cash, MoMo, card, transfer; receipts",
-          "depends_on": ["P2-01", "P0-08"],
+          "depends_on": [
+            "P2-01",
+            "P0-08"
+          ],
           "description": "Migrations for payments, payment_allocations, refunds. Record cash/transfer/cheque payments. Paystack integration: MoMo charge (network selection, prompt on customer phone), card checkout; verify via webhook; idempotent. Receipt numbers and PDFs, sent automatically. Pay page /t/[token] for invoices. Deposits on estimates applied on invoice issue. Refunds with permission. Confetti on fully paid.",
-          "acceptance_criteria": ["MoMo test payment marks invoice paid via webhook only", "Replay of the same webhook does not double-count", "Receipt sent on every successful payment", "Deposit paid on estimate appears as allocation on the invoice"]
+          "acceptance_criteria": [
+            "MoMo test payment marks invoice paid via webhook only",
+            "Replay of the same webhook does not double-count",
+            "Receipt sent on every successful payment",
+            "Deposit paid on estimate appears as allocation on the invoice"
+          ]
         },
         {
           "id": "P2-03",
           "title": "Instalments (payment plans)",
-          "depends_on": ["P2-02"],
+          "depends_on": [
+            "P2-02"
+          ],
           "description": "Migrations for payment_plans, instalments. Create plan from an invoice (down payment, count, frequency, start date, optional late fee). Schedule preview. Each instalment creates a due_item (type instalment). Pay individual instalments via link. Overdue handling and late fees. Plan status changes.",
-          "acceptance_criteria": ["Plan of 3 monthly instalments creates 3 due items with correct dates", "Paying all instalments marks plan and invoice paid"]
+          "acceptance_criteria": [
+            "Plan of 3 monthly instalments creates 3 due items with correct dates",
+            "Paying all instalments marks plan and invoice paid"
+          ]
         },
         {
           "id": "P2-04",
           "title": "Credit accounts",
-          "depends_on": ["P2-02"],
+          "depends_on": [
+            "P2-02"
+          ],
           "description": "Migrations for credit_accounts, credit_statements. Open account (limit, terms), charge invoices to account (limit check), payments allocated across invoices, monthly statement generation (Inngest) with ageing buckets and PDF, statement due item. Account page with balance and ageing chart.",
-          "acceptance_criteria": ["Charging beyond the limit is blocked unless owner overrides (audited)", "Ageing buckets are correct in unit tests", "Statement generated on statement_day"]
+          "acceptance_criteria": [
+            "Charging beyond the limit is blocked unless owner overrides (audited)",
+            "Ageing buckets are correct in unit tests",
+            "Statement generated on statement_day"
+          ]
         },
         {
           "id": "P2-05",
           "title": "Delivery gate",
-          "depends_on": ["P2-02", "P2-03", "P2-04"],
+          "depends_on": [
+            "P2-02",
+            "P2-03",
+            "P2-04"
+          ],
           "description": "Job cannot move to Delivered unless the invoice is issued and paid, or charged to a credit account, or covered by an active payment plan. Delivery issues reserved stock (P3 hook) and creates due items from the job template.",
-          "acceptance_criteria": ["Unpaid job cannot be delivered", "Delivering an oil service job creates an oil_change due item with date and mileage"]
+          "acceptance_criteria": [
+            "Unpaid job cannot be delivered",
+            "Delivering an oil service job creates an oil_change due item with date and mileage"
+          ]
         },
         {
           "id": "P2-06",
           "title": "Expenses and cash-up",
-          "depends_on": ["P2-02"],
+          "depends_on": [
+            "P2-02"
+          ],
           "description": "Migrations for expense_categories (seeded), expenses, cash_ups. Expense entry with receipt photo. End-of-day cash-up: expected by method vs counted cash, difference, notes.",
-          "acceptance_criteria": ["Cash-up shows expected cash from the day's cash payments minus cash refunds"]
+          "acceptance_criteria": [
+            "Cash-up shows expected cash from the day's cash payments minus cash refunds"
+          ]
         },
         {
           "id": "P2-07",
           "title": "Reports: daily and monthly",
-          "depends_on": ["P2-06"],
+          "depends_on": [
+            "P2-06"
+          ],
           "description": "Migrations for report_snapshots. Daily summary and monthly report per PRD 5.11 (sales by category, payments by method, expenses, COGS, gross & net profit, comparison), outstanding balances, staff performance. Snapshot Inngest jobs; live view for today. Charts (recharts, token colours). Export CSV and PDF.",
-          "acceptance_criteria": ["Monthly profit equals sum of daily profits for the month", "Profit hidden from roles without permission", "CSV export opens correctly in Excel"]
+          "acceptance_criteria": [
+            "Monthly profit equals sum of daily profits for the month",
+            "Profit hidden from roles without permission",
+            "CSV export opens correctly in Excel"
+          ]
         },
         {
           "id": "P2-08",
           "title": "Owner dashboard",
-          "depends_on": ["P2-07"],
+          "depends_on": [
+            "P2-07"
+          ],
           "description": "Dashboard per ui-screens.json: today's revenue, jobs by status, cars ready for pickup, payments due, low stock (after P3), reminders due this week, cash position, quick actions.",
-          "acceptance_criteria": ["Dashboard loads in < 2.5s on mid-range Android 4G (Lighthouse throttled)"]
+          "acceptance_criteria": [
+            "Dashboard loads in < 2.5s on mid-range Android 4G (Lighthouse throttled)"
+          ]
         }
       ]
     },
@@ -264,51 +389,91 @@
         {
           "id": "P3-01",
           "title": "Parts catalogue and stock",
-          "depends_on": ["P0-07"],
+          "depends_on": [
+            "P0-07"
+          ],
           "description": "Migrations for parts, stock_levels, stock_movements. Catalogue CRUD, CSV import with preview and error report, barcode field, photos. Stock per branch, adjustments with reason, transfers between branches, weighted average costing, low-stock list. Connect estimate builder to catalogue (reserve on approval, issue on delivery, return unused).",
-          "acceptance_criteria": ["CSV import of 500 parts succeeds with a validation report", "Every stock change has a stock_movement", "Approved job part reserves stock; delivery issues it"]
+          "acceptance_criteria": [
+            "CSV import of 500 parts succeeds with a validation report",
+            "Every stock change has a stock_movement",
+            "Approved job part reserves stock; delivery issues it"
+          ]
         },
         {
           "id": "P3-02",
           "title": "Point of sale (counter sales)",
-          "depends_on": ["P3-01", "P2-02"],
+          "depends_on": [
+            "P3-01",
+            "P2-02"
+          ],
           "description": "Migrations for pos_sales. Fast POS screen: search/scan, cart, optional customer, discount within limit, payment (cash/MoMo/card), receipt print/SMS/WhatsApp. Returns.",
-          "acceptance_criteria": ["Counter sale of 3 items completes in under 30 seconds", "Return puts stock back and issues a credit note"]
+          "acceptance_criteria": [
+            "Counter sale of 3 items completes in under 30 seconds",
+            "Return puts stock back and issues a credit note"
+          ]
         },
         {
           "id": "P3-03",
           "title": "Purchase orders and goods receiving",
-          "depends_on": ["P3-01"],
+          "depends_on": [
+            "P3-01"
+          ],
           "description": "Migrations for purchase_orders, purchase_order_items, goods_receipts. Create PO (marketplace vendor or external supplier), approval, receive full/partial, update stock and average cost.",
-          "acceptance_criteria": ["Partial receipt leaves PO partially_delivered with correct remaining quantities"]
+          "acceptance_criteria": [
+            "Partial receipt leaves PO partially_delivered with correct remaining quantities"
+          ]
         },
         {
           "id": "P3-04",
           "title": "Vendor onboarding and dashboard",
-          "depends_on": ["P0-08"],
+          "depends_on": [
+            "P0-08"
+          ],
           "description": "Migrations for vendors, vendor_members, vendor_products, vendor_reviews. Vendor sign-up, profile, delivery zones, payout details (Paystack subaccount), admin approval. Product catalogue CRUD + CSV import. Vendor dashboard: orders, fulfilment actions, sales, payouts, ratings.",
-          "acceptance_criteria": ["Pending vendor is invisible in the marketplace until approved", "Vendor can import products by CSV"]
+          "acceptance_criteria": [
+            "Pending vendor is invisible in the marketplace until approved",
+            "Vendor can import products by CSV"
+          ]
         },
         {
           "id": "P3-05",
           "title": "Marketplace ordering for garages",
-          "depends_on": ["P3-03", "P3-04", "P2-02"],
+          "depends_on": [
+            "P3-03",
+            "P3-04",
+            "P2-02"
+          ],
           "description": "Migrations for vendor_orders, vendor_order_items, vendor_order_events. Browse/search products across approved vendors that deliver to the garage's region, compare price and ETA, cart grouped by vendor, checkout (Paystack split payment to vendor subaccount, commission_bp default 0), order tracking timeline, receive into stock (creates goods receipt), review vendor. Map vendor products to garage parts.",
-          "acceptance_criteria": ["Order flows placed → accepted → out_for_delivery → delivered → received and stock increases", "Only vendors delivering to the garage's region appear", "Review allowed only after received"]
+          "acceptance_criteria": [
+            "Order flows placed → accepted → out_for_delivery → delivered → received and stock increases",
+            "Only vendors delivering to the garage's region appear",
+            "Review allowed only after received"
+          ]
         },
         {
           "id": "P3-06",
           "title": "Job-linked ordering and auto-reorder",
-          "depends_on": ["P3-05"],
+          "depends_on": [
+            "P3-05"
+          ],
           "description": "When an approved part is out of stock, suggest vendor products and order linked to the job (job → waiting_parts; on receipt notify mechanic and move back to in_progress option). Nightly + on-movement Inngest check: parts below reorder_level with preferred vendor create a draft PO/vendor order; auto-send if garage enabled auto_reorder and total within spend limit, else notify for one-tap approval.",
-          "acceptance_criteria": ["Stock dropping below reorder level creates exactly one draft order", "Auto-send respects the spend limit", "Job-linked order receipt notifies the assigned mechanic"]
+          "acceptance_criteria": [
+            "Stock dropping below reorder level creates exactly one draft order",
+            "Auto-send respects the spend limit",
+            "Job-linked order receipt notifies the assigned mechanic"
+          ]
         },
         {
           "id": "P3-07",
           "title": "Customer ordering to garage and online parts catalogue",
-          "depends_on": ["P3-05", "P4-07"],
+          "depends_on": [
+            "P3-05",
+            "P4-07"
+          ],
           "description": "Customers (portal) browse vendor products filtered by their vehicle, choose a garage for delivery and fitting, pay, and the garage receives the incoming order and books a fitting job. Garage online catalogue: parts flagged online_visible orderable for pickup or fitting.",
-          "acceptance_criteria": ["Customer order appears in garage incoming orders and converts to a booking/job with the parts attached"]
+          "acceptance_criteria": [
+            "Customer order appears in garage incoming orders and converts to a booking/job with the parts attached"
+          ]
         }
       ]
     },
@@ -320,51 +485,93 @@
         {
           "id": "P4-01",
           "title": "Due items and reminder engine",
-          "depends_on": ["P0-08", "P1-03"],
+          "depends_on": [
+            "P0-08",
+            "P1-03"
+          ],
           "description": "Migrations for due_items, reminder_messages, message_templates (garage overrides). Implement reminder-rules.json: escalation stages, effective_due_date, hourly scan, batching into combined messages, channel routing and fallback, quiet hours, allowance check, delivery status updates from webhooks, auto-completion rules. Reminders centre UI: upcoming, sent, failed, converted; manual send; edit templates with variable preview.",
-          "acceptance_criteria": ["Unit tests cover escalation for every due_item_type", "Two items due the same week produce one combined message", "Failed WhatsApp falls back to SMS within 15 minutes", "Over-allowance garage sends only push/email and owner is notified once"]
+          "acceptance_criteria": [
+            "Unit tests cover escalation for every due_item_type",
+            "Two items due the same week produce one combined message",
+            "Failed WhatsApp falls back to SMS within 15 minutes",
+            "Over-allowance garage sends only push/email and owner is notified once"
+          ]
         },
         {
           "id": "P4-02",
           "title": "Oil change records and reminders",
-          "depends_on": ["P4-01", "P2-05"],
+          "depends_on": [
+            "P4-01",
+            "P2-05"
+          ],
           "description": "Oil service record fields on delivery (oil grade, brand, quantity, filters) using interval defaults, due item creation with due_date and due_mileage_km, prediction-driven effective date, mileage confirm and nudge templates, manual 'last oil change' entry for new customers.",
-          "acceptance_criteria": ["Reminder fires on predicted mileage date when it comes before the date interval", "Low-confidence vehicle receives mileage_confirm first"]
+          "acceptance_criteria": [
+            "Reminder fires on predicted mileage date when it comes before the date interval",
+            "Low-confidence vehicle receives mileage_confirm first"
+          ]
         },
         {
           "id": "P4-03",
           "title": "Reminder action pages",
-          "depends_on": ["P4-01", "P1-11"],
+          "depends_on": [
+            "P4-01",
+            "P1-11"
+          ],
           "description": "/t/[token] pages for book_now, update_mileage, already_done, renew_with_garage, pay_now with conversion tracking and pause rules.",
-          "acceptance_criteria": ["Booking from a reminder sets converted_booking_id and pauses that due item", "Mileage update recalculates prediction immediately"]
+          "acceptance_criteria": [
+            "Booking from a reminder sets converted_booking_id and pauses that due item",
+            "Mileage update recalculates prediction immediately"
+          ]
         },
         {
           "id": "P4-04",
           "title": "Insurance policies and reminders",
-          "depends_on": ["P4-01"],
+          "depends_on": [
+            "P4-01"
+          ],
           "description": "Migrations for insurance_partners, insurance_policies. Policy CRUD on vehicle profile with document upload; due item created from end_date; health card ring.",
-          "acceptance_criteria": ["Saving a policy expiring in 20 days schedules the 14-day reminder next"]
+          "acceptance_criteria": [
+            "Saving a policy expiring in 20 days schedules the 14-day reminder next"
+          ]
         },
         {
           "id": "P4-05",
           "title": "DVLA records, fee table and reminders",
-          "depends_on": ["P4-01"],
+          "depends_on": [
+            "P4-01"
+          ],
           "description": "Migrations for dvla_records, dvla_fees. Records CRUD (roadworthy, registration/licence, driver's licence) with documents; admin fee table; due items; pre-inspection booking action.",
-          "acceptance_criteria": ["Roadworthy expiring creates reminders and a 'book pre-inspection' action"]
+          "acceptance_criteria": [
+            "Roadworthy expiring creates reminders and a 'book pre-inspection' action"
+          ]
         },
         {
           "id": "P4-06",
           "title": "Agent renewal workflow (insurance + DVLA)",
-          "depends_on": ["P4-04", "P4-05", "P2-02"],
+          "depends_on": [
+            "P4-04",
+            "P4-05",
+            "P2-02"
+          ],
           "description": "Migrations for renewal_requests, renewal_events. Renewals Kanban for staff; customer flow from reminder or portal: confirm details → upload required documents → quote (official fee/premium + service fee) → approve & pay → processing → completed with new policy/certificate uploaded → new record saved → next due item scheduled. InsuranceProvider/DvlaProvider 'manual' adapters (tasks for staff). Insurance renewals gated by plan feature agent_renewals and garage having an insurance partner. Renewal invoices and commission income tracking. Pre-inspection repair job link for DVLA.",
-          "acceptance_criteria": ["End-to-end insurance renewal completes and schedules next year's reminders", "End-to-end DVLA roadworthy renewal completes", "Garage without insurance partner cannot offer insurance renewal"]
+          "acceptance_criteria": [
+            "End-to-end insurance renewal completes and schedules next year's reminders",
+            "End-to-end DVLA roadworthy renewal completes",
+            "Garage without insurance partner cannot offer insurance renewal"
+          ]
         },
         {
           "id": "P4-07",
           "title": "Customer portal",
-          "depends_on": ["P4-06", "P2-03"],
+          "depends_on": [
+            "P4-06",
+            "P2-03"
+          ],
           "description": "Phone OTP login; link customer records across garages to the user; home with vehicle health cards; vehicle detail (history, documents, upcoming due items, mileage update); invoices & payments (pay balances and instalments); renewals; bookings; notification preferences and channel opt-outs; install PWA prompt and push opt-in.",
-          "acceptance_criteria": ["Customer sees only their own vehicles and only data from garages they have used", "Customer can pay an outstanding instalment from the portal"]
+          "acceptance_criteria": [
+            "Customer sees only their own vehicles and only data from garages they have used",
+            "Customer can pay an outstanding instalment from the portal"
+          ]
         }
       ]
     },
@@ -376,37 +583,142 @@
         {
           "id": "P5-01",
           "title": "Subscription billing and plan limits",
-          "depends_on": ["P2-02"],
+          "depends_on": [
+            "P2-02"
+          ],
           "description": "Seed plans from plans.json. Paystack subscriptions (GHS, monthly), plan selection/upgrade/downgrade, trial, past_due handling (grace period then read-only), complimentary flag for pilot. Enforce max_staff and max_branches, feature gates, message allowance meter with 80%/100% alerts and add-on bundle purchase.",
-          "acceptance_criteria": ["Starter garage cannot invite a 6th staff member", "past_due garage becomes read-only after grace period", "Message meter matches message_log counts"]
+          "acceptance_criteria": [
+            "Starter garage cannot invite a 6th staff member",
+            "past_due garage becomes read-only after grace period",
+            "Message meter matches message_log counts"
+          ]
         },
         {
           "id": "P5-02",
           "title": "Platform admin console",
-          "depends_on": ["P5-01"],
+          "depends_on": [
+            "P5-01"
+          ],
           "description": "Garages list/detail, suspend, impersonate (banner + audit), vendor approvals, plans, DVLA fees, insurance partners, global templates and defaults, platform analytics (active garages, MRR, churn, message usage, renewals).",
-          "acceptance_criteria": ["Every impersonated action is audited with impersonated_by"]
+          "acceptance_criteria": [
+            "Every impersonated action is audited with impersonated_by"
+          ]
         },
         {
           "id": "P5-03",
           "title": "Mechanic gamification and stats",
-          "depends_on": ["P2-07"],
+          "depends_on": [
+            "P2-07"
+          ],
           "description": "Migrations for mechanic_stats. Streaks, jobs completed, hours, revenue, comebacks, badges (First Fix, Zero Comebacks Month, Speed Demon, 100 Jobs), optional weekly leaderboard, mechanic 'My stats' page with playful visuals.",
-          "acceptance_criteria": ["Badges awarded by nightly job", "Leaderboard hidden when garage disables it"]
+          "acceptance_criteria": [
+            "Badges awarded by nightly job",
+            "Leaderboard hidden when garage disables it"
+          ]
         },
         {
           "id": "P5-04",
           "title": "Fleet accounts",
-          "depends_on": ["P4-07", "P2-04"],
+          "depends_on": [
+            "P4-07",
+            "P2-04"
+          ],
           "description": "Fleet customers: multiple vehicles, fleet manager portal view of all vehicles, bulk approvals, consolidated credit statements, fleet reports.",
-          "acceptance_criteria": ["Fleet manager approves estimates for any fleet vehicle"]
+          "acceptance_criteria": [
+            "Fleet manager approves estimates for any fleet vehicle"
+          ]
         },
         {
           "id": "P5-05",
           "title": "Hardening and launch readiness",
-          "depends_on": ["P5-01", "P5-02", "P4-07", "P3-06"],
+          "depends_on": [
+            "P5-01",
+            "P5-02",
+            "P4-07",
+            "P3-06"
+          ],
           "description": "Run all acceptance-tests.json scenarios; Lighthouse and accessibility audits; rate limiting on public endpoints; security review of RLS and magic links; backups and restore drill; Sentry alerting; data export/delete request flow (Act 843); in-app help tips; marketing landing and pricing page.",
-          "acceptance_criteria": ["All acceptance tests pass on staging", "Restore drill documented in docs/OPERATIONS.md", "Lighthouse targets met"]
+          "acceptance_criteria": [
+            "All acceptance tests pass on staging",
+            "Restore drill documented in docs/OPERATIONS.md",
+            "Lighthouse targets met"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P6",
+      "name": "Discovery and customer experience",
+      "goal": "Turn FixAm into a two-sided marketplace: garages get discovered, customers self-serve, and vehicle data drives matching.",
+      "tasks": [
+        {
+          "id": "P6-01",
+          "title": "Vehicle catalogue",
+          "description": "Ghana-relevant vehicle_makes/vehicle_models tables seeded from curated catalogue, catalog FK columns on vehicles/portal_vehicles, picker UI in staff vehicle forms and portal vehicle registration, free-text fallback preserved.",
+          "acceptance_criteria": [
+            "Staff and customers pick make/model from dropdowns backed by the catalogue",
+            "Custom makes/models still accepted as free text",
+            "Catalogue is readable by authenticated users; writes are service-role only"
+          ]
+        },
+        {
+          "id": "P6-02",
+          "title": "Customer self-registration",
+          "description": "Portal profiles decoupled from staff customer records, customer vehicle claiming/creation from the portal, profile management, portal data isolation across garages.",
+          "acceptance_criteria": [
+            "Customer registers via phone OTP and manages their own profile",
+            "Customer sees only their own vehicles and only garages they have visited",
+            "Claimed vehicles link to the matching customer record without duplicates"
+          ]
+        },
+        {
+          "id": "P6-03",
+          "title": "Garage geo + public directory",
+          "description": "GPS coordinates captured at onboarding (browser locate + confirm), plan-gated directory_listing feature, public /garages search with name/city/service/make/model filters, near-me distance sort, public /garages/[slug] profiles.",
+          "acceptance_criteria": [
+            "Only active garages on plans with directory_listing appear",
+            "Near-me sorts by haversine distance",
+            "Public profile shows services, coverage, branches and reviews without leaking private data"
+          ]
+        },
+        {
+          "id": "P6-04",
+          "title": "Service-matching search",
+          "description": "garage_vehicle_coverage declares which makes/models a garage services (owner-managed in settings, catalogue or free text, audited); directory filters by vehicle; portal vehicle page lists other garages that service the car.",
+          "acceptance_criteria": [
+            "Owner can add/remove coverage entries from settings",
+            "Directory make/model filter returns only garages covering that vehicle",
+            "Portal shows matching garages for a catalogued vehicle"
+          ]
+        },
+        {
+          "id": "P6-05",
+          "title": "Reviews & ratings",
+          "description": "Portal customers rate garages they have visited (1-5 + comment, one review per garage per phone, upsert); ratings aggregate on directory cards and public profiles; owners moderate via hide/publish in settings.",
+          "acceptance_criteria": [
+            "Only customers of a garage can review it",
+            "Resubmitting updates the existing review",
+            "Hidden reviews disappear from public aggregates but remain auditable"
+          ]
+        },
+        {
+          "id": "P6-06",
+          "title": "Vendor verification badge",
+          "description": "Platform admin can verify approved vendors (verifiedAt/verifiedBy audited); verified badge on marketplace vendor groups, verified sellers sort first, badge on vendor dashboard and admin console.",
+          "acceptance_criteria": [
+            "Verify requires approved status",
+            "Verified badge visible to garages browsing the marketplace",
+            "Verification and revocation are audit-logged"
+          ]
+        },
+        {
+          "id": "P6-07",
+          "title": "Landing page upgrade",
+          "description": "Dual-audience marketing page: garage CTA funnel (onboarding/pricing) and customer CTA funnel (/garages directory, /portal), feature grids, how-it-works, footer nav.",
+          "acceptance_criteria": [
+            "Both garage and customer paths have clear CTAs",
+            "Signed-in users still redirect via AuthGate"
+          ]
         }
       ]
     }
