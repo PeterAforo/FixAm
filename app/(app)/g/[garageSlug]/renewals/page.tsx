@@ -10,7 +10,8 @@ import { can } from "@/lib/auth/permissions"
 import { listRenewals } from "@/lib/renewals/actions"
 import { RenewalsPanel } from "./renewals-panel"
 
-async function Loader({ garageSlug }: { garageSlug: string }) {
+async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
+  const { garageSlug } = await params
   await connection()
   const userId = await getSessionUserId()
   if (!userId) redirect("/login")
@@ -29,13 +30,12 @@ async function Loader({ garageSlug }: { garageSlug: string }) {
   return <RenewalsPanel garageId={garage.id} garageSlug={garageSlug} renewals={renewals} canProcess={can({ kind: "staff", role: m.role as never, garageId: garage.id, branchId: m.branchId }, "renewals.process")} />
 }
 
-export default async function RenewalsPage({ params }: { params: Promise<{ garageSlug: string }> }) {
-  const { garageSlug } = await params
+export default function RenewalsPage({ params }: { params: Promise<{ garageSlug: string }> }) {
   return (
     <div className="px-5 py-6 md:px-10 md:py-8">
       <div className="mx-auto max-w-7xl">
         <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-muted" />}>
-          <Loader garageSlug={garageSlug} />
+          <Loader params={params} />
         </Suspense>
       </div>
     </div>

@@ -14,7 +14,8 @@ import { BillingPanel } from "./billing-panel"
 import { CoveragePanel } from "./coverage-panel"
 import { ReviewsPanel } from "./reviews-panel"
 
-async function Loader({ garageSlug }: { garageSlug: string }) {
+async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
+  const { garageSlug } = await params
   await connection()
   const userId = await getSessionUserId()
   if (!userId) redirect("/login")
@@ -99,12 +100,11 @@ async function Loader({ garageSlug }: { garageSlug: string }) {
   )
 }
 
-export default async function SettingsPage({ params }: { params: Promise<{ garageSlug: string }> }) {
-  const { garageSlug } = await params
+export default function SettingsPage({ params }: { params: Promise<{ garageSlug: string }> }) {
   return (
     <div className="px-5 py-6 md:px-10 md:py-8">
       <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-muted" />}>
-        <Loader garageSlug={garageSlug} />
+        <Loader params={params} />
       </Suspense>
     </div>
   )

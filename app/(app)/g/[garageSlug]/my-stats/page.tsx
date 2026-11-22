@@ -10,7 +10,8 @@ import { resolveMembership } from "@/lib/actions"
 import { can } from "@/lib/auth/permissions"
 import { MyStatsPanel } from "./my-stats-panel"
 
-async function StatsLoader({ garageSlug }: { garageSlug: string }) {
+async function StatsLoader({ params }: { params: Promise<{ garageSlug: string }> }) {
+  const { garageSlug } = await params
   await connection()
   const [garage] = await db().select({ id: garages.id, slug: garages.slug }).from(garages).where(eq(garages.slug, garageSlug)).limit(1)
   if (!garage) redirect("/onboarding")
@@ -27,13 +28,12 @@ async function StatsLoader({ garageSlug }: { garageSlug: string }) {
   return <MyStatsPanel garageId={garage.id} stats={stats} canManage={canManage} />
 }
 
-export default async function MyStatsPage({ params }: { params: Promise<{ garageSlug: string }> }) {
-  const { garageSlug } = await params
+export default function MyStatsPage({ params }: { params: Promise<{ garageSlug: string }> }) {
   return (
     <div className="mx-auto max-w-3xl p-4 md:p-8">
       <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">My stats</h1>
       <Suspense fallback={<div className="mt-6 h-64 animate-pulse rounded-2xl bg-surface" />}>
-        <StatsLoader garageSlug={garageSlug} />
+        <StatsLoader params={params} />
       </Suspense>
     </div>
   )

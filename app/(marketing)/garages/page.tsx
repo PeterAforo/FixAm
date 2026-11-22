@@ -1,10 +1,13 @@
-import Link from "next/link"
 import { Suspense } from "react"
 import { connection } from "next/server"
 import { listDirectoryGarages, directoryCoverageOptions } from "@/lib/discovery/directory"
-import { DirectoryBrowser } from "./directory-browser"
+import { SiteFooter } from "@/components/marketing/site-chrome"
+import { PageHero } from "@/components/marketing/page-hero"
+import { DirectoryBrowser, DirectoryResultsSkeleton } from "./directory-browser"
 
-async function DirectoryContent({ searchParams }: { searchParams: Promise<{ q?: string; make?: string; model?: string; lat?: string; lng?: string }> }) {
+type SP = { q?: string; make?: string; model?: string; lat?: string; lng?: string }
+
+async function DirectoryContent({ searchParams }: { searchParams: Promise<SP> }) {
   await connection()
   const sp = await searchParams
   const lat = sp.lat ? Number(sp.lat) : null
@@ -21,26 +24,39 @@ async function DirectoryContent({ searchParams }: { searchParams: Promise<{ q?: 
     directoryCoverageOptions(),
   ])
 
-  return <DirectoryBrowser garages={garages} makes={coverage.makes} models={coverage.models} initial={{ q: sp.q ?? "", make: sp.make ?? "", model: sp.model ?? "", lat: sp.lat ?? "", lng: sp.lng ?? "" }} />
+  return (
+    <DirectoryBrowser
+      garages={garages}
+      makes={coverage.makes}
+      models={coverage.models}
+      initial={{ q: sp.q ?? "", make: sp.make ?? "", model: sp.model ?? "", lat: sp.lat ?? "", lng: sp.lng ?? "" }}
+    />
+  )
 }
 
-export const metadata = { title: "Find a garage near you — FixAm" }
+export const metadata = {
+  title: "Find a garage near you",
+  description: "Search trusted workshops across Ghana by location, service or the car you drive. Book online and pay with MoMo.",
+}
 
-export default function GaragesPage({ searchParams }: { searchParams: Promise<{ q?: string; make?: string; model?: string; lat?: string; lng?: string }> }) {
+export default function GaragesPage({ searchParams }: { searchParams: Promise<SP> }) {
   return (
-    <main className="min-h-screen bg-background">
-      <header className="border-b-2 border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="font-display text-xl font-bold">FixAm</Link>
-          <div className="flex gap-4 text-sm font-semibold">
-            <Link href="/pricing" className="text-muted-foreground hover:text-foreground">Pricing</Link>
-            <Link href="/login" className="text-primary hover:underline">Garage sign in</Link>
-          </div>
-        </div>
-      </header>
-      <Suspense fallback={<div className="mx-auto max-w-6xl p-6"><div className="h-96 animate-pulse rounded-2xl bg-muted" /></div>}>
+    <main className="min-h-screen bg-background text-foreground">
+      <PageHero
+        active="Find a garage"
+        eyebrow="For drivers"
+        title={
+          <>
+            Find a garage you can <span className="bg-[linear-gradient(100deg,#FFB08A_0%,#FF5A1F_60%)] bg-clip-text text-transparent">trust</span>
+          </>
+        }
+        subtitle="Search workshops across Ghana by location, service or the car you drive — then book online and track the repair live."
+        className="pb-28 md:pb-32"
+      />
+      <Suspense fallback={<DirectoryResultsSkeleton />}>
         <DirectoryContent searchParams={searchParams} />
       </Suspense>
+      <SiteFooter />
     </main>
   )
 }

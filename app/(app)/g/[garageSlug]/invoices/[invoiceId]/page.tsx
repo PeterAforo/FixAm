@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { notFound, redirect } from "next/navigation"
 import { connection } from "next/server"
 import { and, asc, eq } from "drizzle-orm"
@@ -18,7 +19,7 @@ import { resolveMembership } from "@/lib/actions"
 import { can, type StaffRole } from "@/lib/auth/permissions"
 import { InvoiceDetailPanel } from "./invoice-detail-panel"
 
-export default async function InvoiceDetailPage({
+async function InvoiceDetailLoader({
   params,
 }: {
   params: Promise<{ garageSlug: string; invoiceId: string }>
@@ -133,5 +134,23 @@ export default async function InvoiceDetailPage({
         />
       </div>
     </div>
+  )
+}
+
+export default function InvoiceDetailPage({
+  params,
+}: {
+  params: Promise<{ garageSlug: string; invoiceId: string }>
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="px-5 py-6 md:px-10 md:py-8">
+          <div className="mx-auto h-96 max-w-4xl animate-pulse rounded-[18px] bg-muted" />
+        </div>
+      }
+    >
+      <InvoiceDetailLoader params={params} />
+    </Suspense>
   )
 }

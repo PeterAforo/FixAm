@@ -1,14 +1,29 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
+import {
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  Check,
+  Crosshair,
+  Loader2,
+  MapPin,
+  Plus,
+  Rocket,
+  Store,
+  Users,
+  Warehouse,
+  X,
+} from "lucide-react"
 import { createGarage } from "@/lib/onboarding/actions"
 import { Button } from "@/components/brand/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/brand/card"
-import { Stepper } from "@/components/brand/stepper"
-import { Wrench, Plus, Trash2 } from "lucide-react"
+import { Logo } from "@/components/marketing/logo"
 import { normalizeGhPhone } from "@/lib/phone"
 import { parseGHS } from "@/lib/money"
+import { cn } from "@/lib/utils"
 
 const STAFF_ROLES = [
   { value: "manager", label: "Manager" },
@@ -20,10 +35,25 @@ const STAFF_ROLES = [
 
 type Invite = { phone: string; role: string }
 
+const STEPS = [
+  { label: "Your garage", hint: "Name, contact and location", icon: Store, title: "Tell us about your garage", sub: "This is how customers will find and recognise you." },
+  { label: "Branch & rates", hint: "Bays, labour rate and VAT", icon: Warehouse, title: "Set up your workshop", sub: "Add your first branch, the bays you work in and how you charge." },
+  { label: "Your team", hint: "Invite staff by phone", icon: Users, title: "Invite your team", sub: "They'll get an SMS invite and join when they sign in. You can skip this for now." },
+  { label: "Launch", hint: "Review and go live", icon: Rocket, title: "Ready to launch", sub: "Check everything looks right. You can change any of this later in Settings." },
+] as const
+
 const inputCls =
-  "min-h-12 w-full rounded-lg border-2 border-border bg-surface px-4 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring"
-const labelCls = "block space-y-1.5"
-const labelText = "text-sm font-bold"
+  "h-12 w-full rounded-xl border border-input bg-card px-3.5 text-base text-foreground outline-none transition-shadow placeholder:text-[#8C857B] focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
+
+function Field({ label, hint, children, className }: { label: string; hint?: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <label className={cn("block space-y-2", className)}>
+      <span className="text-sm font-medium">{label}</span>
+      {children}
+      {hint && <span className="block text-[13px] text-muted-foreground">{hint}</span>}
+    </label>
+  )
+}
 
 function slugify(name: string) {
   return name
@@ -59,21 +89,41 @@ export default function OnboardingPage() {
 
   const [invites, setInvites] = useState<Invite[]>([])
 
-  const steps = ["Garage", "Branch & rates", "Team", "Done"]
-
   const slugPreview = useMemo(
     () => slug || (garageName ? slugify(garageName) : "your-garage"),
     [slug, garageName]
   )
+  const phoneValid = Boolean(normalizeGhPhone(phone))
+  const cleanBays = bays.map((b) => b.trim()).filter(Boolean)
+  const validInvites = invites.filter((i) => normalizeGhPhone(i.phone))
 
-  function next() {
+  const canContinue =
+    step === 0 ? Boolean(garageName.trim()) && phoneValid : step === 1 ? Boolean(branchName.trim()) : true
+
+  function go(to: number) {
     setError(null)
-    setStep((s) => Math.min(s + 1, steps.length - 1))
+    setStep(Math.max(0, Math.min(to, STEPS.length - 1)))
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  function back() {
-    setError(null)
-    setStep((s) => Math.max(s - 1, 0))
+  function locate() {
+    if (!navigator.geolocation) {
+      setGpsError("Location isn't supported on this device — the address is enough.")
+      return
+    }
+    setGpsLoading(true)
+    setGpsError(null)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setGpsLoading(false)
+      },
+      () => {
+        setGpsError("We couldn't get your location. Check your browser permissions, or skip this.")
+        setGpsLoading(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
   }
 
   async function submit() {
@@ -93,8 +143,8 @@ export default function OnboardingPage() {
       defaultLabourRate: Number(parseGHS(labourRate || "0")),
       pricesIncludeTax,
       vatPercent: Number(vatPercent) || 0,
-      bays: bays.filter(Boolean),
-      invites: invites.map((i) => ({ phone: i.phone, role: i.role as never })),
+      bays: cleanBays,
+      invites: validInvites.map((i) => ({ phone: i.phone, role: i.role as never })),
     })
     setSubmitting(false)
     if (!result.ok) {
@@ -110,309 +160,380 @@ export default function OnboardingPage() {
     router.refresh()
   }
 
+  const current = STEPS[step]!
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-6">
-      <Card className="w-full max-w-xl">
-        <CardHeader className="items-center text-center">
-          <span className="mb-2 flex size-14 items-center justify-center rounded-full border-2 border-border bg-primary text-primary-foreground shadow-chunky-sm">
-            <Wrench className="size-7" />
-          </span>
-          <CardTitle className="text-3xl">Set up your garage</CardTitle>
-          <CardDescription>Takes about 3 minutes. You&apos;re on a free Pro trial.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <Stepper
-            steps={steps.map((label, i) => ({
-              label,
-              state: i < step ? "done" : i === step ? "current" : "upcoming",
-            }))}
-          />
+    <main className="flex min-h-screen bg-background text-foreground">
+      {/* Left rail — progress + live preview */}
+      <aside className="relative hidden w-[420px] shrink-0 flex-col overflow-hidden bg-[#0B0F1A] p-10 text-[#F4F2EE] lg:flex">
+        <div aria-hidden className="pointer-events-none absolute -left-40 -top-40 size-[560px] bg-[radial-gradient(50%_50%_at_50%_50%,rgba(255,90,31,0.26)_0%,rgba(255,90,31,0)_100%)]" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:48px_48px]" />
 
-          {step === 0 && (
-            <div className="space-y-4">
-              <label className={labelCls}>
-                <span className={labelText}>Garage name</span>
-                <input
-                  className={inputCls}
-                  value={garageName}
-                  onChange={(e) => {
-                    setGarageName(e.target.value)
-                    if (!slugTouched) setSlug("")
-                  }}
-                  placeholder="Pitstop Motors"
-                />
-              </label>
-              <label className={labelCls}>
-                <span className={labelText}>Garage link</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">fixam.app/g/</span>
-                  <input
-                    className={`${inputCls} font-mono`}
-                    value={slugPreview}
-                    onChange={(e) => {
-                      setSlugTouched(true)
-                      setSlug(slugify(e.target.value))
-                    }}
-                  />
-                </div>
-              </label>
-              <label className={labelCls}>
-                <span className={labelText}>Phone</span>
-                <input
-                  className={`${inputCls} font-mono`}
-                  inputMode="tel"
-                  placeholder="0241234567"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-              </label>
-              <label className={labelCls}>
-                <span className={labelText}>Email (optional)</span>
-                <input
-                  className={inputCls}
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label className={labelCls}>
-                  <span className={labelText}>Address</span>
-                  <input className={inputCls} value={address} onChange={(e) => setAddress(e.target.value)} />
-                </label>
-                <label className={labelCls}>
-                  <span className={labelText}>City</span>
-                  <input className={inputCls} value={city} onChange={(e) => setCity(e.target.value)} placeholder="Accra" />
-                </label>
-              </div>
-              <div className="rounded-xl border-2 border-border bg-surface-muted/50 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className={labelText}>Garage location</p>
-                    <p className="text-xs text-muted-foreground">
-                      {gps
-                        ? `📍 ${gps.lat.toFixed(5)}, ${gps.lng.toFixed(5)} — is this your garage's location? Customers use it to find you.`
-                        : "Add your GPS location so customers can find your garage on the map."}
-                    </p>
-                    {gpsError && <p className="mt-1 text-xs font-semibold text-danger">{gpsError}</p>}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    disabled={gpsLoading}
-                    onClick={() => {
-                      if (!navigator.geolocation) {
-                        setGpsError("Location is not supported on this device — enter the address instead.")
-                        return
-                      }
-                      setGpsLoading(true)
-                      setGpsError(null)
-                      navigator.geolocation.getCurrentPosition(
-                        (pos) => {
-                          setGps({ lat: pos.coords.latitude, lng: pos.coords.longitude })
-                          setGpsLoading(false)
-                        },
-                        () => {
-                          setGpsError("Could not get your location — check browser permissions.")
-                          setGpsLoading(false)
-                        },
-                        { enableHighAccuracy: true, timeout: 10000 }
-                      )
-                    }}
-                  >
-                    {gpsLoading ? "Locating…" : gps ? "Update location" : "Use current location"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+        <Logo className="relative" />
+        <div className="relative mt-12">
+          <p className="text-[13px] font-semibold text-[#FF8A57]">14-day free Pro trial</p>
+          <h1 className="mt-2 font-display text-[32px] font-bold leading-[1.08] tracking-[-0.03em]">Let&apos;s get your garage running on FixAm.</h1>
+          <p className="mt-3 text-[15px] text-[#AEB5C8]">About three minutes. No card needed.</p>
+        </div>
 
-          {step === 1 && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <label className={labelCls}>
-                  <span className={labelText}>Branch name</span>
-                  <input className={inputCls} value={branchName} onChange={(e) => setBranchName(e.target.value)} />
-                </label>
-                <label className={labelCls}>
-                  <span className={labelText}>Branch code</span>
-                  <input
-                    className={`${inputCls} font-mono uppercase`}
-                    maxLength={5}
-                    value={branchCode}
-                    onChange={(e) => setBranchCode(e.target.value.toUpperCase())}
-                  />
-                </label>
-              </div>
-              <div className="space-y-2">
-                <span className={labelText}>Bays / workstations</span>
-                {bays.map((b, i) => (
-                  <div key={i} className="flex gap-2">
-                    <input
-                      className={inputCls}
-                      value={b}
-                      onChange={(e) =>
-                        setBays((prev) => prev.map((x, j) => (j === i ? e.target.value : x)))
-                      }
-                      placeholder={`Bay ${i + 1}`}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="min-h-12 min-w-12 px-3"
-                      onClick={() => setBays((prev) => prev.filter((_, j) => j !== i))}
-                      aria-label="Remove bay"
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
+        <ol className="relative mt-10 space-y-1">
+          {STEPS.map((s, i) => {
+            const done = i < step
+            const active = i === step
+            return (
+              <li key={s.label}>
+                <button
                   type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setBays((prev) => [...prev, `Bay ${prev.length + 1}`])}
+                  disabled={i > step}
+                  onClick={() => go(i)}
+                  className={cn(
+                    "flex w-full items-center gap-4 rounded-2xl px-3 py-3 text-left transition-colors",
+                    active ? "bg-white/[0.07]" : "hover:bg-white/[0.04] disabled:hover:bg-transparent"
+                  )}
                 >
-                  <Plus className="size-4" /> Add bay
-                </Button>
-              </div>
-              <label className={labelCls}>
-                <span className={labelText}>Default labour rate (GHS/hour)</span>
-                <input
-                  className={inputCls}
-                  inputMode="decimal"
-                  value={labourRate}
-                  onChange={(e) => setLabourRate(e.target.value)}
-                  placeholder="150.00"
-                />
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label className={labelCls}>
-                  <span className={labelText}>VAT %</span>
+                  <span
+                    className={cn(
+                      "flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
+                      done && "bg-[#C6F432] text-[#0B0F1A]",
+                      active && "bg-[#D4430F] text-white shadow-[0_0_0_4px_rgba(212,67,15,0.25)]",
+                      !done && !active && "border border-white/15 text-[#8A93AB]"
+                    )}
+                  >
+                    {done ? <Check className="size-4" strokeWidth={3} /> : i + 1}
+                  </span>
+                  <span>
+                    <span className={cn("block text-[15px] font-semibold", !done && !active && "text-[#8A93AB]")}>{s.label}</span>
+                    <span className="block text-[13px] text-[#8A93AB]">{s.hint}</span>
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ol>
+
+        {/* Live preview */}
+        <div className="relative mt-auto rounded-[20px] border border-white/10 bg-[#121A2E] p-5">
+          <p className="text-xs font-medium text-[#8A93AB]">Your public garage page</p>
+          <div className="mt-3 flex items-center gap-3">
+            <span className="flex size-11 items-center justify-center rounded-[13px] bg-[linear-gradient(140deg,#FF7A3D,#D4430F)] font-display text-lg font-bold text-white">
+              {(garageName.trim()[0] ?? "G").toUpperCase()}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-[15px] font-semibold">{garageName.trim() || "Your garage"}</p>
+              <p className="flex items-center gap-1 truncate text-[13px] text-[#8A93AB]">
+                <MapPin className="size-3.5" /> {city.trim() || "Your city"}
+              </p>
+            </div>
+          </div>
+          <p className="mt-3 truncate rounded-lg bg-white/5 px-2.5 py-1.5 font-mono text-xs text-[#AEB5C8]">fixam.app/g/{slugPreview}</p>
+        </div>
+      </aside>
+
+      {/* Form column */}
+      <section className="flex min-w-0 flex-1 flex-col">
+        <div className="flex items-center justify-between px-6 py-5 md:px-12">
+          <Logo className="lg:invisible" />
+          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">Save and exit</Link>
+        </div>
+
+        {/* Mobile progress */}
+        <div className="px-6 md:px-12 lg:hidden">
+          <div className="flex gap-1.5">
+            {STEPS.map((s, i) => (
+              <span key={s.label} className={cn("h-1.5 flex-1 rounded-full", i <= step ? "bg-[#D4430F]" : "bg-border")} />
+            ))}
+          </div>
+        </div>
+
+        <div className="mx-auto w-full max-w-[600px] flex-1 px-6 pb-12 pt-8 md:px-0 md:pt-14">
+          <div className="flex items-center gap-3">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-primary-subtle text-primary"><current.icon className="size-5" /></span>
+            <p className="text-sm font-medium text-muted-foreground">Step {step + 1} of {STEPS.length}</p>
+          </div>
+          <h2 className="mt-5 font-display text-[34px] font-bold leading-[1.08] tracking-[-0.03em]">{current.title}</h2>
+          <p className="mt-2 text-base text-muted-foreground">{current.sub}</p>
+
+          <div className="mt-10">
+            {step === 0 && (
+              <div className="space-y-6">
+                <Field label="Garage name">
                   <input
                     className={inputCls}
-                    inputMode="decimal"
-                    value={vatPercent}
-                    onChange={(e) => setVatPercent(e.target.value)}
+                    value={garageName}
+                    autoFocus
+                    onChange={(e) => {
+                      setGarageName(e.target.value)
+                      if (!slugTouched) setSlug("")
+                    }}
+                    placeholder="e.g. Pitstop Motors"
                   />
-                </label>
-                <label className="flex items-end gap-3 pb-2">
-                  <input
-                    type="checkbox"
-                    id="tax-inclusive"
-                    checked={pricesIncludeTax}
-                    onChange={(e) => setPricesIncludeTax(e.target.checked)}
-                    className="size-5 accent-primary"
-                  />
-                  <span className="text-sm font-bold">Prices include VAT</span>
-                </label>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Invite your team by phone number. They&apos;ll get an SMS (mock inbox in dev) and
-                join when they sign in.
-              </p>
-              {invites.map((inv, i) => (
-                <div key={i} className="flex gap-2">
-                  <input
-                    className={`${inputCls} font-mono`}
-                    inputMode="tel"
-                    placeholder="0241234567"
-                    value={inv.phone}
-                    onChange={(e) =>
-                      setInvites((prev) =>
-                        prev.map((x, j) => (j === i ? { ...x, phone: e.target.value } : x))
-                      )
-                    }
-                  />
-                  <select
-                    className={`${inputCls} max-w-44`}
-                    value={inv.role}
-                    onChange={(e) =>
-                      setInvites((prev) =>
-                        prev.map((x, j) => (j === i ? { ...x, role: e.target.value } : x))
-                      )
-                    }
+                </Field>
+                <Field label="Garage link" hint="Customers use this link to book and find you.">
+                  <span className="flex h-12 overflow-hidden rounded-xl border border-input bg-card transition-shadow focus-within:border-foreground focus-within:ring-4 focus-within:ring-[#FF5A1F]/15">
+                    <span className="flex items-center border-r border-input bg-background px-3.5 text-sm text-muted-foreground">fixam.app/g/</span>
+                    <input
+                      className="min-w-0 flex-1 bg-transparent px-3.5 font-mono text-[15px] outline-none"
+                      value={slugPreview}
+                      onChange={(e) => {
+                        setSlugTouched(true)
+                        setSlug(slugify(e.target.value))
+                      }}
+                    />
+                  </span>
+                </Field>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <Field
+                    label="Phone"
+                    hint={phone && !phoneValid ? <span className="text-[#B3122F]">Enter a Ghana number, e.g. 024 123 4567</span> : undefined}
                   >
-                    {STAFF_ROLES.map((r) => (
-                      <option key={r.value} value={r.value}>
-                        {r.label}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="min-h-12 min-w-12 px-3"
-                    onClick={() => setInvites((prev) => prev.filter((_, j) => j !== i))}
-                    aria-label="Remove invite"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
+                    <input className={inputCls} inputMode="tel" autoComplete="tel" placeholder="024 123 4567" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  </Field>
+                  <Field label="Email (optional)">
+                    <input className={inputCls} type="email" autoComplete="email" placeholder="hello@yourgarage.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </Field>
                 </div>
-              ))}
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => setInvites((prev) => [...prev, { phone: "", role: "mechanic" }])}
-              >
-                <Plus className="size-4" /> Add staff
-              </Button>
-            </div>
-          )}
+                <div className="grid gap-6 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+                  <Field label="Street address">
+                    <input className={inputCls} autoComplete="street-address" placeholder="e.g. Spintex Road, near Shell" value={address} onChange={(e) => setAddress(e.target.value)} />
+                  </Field>
+                  <Field label="City or town">
+                    <input className={inputCls} value={city} onChange={(e) => setCity(e.target.value)} placeholder="Accra" />
+                  </Field>
+                </div>
 
-          {step === 3 && (
-            <div className="space-y-3 text-sm">
-              <p className="rounded-lg border-2 border-border bg-muted p-4">
-                <strong>{garageName || "Your garage"}</strong> · fixam.app/g/{slugPreview}
-                <br />
-                {branchName} · {bays.filter(Boolean).length} bay{bays.filter(Boolean).length === 1 ? "" : "s"} ·{" "}
-                {invites.length} invite{invites.length === 1 ? "" : "s"}
-              </p>
-              <p className="text-muted-foreground">
-                After this you can add customers, vehicles and jobs — or import seed data.
-              </p>
-            </div>
-          )}
+                <div className={cn("flex flex-wrap items-center gap-4 rounded-[18px] border p-5", gps ? "border-[#C6F432] bg-[#F8FDE6]" : "border-border bg-card")}>
+                  <span className={cn("flex size-11 shrink-0 items-center justify-center rounded-xl", gps ? "bg-[#C6F432] text-[#0B0F1A]" : "bg-surface-muted text-muted-foreground")}>
+                    {gps ? <Check className="size-5" strokeWidth={2.6} /> : <MapPin className="size-5" />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[15px] font-semibold">{gps ? "Location saved" : "Pin your garage on the map"}</p>
+                    <p className="text-[13px] text-muted-foreground">
+                      {gps
+                        ? `${gps.lat.toFixed(5)}, ${gps.lng.toFixed(5)} — make sure you're at the garage when you set this.`
+                        : "Optional, but it puts you on the map and gives drivers directions."}
+                    </p>
+                    {gpsError && <p className="mt-1 text-[13px] font-medium text-[#B3122F]">{gpsError}</p>}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={locate}
+                    disabled={gpsLoading}
+                    className="inline-flex h-10 items-center gap-2 rounded-full border border-border-strong bg-card px-4 text-sm font-medium transition-colors hover:bg-surface-sunken disabled:opacity-60"
+                  >
+                    {gpsLoading ? <Loader2 className="size-4 animate-spin" /> : <Crosshair className="size-4" />}
+                    {gpsLoading ? "Locating…" : gps ? "Update" : "Use my location"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === 1 && (
+              <div className="space-y-8">
+                <div className="grid gap-6 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+                  <Field label="Branch name">
+                    <input className={inputCls} value={branchName} onChange={(e) => setBranchName(e.target.value)} />
+                  </Field>
+                  <Field label="Branch code" hint="Used on invoice numbers">
+                    <input className={`${inputCls} font-mono uppercase`} maxLength={5} value={branchCode} onChange={(e) => setBranchCode(e.target.value.toUpperCase())} />
+                  </Field>
+                </div>
+
+                <div>
+                  <div className="flex items-end justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium">Bays and workstations</p>
+                      <p className="text-[13px] text-muted-foreground">Each bay becomes a lane on your job board.</p>
+                    </div>
+                    <span className="text-sm text-muted-foreground">{cleanBays.length} bay{cleanBays.length === 1 ? "" : "s"}</span>
+                  </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {bays.map((b, i) => (
+                      <div key={i} className="flex h-12 items-center rounded-xl border border-input bg-card pl-3.5 pr-1.5 transition-shadow focus-within:border-foreground focus-within:ring-4 focus-within:ring-[#FF5A1F]/15">
+                        <Building2 className="size-4 shrink-0 text-muted-foreground" />
+                        <input
+                          className="min-w-0 flex-1 bg-transparent px-2.5 text-[15px] outline-none"
+                          value={b}
+                          aria-label={`Bay ${i + 1} name`}
+                          onChange={(e) => setBays((prev) => prev.map((x, j) => (j === i ? e.target.value : x)))}
+                          placeholder={`Bay ${i + 1}`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setBays((prev) => prev.filter((_, j) => j !== i))}
+                          aria-label={`Remove ${b || `bay ${i + 1}`}`}
+                          className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-muted hover:text-foreground"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setBays((prev) => [...prev, `Bay ${prev.length + 1}`])}
+                      className="flex h-12 items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong text-sm font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+                    >
+                      <Plus className="size-4" /> Add bay
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded-[18px] border border-border bg-card p-5">
+                  <p className="text-[15px] font-semibold">Pricing</p>
+                  <div className="mt-4 grid gap-6 sm:grid-cols-2">
+                    <Field label="Labour rate per hour">
+                      <span className="flex h-12 overflow-hidden rounded-xl border border-input bg-card transition-shadow focus-within:border-foreground focus-within:ring-4 focus-within:ring-[#FF5A1F]/15">
+                        <span className="flex items-center border-r border-input bg-background px-3.5 text-sm font-medium">GH₵</span>
+                        <input className="min-w-0 flex-1 bg-transparent px-3.5 text-[15px] tabular-nums outline-none" inputMode="decimal" value={labourRate} onChange={(e) => setLabourRate(e.target.value)} placeholder="150.00" />
+                      </span>
+                    </Field>
+                    <Field label="VAT rate">
+                      <span className="flex h-12 overflow-hidden rounded-xl border border-input bg-card transition-shadow focus-within:border-foreground focus-within:ring-4 focus-within:ring-[#FF5A1F]/15">
+                        <input className="min-w-0 flex-1 bg-transparent px-3.5 text-[15px] tabular-nums outline-none" inputMode="decimal" value={vatPercent} onChange={(e) => setVatPercent(e.target.value)} />
+                        <span className="flex items-center border-l border-input bg-background px-3.5 text-sm font-medium">%</span>
+                      </span>
+                    </Field>
+                  </div>
+                  <label className="mt-5 flex cursor-pointer items-start gap-3">
+                    <input type="checkbox" checked={pricesIncludeTax} onChange={(e) => setPricesIncludeTax(e.target.checked)} className="mt-0.5 size-5 accent-[#16130F]" />
+                    <span>
+                      <span className="block text-sm font-medium">My prices already include VAT</span>
+                      <span className="block text-[13px] text-muted-foreground">Leave unticked if VAT should be added on top of your prices.</span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="space-y-4">
+                {invites.length === 0 && (
+                  <div className="flex flex-col items-center rounded-[18px] border border-dashed border-border-strong bg-card/60 px-6 py-10 text-center">
+                    <span className="flex size-12 items-center justify-center rounded-xl bg-surface-muted text-muted-foreground"><Users className="size-6" /></span>
+                    <p className="mt-3 text-[15px] font-semibold">No one invited yet</p>
+                    <p className="mt-1 max-w-sm text-[13px] text-muted-foreground">Add mechanics, service advisors or your accountant. Each person only sees what their role needs.</p>
+                  </div>
+                )}
+                {invites.map((inv, i) => (
+                  <div key={i} className="flex flex-wrap gap-2 rounded-[18px] border border-border bg-card p-3 sm:flex-nowrap">
+                    <input
+                      className={`${inputCls} flex-1`}
+                      inputMode="tel"
+                      aria-label={`Team member ${i + 1} phone`}
+                      placeholder="024 123 4567"
+                      value={inv.phone}
+                      onChange={(e) => setInvites((prev) => prev.map((x, j) => (j === i ? { ...x, phone: e.target.value } : x)))}
+                    />
+                    <select
+                      className={`${inputCls} sm:max-w-48`}
+                      aria-label={`Team member ${i + 1} role`}
+                      value={inv.role}
+                      onChange={(e) => setInvites((prev) => prev.map((x, j) => (j === i ? { ...x, role: e.target.value } : x)))}
+                    >
+                      {STAFF_ROLES.map((r) => (
+                        <option key={r.value} value={r.value}>{r.label}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setInvites((prev) => prev.filter((_, j) => j !== i))}
+                      aria-label="Remove invite"
+                      className="flex size-12 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:bg-surface-muted hover:text-foreground"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setInvites((prev) => [...prev, { phone: "", role: "mechanic" }])}
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong text-sm font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+                >
+                  <Plus className="size-4" /> Add a team member
+                </button>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="overflow-hidden rounded-[20px] border border-border bg-card">
+                {[
+                  {
+                    title: "Garage",
+                    to: 0,
+                    rows: [
+                      ["Name", garageName.trim() || "—"],
+                      ["Link", `fixam.app/g/${slugPreview}`],
+                      ["Phone", phone || "—"],
+                      ["Location", [address, city].filter(Boolean).join(", ") || "—"],
+                      ["Map pin", gps ? "Saved" : "Not set"],
+                    ],
+                  },
+                  {
+                    title: "Workshop",
+                    to: 1,
+                    rows: [
+                      ["Branch", `${branchName} (${branchCode})`],
+                      ["Bays", cleanBays.length ? cleanBays.join(", ") : "—"],
+                      ["Labour rate", `GH₵ ${labourRate || "0"} / hour`],
+                      ["VAT", `${vatPercent || 0}% ${pricesIncludeTax ? "included in prices" : "added on top"}`],
+                    ],
+                  },
+                  {
+                    title: "Team",
+                    to: 2,
+                    rows: [["Invites", validInvites.length ? `${validInvites.length} person${validInvites.length === 1 ? "" : "s"} will get an SMS` : "Just you for now"]],
+                  },
+                ].map((sec, si) => (
+                  <div key={sec.title} className={cn("p-6", si > 0 && "border-t border-border")}>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[15px] font-semibold">{sec.title}</p>
+                      <button type="button" onClick={() => go(sec.to)} className="text-sm font-medium text-[#B8390A] hover:text-[#8F2C08]">Edit</button>
+                    </div>
+                    <dl className="mt-3 space-y-2 text-sm">
+                      {sec.rows.map(([k, v]) => (
+                        <div key={k} className="flex gap-4">
+                          <dt className="w-28 shrink-0 text-muted-foreground">{k}</dt>
+                          <dd className="min-w-0 break-words">{v}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {error && (
-            <p role="alert" className="rounded-lg border-2 border-danger bg-danger/10 px-4 py-2 text-sm font-semibold text-danger">
+            <p role="alert" className="mt-6 rounded-xl border border-[#FFC2CC] bg-[#FFF1F3] px-4 py-3 text-sm font-medium text-[#B3122F]">
               {error}
             </p>
           )}
 
-          <div className="flex gap-3">
-            {step > 0 && (
-              <Button type="button" variant="ghost" onClick={back} disabled={submitting}>
-                Back
-              </Button>
-            )}
-            {step < steps.length - 1 ? (
-              <Button
-                type="button"
-                className="flex-1"
-                onClick={next}
-                disabled={
-                  (step === 0 && (!garageName.trim() || !normalizeGhPhone(phone))) ||
-                  (step === 1 && !branchName.trim())
-                }
-              >
-                Continue
+          <div className="mt-10 flex items-center justify-between gap-3 border-t border-border pt-6">
+            {step > 0 ? (
+              <Button type="button" variant="ghost" onClick={() => go(step - 1)} disabled={submitting}>
+                <ArrowLeft className="size-4" /> Back
               </Button>
             ) : (
-              <Button type="button" className="flex-1" onClick={submit} disabled={submitting}>
-                {submitting ? "Creating…" : "Create garage"}
-              </Button>
+              <span className="text-[13px] text-muted-foreground">You can change all of this later.</span>
             )}
+            <div className="flex items-center gap-2">
+              {step === 2 && invites.length === 0 && (
+                <Button type="button" variant="ghost" onClick={() => go(3)}>Skip for now</Button>
+              )}
+              {step < STEPS.length - 1 ? (
+                <Button type="button" size="lg" onClick={() => go(step + 1)} disabled={!canContinue}>
+                  Continue <ArrowRight className="size-4" />
+                </Button>
+              ) : (
+                <Button type="button" size="lg" onClick={submit} loading={submitting}>
+                  {submitting ? "Creating your garage…" : "Create my garage"}
+                  {!submitting && <Rocket className="size-4" />}
+                </Button>
+              )}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     </main>
   )
 }

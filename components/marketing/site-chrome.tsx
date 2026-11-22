@@ -4,12 +4,13 @@ import { Logo } from "./logo"
 
 const NAV = [
   { href: "/#product", label: "Product" },
-  { href: "/#drivers", label: "For drivers" },
-  { href: "/pricing", label: "Pricing" },
   { href: "/garages", label: "Find a garage" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/support", label: "Support" },
+  { href: "/about", label: "About" },
 ]
 
-/** Marketing header. `tone="dark"` sits on the carbon hero; `light` is a sticky glass bar. */
+/** Marketing header. `tone="dark"` sits on a carbon hero; `light` is a sticky glass bar. */
 export function SiteHeader({ tone = "light", active }: { tone?: "light" | "dark"; active?: string }) {
   const dark = tone === "dark"
   return (
@@ -26,6 +27,7 @@ export function SiteHeader({ tone = "light", active }: { tone?: "light" | "dark"
             <Link
               key={n.href}
               href={n.href}
+              aria-current={active === n.label ? "page" : undefined}
               className={cn(
                 "transition-colors",
                 dark ? "hover:text-white" : "hover:text-foreground",
@@ -57,9 +59,9 @@ export function SiteHeader({ tone = "light", active }: { tone?: "light" | "dark"
 
 const FOOTER_COLS = [
   { title: "Product", links: [["/#product", "Workshop"], ["/#payments", "Payments"], ["/#reminders", "Reminders"], ["/pricing", "Pricing"]] },
-  { title: "Drivers", links: [["/garages", "Find a garage"], ["/portal", "Customer portal"]] },
-  { title: "Vendors", links: [["/vendor", "Sell on FixAm"]] },
-  { title: "Account", links: [["/login", "Garage sign in"], ["/onboarding", "Start free trial"]] },
+  { title: "Drivers", links: [["/garages", "Find a garage"], ["/portal", "Customer portal"], ["/support#drivers", "Driver help"]] },
+  { title: "Company", links: [["/about", "About us"], ["/contact", "Contact"], ["/support", "Help centre"], ["/vendor", "Sell parts on FixAm"]] },
+  { title: "Legal", links: [["/privacy", "Privacy policy"], ["/terms", "Terms of service"]] },
 ] as const
 
 export function SiteFooter() {
@@ -71,6 +73,12 @@ export function SiteFooter() {
           <p className="mt-3.5 max-w-[260px] text-sm leading-relaxed text-muted-foreground">
             The garage operating system for Ghana.
           </p>
+          <Link
+            href="/onboarding"
+            className="mt-5 inline-flex h-10 items-center rounded-full bg-foreground px-4 text-sm font-semibold text-background hover:opacity-90"
+          >
+            Start free trial
+          </Link>
         </div>
         <div className="grid flex-[2] grid-cols-2 gap-6 text-sm sm:grid-cols-4">
           {FOOTER_COLS.map((c) => (
