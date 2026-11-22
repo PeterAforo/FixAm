@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, Eraser, Plus } from "lucide-react"
+import { CheckCircle2, ChevronLeft, ChevronRight, Eraser, Plus } from "lucide-react"
 import { Button } from "@/components/brand/button"
 import { Card, CardContent } from "@/components/brand/card"
 import { checkInJob } from "@/lib/jobs/actions"
@@ -79,6 +79,36 @@ export function CheckInPanel({
   const [promisedAt, setPromisedAt] = useState("")
   const [priority, setPriority] = useState<"low" | "normal" | "high" | "urgent">("normal")
   const [sigEmpty, setSigEmpty] = useState(true)
+  const [step, setStep] = useState(0)
+
+  const STEPS = ["Customer & vehicle", "Job details", "Assignment", "Signature"]
+
+  function validateStep(s: number): string | null {
+    if (s === 0) {
+      if (!customerId) return "Pick a customer"
+      if (!vehicleId) return "Pick a vehicle"
+    }
+    if (s === 1) {
+      if (!complaint.trim()) return "Describe the complaint"
+      const odo = Number(odometer)
+      if (!Number.isInteger(odo) || odo < 0) return "Enter the odometer reading (required)"
+    }
+    if (s === 2 && !branchId) return "Pick a branch"
+    return null
+  }
+
+  function next() {
+    setError(null)
+    const e = validateStep(step)
+    if (e) { setError(e); return }
+    setStep((s) => Math.min(s + 1, STEPS.length - 1))
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+  function back() {
+    setError(null)
+    setStep((s) => Math.max(s - 1, 0))
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const drawing = useRef(false)
@@ -243,11 +273,34 @@ export function CheckInPanel({
       <header>
         <h1 className="font-display text-3xl font-bold">Check in vehicle</h1>
         <p className="text-muted-foreground">Fast intake — customer, vehicle, complaint, odometer, assignment.</p>
+        {/* Stepper */}
+        <ol className="mt-4 flex items-center gap-2">
+          {STEPS.map((label, i) => (
+            <li key={label} className="flex flex-1 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => i < step && setStep(i)}
+                className={`flex size-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold ${
+                  i < step ? "border-success bg-success text-success-foreground"
+                  : i === step ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-surface text-muted-foreground"
+                }`}
+                aria-label={`Step ${i + 1}: ${label}`}
+                aria-current={i === step ? "step" : undefined}
+              >
+                {i < step ? <CheckCircle2 className="size-4" /> : i + 1}
+              </button>
+              <span className={`hidden text-xs font-bold sm:block ${i === step ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
+              {i < STEPS.length - 1 && <span className={`h-0.5 flex-1 rounded ${i < step ? "bg-success" : "bg-border"}`} />}
+            </li>
+          ))}
+        </ol>
       </header>
 
       {error && <p className="rounded-lg border-2 border-danger bg-danger/10 px-4 py-3 text-sm font-semibold text-danger">{error}</p>}
 
       {/* 1. Customer & vehicle */}
+      {step === 0 && (
       <Card>
         <CardContent className="space-y-4 p-5">
           <h2 className="font-display text-lg font-bold">1 · Customer &amp; vehicle</h2>
@@ -320,8 +373,10 @@ export function CheckInPanel({
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* 2. Job details */}
+      {step === 1 && (
       <Card>
         <CardContent className="space-y-4 p-5">
           <h2 className="font-display text-lg font-bold">2 · Job details</h2>
@@ -377,8 +432,10 @@ export function CheckInPanel({
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* 3. Assignment */}
+      {step === 2 && (
       <Card>
         <CardContent className="space-y-4 p-5">
           <h2 className="font-display text-lg font-bold">3 · Assignment</h2>
@@ -421,8 +478,10 @@ export function CheckInPanel({
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* 4. Signature + submit */}
+      {step === 3 && (
       <Card>
         <CardContent className="space-y-4 p-5">
           <h2 className="font-display text-lg font-bold">4 · Customer signature</h2>
@@ -448,6 +507,22 @@ export function CheckInPanel({
           </div>
         </CardContent>
       </Card>
+      )}
+
+      {/* Wizard nav */}
+      <div className="flex items-center justify-between">
+        <Button variant="secondary" onClick={back} disabled={step === 0}>
+          <ChevronLeft className="size-4" /> Back
+        </Button>
+        <span className="text-xs font-bold text-muted-foreground">Step {step + 1} of {STEPS.length}</span>
+        {step < STEPS.length - 1 ? (
+          <Button onClick={next}>
+            Next <ChevronRight className="size-4" />
+          </Button>
+        ) : (
+          <span />
+        )}
+      </div>
     </div>
   )
 }

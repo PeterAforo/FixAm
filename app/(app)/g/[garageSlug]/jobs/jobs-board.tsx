@@ -63,6 +63,14 @@ function countdown(promisedAt: string | null): { text: string; tone: "ok" | "war
   return { text, tone: "ok" }
 }
 
+const COLUMN_TINT: Partial<Record<JobStatus, string>> = {
+  waiting_parts: "bg-warning/10",
+  quality_check: "bg-info-subtle",
+  ready: "bg-success/10",
+  declined: "bg-danger/10",
+  cancelled: "bg-muted/60",
+}
+
 const inputCls =
   "min-h-10 rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
 
@@ -263,8 +271,8 @@ export function JobsBoard({
             return (
               <div
                 key={status}
-                className={`flex w-64 shrink-0 flex-col rounded-xl border-2 bg-surface-muted/40 transition-colors ${
-                  dragOver === status ? "border-primary bg-primary/5" : "border-transparent"
+                className={`flex w-64 shrink-0 flex-col rounded-xl border-2 bg-surface-muted/40 transition-colors ${COLUMN_TINT[status] ?? ""} ${
+                  dragOver === status ? "border-primary bg-primary/10 ring-2 ring-primary/30" : "border-transparent"
                 }`}
                 onDragOver={(e) => {
                   if (!canStatusUpdate) return
@@ -369,7 +377,7 @@ function JobCard({
         e.dataTransfer.setData("text/job-id", job.id)
         e.dataTransfer.effectAllowed = "move"
       }}
-      className={`block rounded-lg border-2 border-border bg-card p-2.5 shadow-chunky transition-transform hover:-translate-y-0.5 ${compact ? "text-xs" : ""}`}
+      className={`block rounded-lg border-2 border-border bg-card p-2.5 shadow-chunky transition-all hover:-translate-y-0.5 hover:shadow-pop ${job.priority === "urgent" ? "border-l-4 border-l-danger" : ""} ${compact ? "text-xs" : ""}`}
     >
       <div className="flex items-start gap-2">
         <CarAvatar type={vtype} color={job.colorHex ?? undefined} className="h-8 w-14 shrink-0" />
