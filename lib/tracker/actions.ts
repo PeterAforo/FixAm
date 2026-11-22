@@ -28,6 +28,8 @@ export type TrackerData = {
   stageIndex: number
   plate: string | null
   vehicleLabel: string | null
+  vehicleBodyType: string | null
+  colorHex: string | null
   promisedAt: string | null
   checkedInAt: string | null
   readyAt: string | null
@@ -35,6 +37,8 @@ export type TrackerData = {
   garageName: string
   garagePhone: string | null
   garageAddress: string | null
+  garageBrandColor: string | null
+  garageLogoUrl: string | null
   mechanicFirstName: string | null
   findings: { id: string; title: string; description: string | null; severity: string }[]
   media: { id: string; kind: string; caption: string | null; url: string | null }[]
@@ -55,9 +59,9 @@ export async function getTrackerData(rawInput: unknown): Promise<ActionResult<Tr
   if (!job || job.deletedAt) return { ok: true, data: null }
 
   const [vehicle, customer, garage, branch, leadRows, findingRows, mediaRows, eventRows] = await Promise.all([
-    db().select({ plateNumber: vehicles.plateNumber, make: vehicles.make, model: vehicles.model }).from(vehicles).where(eq(vehicles.id, job.vehicleId)).limit(1),
+    db().select({ plateNumber: vehicles.plateNumber, make: vehicles.make, model: vehicles.model, bodyType: vehicles.bodyType, colorHex: vehicles.colorHex }).from(vehicles).where(eq(vehicles.id, job.vehicleId)).limit(1),
     db().select({ phone: customers.phone }).from(customers).where(eq(customers.id, job.customerId)).limit(1),
-    db().select({ name: garages.name, phone: garages.phone, address: garages.address }).from(garages).where(eq(garages.id, job.garageId)).limit(1),
+    db().select({ name: garages.name, phone: garages.phone, address: garages.address, brandColor: garages.brandColor, logoUrl: garages.logoUrl }).from(garages).where(eq(garages.id, job.garageId)).limit(1),
     db().select({ phone: branches.phone, address: branches.address }).from(branches).where(eq(branches.id, job.branchId)).limit(1),
     db()
       .select({ name: users.fullName })
@@ -107,6 +111,8 @@ export async function getTrackerData(rawInput: unknown): Promise<ActionResult<Tr
       stageIndex,
       plate: vehicle[0]?.plateNumber ?? null,
       vehicleLabel: vehicle[0] ? `${vehicle[0].make} ${vehicle[0].model}` : null,
+      vehicleBodyType: vehicle[0]?.bodyType ?? null,
+      colorHex: vehicle[0]?.colorHex ?? null,
       promisedAt: job.promisedAt?.toISOString() ?? null,
       checkedInAt: job.checkedInAt?.toISOString() ?? null,
       readyAt: job.readyAt?.toISOString() ?? null,
@@ -114,6 +120,8 @@ export async function getTrackerData(rawInput: unknown): Promise<ActionResult<Tr
       garageName: garage[0]?.name ?? "Garage",
       garagePhone: garage[0]?.phone ?? branch[0]?.phone ?? customer[0]?.phone ?? null,
       garageAddress: garage[0]?.address ?? branch[0]?.address ?? null,
+      garageBrandColor: garage[0]?.brandColor ?? null,
+      garageLogoUrl: garage[0]?.logoUrl ?? null,
       mechanicFirstName: leadRows[0]?.name?.split(" ")[0] ?? null,
       findings: findingRows.map((f) => ({ id: f.id, title: f.title, description: f.description, severity: f.severity })),
       media,
