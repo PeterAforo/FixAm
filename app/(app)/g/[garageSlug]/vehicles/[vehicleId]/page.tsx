@@ -21,6 +21,7 @@ import { resolveMembership } from "@/lib/actions"
 import { can, type StaffRole } from "@/lib/auth/permissions"
 import { predictOdometer } from "@/lib/domain/mileage"
 import type { RingStatus } from "@/components/brand/vehicle-health-card"
+import { computeFixAmScore } from "@/lib/domain/fixam-score"
 import { VehicleProfilePanel } from "./vehicle-profile-panel"
 import { listCatalogueGrouped } from "@/lib/catalogue"
 
@@ -175,6 +176,17 @@ async function VehicleLoader({
       ? { status: "ok" }
       : { status: openJobs.some((j) => j.status === "quality_check" || j.status === "ready") ? "soon" : "overdue" }
 
+  // FixAm Score — due items not already covered by the four rings
+  const RING_TYPES = new Set(["oil_change", "insurance", "roadworthy", "registration_licence", "drivers_licence"])
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const otherDue = openDueItems.filter((d) => !RING_TYPES.has(d.type))
+  const otherDueOverdue = otherDue.filter((d) => d.status === "overdue" || d.effectiveDueDate <= todayISO).length
+  const otherDueSoon = otherDue.filter((d) => d.status === "due_soon" || d.status === "due" || d.status === "scheduled").length
+  const fixamScore = computeFixAmScore({
+    oil: oilRing, insurance: insRing, dvla: dvlaRing, issues: issueRing,
+    otherDueSoon, otherDueOverdue,
+  })
+
   // Mileage estimate
   const validReadings = readingRows.filter((r) => r.status === "valid")
   const lastValid = validReadings[0] ?? null
@@ -311,6 +323,7 @@ async function VehicleLoader({
       jobs={jobRows}
       timeline={timeline.slice(0, 40)}
       rings={{ oil: oilRing, insurance: insRing, dvla: dvlaRing, issues: issueRing }}
+      fixamScore={fixamScore}
       mileage={{
         kmPerDay,
         confidence: (vehicle.kmPerDayConfidence as "high" | "medium" | "low" | null) ?? null,

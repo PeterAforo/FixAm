@@ -112,6 +112,7 @@ export function VehicleProfilePanel(props: {
     dvla: { status: RingStatus; nextDue?: string }
     issues: { status: RingStatus; nextDue?: string }
   }
+  fixamScore?: { score: number; tips: string[] }
   mileage: {
     kmPerDay: number | null
     confidence: "high" | "medium" | "low" | null
@@ -128,7 +129,7 @@ export function VehicleProfilePanel(props: {
 }) {
   const {
     garageSlug, garageId, vehicle, owner, ownerships, readings, documents,
-    dueItems, insurance, dvla, jobs, timeline, rings, mileage,
+    dueItems, insurance, dvla, jobs, timeline, rings, fixamScore, mileage,
     customerOptions, catalogue, canRecordOdometer, canOverrideOdometer, canUpdateVehicle,
   } = props
 
@@ -384,6 +385,7 @@ export function VehicleProfilePanel(props: {
             insurance={rings.insurance}
             dvla={rings.dvla}
             issues={rings.issues}
+            score={fixamScore}
           />
 
           {/* Mileage estimate (P1-03) */}
