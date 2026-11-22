@@ -118,13 +118,18 @@ function ReminderCard(props: {
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="font-display text-lg font-bold">{item.title}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="font-display text-lg font-bold">{item.title}</h2>
+              {item.effectiveDueDate <= new Date().toISOString().slice(0, 10) && (
+                <span className="rounded-full bg-danger-subtle px-2 py-0.5 text-[10px] font-bold uppercase text-danger">Due now</span>
+              )}
+            </div>
             <p className="mt-0.5 text-sm text-muted-foreground">
               {item.vehicleLabel}
               {item.dueMileageKm ? ` · due at ${item.dueMileageKm.toLocaleString()} km` : ""}
             </p>
             <p className="mt-1 text-sm">
-              {item.effectiveDueDate <= new Date().toISOString().slice(0, 10) ? "Due now" : `Due around ${item.effectiveDueDate}`}
+              {item.effectiveDueDate <= new Date().toISOString().slice(0, 10) ? "" : `Due around ${item.effectiveDueDate}`}
               {item.predictedDueDate && item.predictedDueDate !== item.dueDate ? " (by mileage)" : ""}
             </p>
           </div>
