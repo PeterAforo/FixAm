@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { getSessionUserId } from "@/lib/auth/ensure-user"
 import { postLoginDestination } from "@/lib/auth/destination"
+import { Torq } from "@/components/brand/torq"
 
 async function AuthGate() {
   const userId = await getSessionUserId()
@@ -64,22 +65,33 @@ export default function MarketingHome() {
       </header>
 
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 pb-16 pt-16 text-center md:pt-24">
-        <p className="text-sm font-semibold uppercase tracking-widest text-primary">Fix am. Run your garage.</p>
-        <h1 className="mx-auto mt-3 max-w-3xl font-display text-4xl font-extrabold leading-tight md:text-6xl">
-          The garage operating system for Ghana
-        </h1>
-        <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-          Repairs, parts, renewals, bookings and money — one system for workshops,
-          and one app for the drivers who trust them.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/onboarding" className={btnPrimary}>Start free trial</Link>
-          <Link href="/garages" className={btnSecondary}>
-            <MapPin className="mr-1 inline size-4" /> Find a garage near you
-          </Link>
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-[image:var(--gradient-ignite)] opacity-[0.07]" aria-hidden />
+        <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-16 text-center md:pt-24">
+          <div className="mx-auto flex w-fit items-center gap-3">
+            <Torq pose="wave" className="size-20 md:size-24" />
+            <div className="text-left">
+              <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-border bg-card px-3 py-1 text-xs font-bold shadow-chunky-sm">
+                <span className="size-2 rounded-full bg-volt-400" /> Made for Ghana
+              </span>
+              <p className="mt-1 text-xs font-semibold text-muted-foreground">MoMo · WhatsApp · DVLA · Accra time</p>
+            </div>
+          </div>
+          <h1 className="mx-auto mt-6 max-w-3xl font-display text-4xl font-extrabold leading-[1.05] tracking-tight md:text-6xl">
+            Fix am. <span className="text-primary">Run your garage.</span>
+          </h1>
+          <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
+            Repairs, parts, renewals, bookings and money — one system for workshops,
+            and one app for the drivers who trust them.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link href="/onboarding" className={btnPrimary}>Start free trial</Link>
+            <Link href="/garages" className={btnSecondary}>
+              <MapPin className="mr-1 inline size-4" /> Find a garage near you
+            </Link>
+          </div>
+          <p className="mt-4 text-xs text-muted-foreground">14-day free trial · No card required · Cancel anytime</p>
         </div>
-        <p className="mt-4 text-xs text-muted-foreground">14-day free trial · No card required · Cancel anytime</p>
       </section>
 
       {/* Two audiences */}
@@ -92,7 +104,7 @@ export default function MarketingHome() {
             </p>
             <ul className="mt-5 grid gap-3 sm:grid-cols-2">
               {garageFeatures.map((f) => (
-                <li key={f.title} className="flex gap-3 rounded-xl border border-border bg-surface p-3">
+                <li key={f.title} className="flex gap-3 rounded-xl border border-border bg-surface p-3 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-chunky-sm">
                   <f.icon className="mt-0.5 size-5 shrink-0 text-primary" />
                   <div>
                     <p className="text-sm font-bold">{f.title}</p>
@@ -115,7 +127,7 @@ export default function MarketingHome() {
             </p>
             <ul className="mt-5 grid gap-3 sm:grid-cols-2">
               {customerFeatures.map((f) => (
-                <li key={f.title} className="flex gap-3 rounded-xl border border-border bg-surface p-3">
+                <li key={f.title} className="flex gap-3 rounded-xl border border-border bg-surface p-3 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-chunky-sm">
                   <f.icon className="mt-0.5 size-5 shrink-0 text-primary" />
                   <div>
                     <p className="text-sm font-bold">{f.title}</p>
