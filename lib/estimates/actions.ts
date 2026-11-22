@@ -8,6 +8,7 @@ import {
   documentSequences,
   estimates,
   garages,
+  jobFindings,
   jobItems,
   jobs,
   vehicles,
@@ -267,7 +268,7 @@ export async function getPublicEstimate(rawInput: unknown): Promise<
     garageName: string
     vehiclePlate: string | null
     customerName: string | null
-    items: { id: string; type: string; description: string; quantity: number; unitPrice: number; discountAmount: number; approvalStatus: string | null }[]
+    items: { id: string; type: string; description: string; quantity: number; unitPrice: number; discountAmount: number; approvalStatus: string | null; severity: string | null }[]
   } | null>
 > {
   const parsed = z.object({ token: z.string().min(16).max(128) }).safeParse(rawInput)
@@ -292,6 +293,13 @@ export async function getPublicEstimate(rawInput: unknown): Promise<
     .where(and(eq(jobItems.estimateId, est.id), eq(jobItems.garageId, est.garageId)))
     .orderBy(jobItems.sortOrder)
 
+  const findingIds = [...new Set(items.map((i) => i.findingId).filter((x): x is string => Boolean(x)))]
+  const findings = findingIds.length
+    ? await db().select({ id: jobFindings.id, severity: jobFindings.severity }).from(jobFindings)
+        .where(and(eq(jobFindings.garageId, est.garageId), inArray(jobFindings.id, findingIds)))
+    : []
+  const severityByFinding = new Map(findings.map((f) => [f.id, f.severity]))
+
   return {
     ok: true,
     data: {
@@ -315,6 +323,7 @@ export async function getPublicEstimate(rawInput: unknown): Promise<
         unitPrice: Number(i.unitPrice),
         discountAmount: Number(i.discountAmount ?? 0),
         approvalStatus: i.approvalStatus,
+        severity: i.findingId ? severityByFinding.get(i.findingId) ?? null : null,
       })),
     },
   }
