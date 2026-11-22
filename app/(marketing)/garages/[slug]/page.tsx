@@ -20,7 +20,9 @@ async function ProfileContent({ params }: { params: Promise<{ slug: string }> })
     <div className="mx-auto max-w-4xl px-6 py-10">
       <Link href="/garages" className="text-sm font-semibold text-primary hover:underline">← All garages</Link>
 
-      <header className="mt-4 flex flex-wrap items-start justify-between gap-4">
+      <header className="mt-4 overflow-hidden rounded-2xl border-2 border-border bg-card shadow-chunky">
+        <div className="h-2" style={{ background: g.brandColor ?? "var(--color-primary)" }} />
+        <div className="flex flex-wrap items-start justify-between gap-4 p-5">
         <div className="flex items-center gap-4">
           <span
             className="flex size-16 items-center justify-center rounded-2xl border-2 border-border font-display text-2xl font-bold"
@@ -52,6 +54,7 @@ async function ProfileContent({ params }: { params: Promise<{ slug: string }> })
           >
             Book online
           </Link>
+        </div>
         </div>
       </header>
 

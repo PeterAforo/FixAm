@@ -141,12 +141,14 @@
   --shadow-3: 0 12px 32px -8px rgb(16 24 40 / 0.16), 0 4px 8px -4px rgb(16 24 40 / 0.06), 0 0 0 1px var(--hairline, rgb(26 24 22 / 0.08));
   --shadow-4: 0 24px 64px -12px rgb(16 24 40 / 0.28), 0 0 0 1px var(--hairline, rgb(26 24 22 / 0.08));
   --shadow-pop: 4px 4px 0 0 var(--foreground);
-  --shadow-glow-primary: 0 8px 24px -6px rgb(255 90 31 / 0.55);
+  --shadow-glow-primary: inset 0 1px 0 rgb(255 255 255 / 0.22), 0 10px 24px -12px rgb(212 67 15 / 0.8);
 
-  /* Chunky offset shadows retained as the "pop" accent (badges, mascot, empty states) */
-  --shadow-chunky-sm: 3px 3px 0 0 var(--color-border);
-  --shadow-chunky: 5px 5px 0 0 var(--color-border);
-  --shadow-chunky-lg: 8px 8px 0 0 var(--color-border);
+  /* Premium uplift: the old chunky offset shadows read as toy-like, so these
+     legacy names now resolve to soft layered shadows app-wide. Use
+     shadow-pop explicitly for the rare playful accent (badge unlocks). */
+  --shadow-chunky-sm: 0 1px 2px rgb(16 24 40 / 0.06);
+  --shadow-chunky: 0 4px 12px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.04);
+  --shadow-chunky-lg: 0 12px 32px -8px rgb(16 24 40 / 0.16), 0 4px 8px -4px rgb(16 24 40 / 0.06);
   --shadow-soft: 0 8px 24px rgb(11 27 63 / 0.12);
 }
 
@@ -221,25 +223,25 @@
 :root {
   --radius: 14px;
 
-  --background: #faf7f2;          /* sand.50 */
-  --foreground: #1a1816;          /* sand.900 */
+  --background: #faf8f5;          /* page */
+  --foreground: #16130f;          /* ink */
   --surface: #ffffff;             /* sand.0 */
   --surface-raised: #ffffff;
   --surface-sunken: #f3eee6;      /* sand.100 */
   --surface-muted: #f3eee6;
   --card: #ffffff;
-  --card-foreground: #1a1816;
+  --card-foreground: #16130f;
   --popover: #ffffff;
-  --popover-foreground: #1a1816;
-  --primary: #ff5a1f;             /* ignition.500 */
+  --popover-foreground: #16130f;
+  --primary: #d4430f;             /* button orange — white text passes 4.5:1 */
   --primary-foreground: #ffffff;
-  --primary-hover: #ed4410;       /* ignition.600 */
-  --primary-pressed: #c4350c;     /* ignition.700 */
+  --primary-hover: #b8390a;
+  --primary-pressed: #9c2b0e;
   --primary-subtle: #fff3ed;      /* ignition.50 */
-  --secondary: #1a1816;
+  --secondary: #16130f;
   --secondary-foreground: #ffffff;
   --muted: #f3eee6;
-  --muted-foreground: #5b554d;    /* sand.600 */
+  --muted-foreground: #5f584f;
   --accent: #c6f432;              /* volt.400 */
   --accent-foreground: #0a0f1e;
   --info: #00c2b8;
@@ -254,20 +256,20 @@
   --danger: #ff3b5c;              /* brake.500 */
   --danger-foreground: #ffffff;
   --danger-subtle: #ffe8ec;
-  --border: #e7e0d5;              /* sand.200 */
-  --border-strong: #d3cabc;       /* sand.300 */
-  --border-subtle: #f3eee6;
-  --input: #d3cabc;
+  --border: #ece6dd;
+  --border-strong: #ddd5c9;
+  --border-subtle: #f4f0ea;
+  --input: #ddd5c9;
   --ring: #00c2b8;
   --hairline: rgb(26 24 22 / 0.08);
 
   --sidebar: #ffffff;
-  --sidebar-foreground: #1a1816;
-  --sidebar-primary: #ff5a1f;
+  --sidebar-foreground: #16130f;
+  --sidebar-primary: #d4430f;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f3eee6;
-  --sidebar-accent-foreground: #1a1816;
-  --sidebar-border: #e7e0d5;
+  --sidebar-accent: #f4f0ea;
+  --sidebar-accent-foreground: #16130f;
+  --sidebar-border: #ece6dd;
   --sidebar-ring: #00c2b8;
 }
 
@@ -396,6 +398,12 @@
   }
   html {
     @apply font-sans;
+  }
+  h1, h2, h3 {
+    letter-spacing: -0.02em;
+  }
+  button, [role="tab"] {
+    text-transform: none;
   }
 
   /* Torq idle blink — 4–7s random-ish cadence via two keyframe loops */

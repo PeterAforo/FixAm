@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 const buttonVariants = cva(
   [
     "inline-flex items-center justify-center gap-2 font-sans font-semibold",
-    "rounded-pill border-2 transition-[transform,box-shadow,background-color] duration-fast ease-spring",
+    "rounded-pill border transition-[transform,box-shadow,background-color] duration-fast ease-spring active:scale-[0.98]",
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&>svg]:size-4 [&>svg]:shrink-0",
@@ -18,7 +18,7 @@ const buttonVariants = cva(
         primary:
           "border-transparent bg-primary text-primary-foreground shadow-glow-primary hover:bg-primary-hover active:bg-primary-pressed",
         secondary:
-          "border-border bg-surface text-foreground shadow-1 hover:bg-surface-sunken",
+          "border-border-strong bg-surface text-foreground hover:bg-surface-sunken",
         tonal:
           "border-transparent bg-primary-subtle text-primary hover:bg-ignition-100",
         accent:
@@ -33,7 +33,7 @@ const buttonVariants = cva(
           "border-transparent bg-transparent text-primary underline-offset-4 shadow-none hover:underline",
       },
       size: {
-        sm: "min-h-9 px-4 text-xs",
+        sm: "min-h-9 px-4 text-sm",
         md: "min-h-11 px-5 text-sm",
         lg: "min-h-[52px] px-7 text-base",
         xl: "min-h-[60px] px-9 text-lg",
