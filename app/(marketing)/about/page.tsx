@@ -2,6 +2,8 @@ import Link from "next/link"
 import { ArrowRight, Gauge, HeartHandshake, MapPinned, ShieldCheck, Smartphone, Sparkles } from "lucide-react"
 import { SiteFooter } from "@/components/marketing/site-chrome"
 import { CtaBand, PageHero, Section, SectionIntro, ctaGlass, ctaPrimary } from "@/components/marketing/page-hero"
+import { photos } from "@/lib/images"
+import { PhotoCredit, PhotoImg } from "@/components/marketing/photo"
 
 export const metadata = {
   title: "About us",
@@ -26,6 +28,7 @@ export default function AboutPage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <PageHero
+        image={photos.accraCity}
         active="About"
         eyebrow="About FixAm"
         title={
@@ -44,7 +47,17 @@ export default function AboutPage() {
       {/* Story */}
       <Section>
         <div className="grid gap-12 lg:grid-cols-2">
-          <SectionIntro eyebrow="Why we exist" title="Great mechanics, held back by notebooks." />
+          <div>
+            <SectionIntro eyebrow="Why we exist" title="Great mechanics, held back by notebooks." />
+            <figure className="relative mt-10 aspect-[4/3] overflow-hidden rounded-[24px] shadow-[0_30px_60px_-30px_rgba(22,19,15,0.45)]">
+              <PhotoImg photo={photos.mechanicEngine} fill sizes="(min-width: 1024px) 560px, 100vw" />
+              <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,rgba(11,15,26,0.75)_100%)]" />
+              <figcaption className="absolute inset-x-5 bottom-4 flex items-end justify-between gap-4 text-white">
+                <span className="text-sm font-medium">Skill is everywhere. Systems aren&apos;t — yet.</span>
+                <PhotoCredit photo={photos.mechanicEngine} />
+              </figcaption>
+            </figure>
+          </div>
           <div className="space-y-5 text-[17px] leading-relaxed text-muted-foreground">
             <p>
               Ghana&apos;s roads run on the skill of its mechanics. But most workshops still run on paper job cards,

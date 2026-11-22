@@ -14,6 +14,7 @@ import { SiteFooter } from "@/components/marketing/site-chrome"
 import { PageHero } from "@/components/marketing/page-hero"
 import { site, whatsappLink } from "@/lib/site"
 import { HelpSearch, type HelpTopic } from "./help-search"
+import { photos } from "@/lib/images"
 
 export const metadata = {
   title: "Help centre",
@@ -111,6 +112,7 @@ export default function SupportPage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <PageHero
+        image={photos.mechanicEngine}
         active="Support"
         eyebrow="Help centre"
         title="How can we help?"

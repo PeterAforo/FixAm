@@ -7,6 +7,8 @@ import { Button } from "@/components/brand/button"
 import { Logo } from "@/components/marketing/logo"
 import { cn } from "@/lib/utils"
 import { requestPortalOtp, verifyPortalOtp, portalPasswordLogin } from "@/lib/portal/actions"
+import { PhotoCredit, PhotoImg } from "@/components/marketing/photo"
+import { photos } from "@/lib/images"
 
 const inputCls =
   "h-[52px] w-full rounded-xl border border-input bg-card px-3.5 text-base text-foreground outline-none transition-shadow placeholder:text-[#8C857B] focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
@@ -132,15 +134,12 @@ export function PortalLogin() {
               <span className="rounded-md border-[1.5px] border-foreground bg-white px-2 py-0.5 font-mono text-xs font-semibold">GR 1234-24</span>
               <span className="text-xs text-muted-foreground">Pitstop Motors</span>
             </div>
-            <div className="flex h-[120px] items-center justify-center rounded-[18px] bg-[linear-gradient(160deg,#FFF4EE,#F6EFE6)]">
-              <svg width="200" height="78" viewBox="0 0 200 78" fill="none" aria-hidden>
-                <ellipse cx="100" cy="70" rx="86" ry="6" fill="#16130F" opacity="0.1" />
-                <path d="M18 54c0-8 4-13 12-15l20-5 22-17c4-3 8-4 13-4h38c6 0 10 2 14 6l16 16 18 4c7 2 11 7 11 14v4c0 3-2 5-5 5H23c-3 0-5-2-5-5v-3z" fill="#C0C4CC" />
-                <path d="M74 34l17-14c2-2 5-3 8-3h30c4 0 7 1 10 4l13 13H74z" fill="#3A4360" />
-                <circle cx="52" cy="60" r="12" fill="#16130F" /><circle cx="52" cy="60" r="5" fill="#8C857B" />
-                <circle cx="152" cy="60" r="12" fill="#16130F" /><circle cx="152" cy="60" r="5" fill="#8C857B" />
-                <rect x="176" y="44" width="8" height="4" rx="2" fill="#FFB020" />
-              </svg>
+            <div className="relative h-[150px] overflow-hidden rounded-[18px]">
+              <PhotoImg photo={photos.suvGarage} fill sizes="300px" />
+              <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,transparent_45%,rgba(11,15,26,0.6)_100%)]" />
+              <span className="absolute bottom-2.5 left-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-semibold text-foreground backdrop-blur">
+                <span className="size-1.5 rounded-full bg-[#4E6B07]" /> In for service · Bay 2
+              </span>
             </div>
             <div className="flex items-end justify-between">
               <div>
@@ -165,7 +164,9 @@ export function PortalLogin() {
           <h2 className="font-display text-[30px] font-bold leading-[1.1] tracking-[-0.025em]">
             Every car you own, every service it&apos;s had, and what&apos;s due next.
           </h2>
-          <p className="mt-3 text-[13px] text-muted-foreground">Sample vehicle shown.</p>
+          <p className="mt-3 text-[13px] text-muted-foreground">
+            Sample vehicle shown. <PhotoCredit photo={photos.suvGarage} className="text-muted-foreground/70 hover:text-foreground" />
+          </p>
         </div>
       </aside>
 

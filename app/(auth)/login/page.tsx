@@ -9,6 +9,8 @@ import Link from "next/link"
 import { Button } from "@/components/brand/button"
 import { Logo } from "@/components/marketing/logo"
 import { cn } from "@/lib/utils"
+import { PhotoCredit, PhotoImg } from "@/components/marketing/photo"
+import { photos } from "@/lib/images"
 
 type Mode = "password" | "otp" | "signup"
 type Step = "credentials" | "otp-sent"
@@ -321,7 +323,9 @@ export default function LoginPage() {
       {/* Showcase side */}
       <aside className="relative hidden min-w-0 flex-[1_1_520px] flex-col justify-center gap-10 overflow-hidden bg-[#0B0F1A] p-14 text-[#F4F2EE] lg:flex">
         <div aria-hidden className="absolute -right-[200px] -top-[160px] h-[620px] w-[720px] bg-[radial-gradient(50%_50%_at_50%_50%,rgba(255,90,31,0.30)_0%,rgba(255,90,31,0)_100%)]" />
-        <div aria-hidden className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:56px_56px]" />
+        <PhotoImg photo={photos.mechanicEngine} fill priority sizes="50vw" />
+        <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,15,26,0.55)_0%,rgba(11,15,26,0.7)_40%,rgba(11,15,26,0.95)_100%)]" />
+        <div aria-hidden className="absolute -right-[200px] -top-[160px] h-[620px] w-[720px] bg-[radial-gradient(50%_50%_at_50%_50%,rgba(255,90,31,0.25)_0%,rgba(255,90,31,0)_100%)]" />
         <div className="relative max-w-[520px]">
           <div className="text-[13px] font-semibold text-[#FF8A57]">Your workshop, at a glance</div>
           <h2 className="mt-3 font-display text-[40px] font-bold leading-[1.05] tracking-[-0.03em]">
@@ -334,12 +338,12 @@ export default function LoginPage() {
               <div className="text-xs text-white/85">Collected today</div>
               <div className="mt-2 font-display text-[32px] font-bold tabular-nums"><span className="mr-0.5 align-[9px] text-base">GH₵</span>4,860</div>
             </div>
-            <div className="rounded-[18px] border border-white/[0.08] bg-[#121A2E] p-5">
+            <div className="rounded-[18px] border border-white/10 bg-[#121A2E]/80 p-5 backdrop-blur-md">
               <div className="text-xs text-[#8A93AB]">Reminders → bookings</div>
               <div className="mt-2 font-display text-[32px] font-bold text-[#D9F76F]">31%</div>
             </div>
           </div>
-          <div className="rounded-[18px] border border-white/[0.08] bg-[#121A2E] p-2">
+          <div className="rounded-[18px] border border-white/10 bg-[#121A2E]/80 p-2 backdrop-blur-md">
             {[
               { plate: "GN 4410-20", car: "Nissan Almera", label: "Ready", cls: "bg-[#C6F432] text-[#0B0F1A]" },
               { plate: "AS 5678-22", car: "Hyundai Elantra", label: "Awaiting approval", cls: "bg-[#FFB020]/15 text-[#FFC24D]" },
@@ -355,7 +359,10 @@ export default function LoginPage() {
             ))}
           </div>
         </div>
-        <p className="relative text-[13px] text-[#8A93AB]">Sample data shown.</p>
+        <div className="relative flex items-center justify-between gap-4">
+          <p className="text-[13px] text-[#8A93AB]">Sample data shown.</p>
+          <PhotoCredit photo={photos.mechanicEngine} />
+        </div>
       </aside>
     </main>
   )

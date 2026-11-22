@@ -1,6 +1,8 @@
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { SiteHeader } from "./site-chrome"
+import { PhotoCredit, PhotoImg } from "./photo"
+import type { Photo } from "@/lib/images"
 
 /** Dark hero band used by content pages (about, support, contact, directory…). */
 export function PageHero({
@@ -11,6 +13,7 @@ export function PageHero({
   align = "center",
   children,
   className,
+  image,
 }: {
   eyebrow?: string
   title: ReactNode
@@ -19,9 +22,18 @@ export function PageHero({
   align?: "center" | "left"
   children?: ReactNode
   className?: string
+  /** Optional full-bleed background photo (darkened). */
+  image?: Photo
 }) {
   return (
     <section className={cn("relative overflow-hidden bg-[#0B0F1A] text-[#F4F2EE]", className)}>
+      {image && (
+        <>
+          <PhotoImg photo={image} fill priority className="opacity-55" />
+          <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,15,26,0.88)_0%,rgba(11,15,26,0.62)_45%,rgba(11,15,26,0.94)_100%)]" />
+          <PhotoCredit photo={image} className="absolute bottom-3 right-4 z-10 hidden md:block" />
+        </>
+      )}
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-[-220px] h-[620px] w-[1000px] -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_50%,rgba(255,90,31,0.24)_0%,rgba(255,90,31,0)_100%)]"

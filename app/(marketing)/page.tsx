@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
-import { ArrowRight, ChevronRight, Flame, MapPin } from "lucide-react"
+import { ArrowRight, BellRing, CheckCircle2, ChevronRight, Flame, MapPin, Smartphone } from "lucide-react"
 import { getSessionUserId } from "@/lib/auth/ensure-user"
 import { postLoginDestination } from "@/lib/auth/destination"
 import { SiteFooter, SiteHeader } from "@/components/marketing/site-chrome"
@@ -12,6 +12,8 @@ import {
   PaymentToast,
   TrackerPhone,
 } from "@/components/marketing/mockups"
+import { PhotoCredit, PhotoImg } from "@/components/marketing/photo"
+import { photos } from "@/lib/images"
 
 async function AuthGate() {
   const userId = await getSessionUserId()
@@ -99,6 +101,45 @@ export default function MarketingHome() {
               </span>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── On the workshop floor (photography) ─────────────────────── */}
+      <section className="mx-auto max-w-[1200px] px-6 pt-24 md:px-8 md:pt-[120px]">
+        <div className="grid gap-5 md:grid-cols-12 md:grid-rows-[260px_260px]">
+          <figure className="group relative overflow-hidden rounded-[28px] md:col-span-7 md:row-span-2 min-h-[380px]">
+            <PhotoImg photo={photos.accraWorkshop} fill sizes="(min-width: 768px) 700px, 100vw" className="transition-transform duration-700 group-hover:scale-[1.03]" />
+            <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,15,26,0.1)_30%,rgba(11,15,26,0.85)_100%)]" />
+            <div className="absolute left-5 top-5 flex items-center gap-2.5 rounded-2xl border border-white/15 bg-[#0B0F1A]/70 px-3.5 py-2.5 text-white backdrop-blur-md">
+              <span className="flex size-8 items-center justify-center rounded-full bg-[#C6F432] text-[#0B0F1A]"><CheckCircle2 className="size-4" /></span>
+              <span className="text-sm"><strong className="font-semibold">Bay 2</strong> · Ready for pickup</span>
+            </div>
+            <figcaption className="absolute inset-x-6 bottom-6 text-white md:inset-x-8 md:bottom-8">
+              <p className="text-[13px] font-semibold text-[#FF8A57]">Made on the workshop floor</p>
+              <p className="mt-2 max-w-[460px] font-display text-[28px] font-bold leading-[1.1] tracking-[-0.02em] md:text-[34px]">
+                Designed with Accra mechanics, for real bays — not boardrooms.
+              </p>
+              <PhotoCredit photo={photos.accraWorkshop} className="mt-3 inline-block" />
+            </figcaption>
+          </figure>
+          <figure className="group relative min-h-[240px] overflow-hidden rounded-[28px] md:col-span-5">
+            <PhotoImg photo={photos.oilChange} fill sizes="(min-width: 768px) 480px, 100vw" className="transition-transform duration-700 group-hover:scale-[1.03]" />
+            <div aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,15,26,0.8)_0%,rgba(11,15,26,0.1)_75%)]" />
+            <figcaption className="absolute inset-y-0 left-6 flex max-w-[260px] flex-col justify-center text-white">
+              <span className="flex size-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur"><BellRing className="size-5" /></span>
+              <p className="mt-3 font-display text-xl font-semibold leading-tight">Oil reminders timed to how they actually drive.</p>
+            </figcaption>
+            <PhotoCredit photo={photos.oilChange} className="absolute bottom-3 right-4" />
+          </figure>
+          <figure className="group relative min-h-[240px] overflow-hidden rounded-[28px] md:col-span-5">
+            <PhotoImg photo={photos.suvGarage} fill sizes="(min-width: 768px) 480px, 100vw" className="transition-transform duration-700 group-hover:scale-[1.03]" />
+            <div aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,15,26,0.8)_0%,rgba(11,15,26,0.1)_75%)]" />
+            <figcaption className="absolute inset-y-0 left-6 flex max-w-[260px] flex-col justify-center text-white">
+              <span className="flex size-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur"><Smartphone className="size-5" /></span>
+              <p className="mt-3 font-display text-xl font-semibold leading-tight">Drivers watch the job live — and approve from WhatsApp.</p>
+            </figcaption>
+            <PhotoCredit photo={photos.suvGarage} className="absolute bottom-3 right-4" />
+          </figure>
         </div>
       </section>
 
@@ -276,6 +317,8 @@ export default function MarketingHome() {
       {/* ── Final CTA ───────────────────────────────────────────────── */}
       <section className="px-6 pb-24 md:px-8">
         <div className="relative mx-auto max-w-[1200px] overflow-hidden rounded-[32px] bg-[#0B0F1A] px-6 py-20 text-center text-[#F4F2EE] md:py-[88px]">
+          <PhotoImg photo={photos.accraCity} fill sizes="1200px" className="opacity-40" />
+          <div aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,15,26,0.75),rgba(11,15,26,0.9))]" />
           <div aria-hidden className="absolute -bottom-[260px] left-1/2 h-[520px] w-[900px] -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_50%,rgba(255,90,31,0.35)_0%,rgba(255,90,31,0)_100%)]" />
           <h2 className="relative font-display text-4xl font-bold leading-[1.02] tracking-[-0.035em] md:text-6xl">Ready to FixAm your garage?</h2>
           <p className="relative mx-auto mt-[18px] max-w-[520px] text-lg text-[#AEB5C8]">

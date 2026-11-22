@@ -4,6 +4,7 @@ import { listDirectoryGarages, directoryCoverageOptions } from "@/lib/discovery/
 import { SiteFooter } from "@/components/marketing/site-chrome"
 import { PageHero } from "@/components/marketing/page-hero"
 import { DirectoryBrowser, DirectoryResultsSkeleton } from "./directory-browser"
+import { photos } from "@/lib/images"
 
 type SP = { q?: string; make?: string; model?: string; lat?: string; lng?: string }
 
@@ -43,6 +44,7 @@ export default function GaragesPage({ searchParams }: { searchParams: Promise<SP
   return (
     <main className="min-h-screen bg-background text-foreground">
       <PageHero
+        image={photos.accraStreet}
         active="Find a garage"
         eyebrow="For drivers"
         title={

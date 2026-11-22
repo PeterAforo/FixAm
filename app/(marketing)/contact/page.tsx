@@ -4,6 +4,7 @@ import { SiteFooter } from "@/components/marketing/site-chrome"
 import { PageHero } from "@/components/marketing/page-hero"
 import { site, whatsappLink } from "@/lib/site"
 import { ContactForm } from "./contact-form"
+import { photos } from "@/lib/images"
 
 export const metadata = {
   title: "Contact us",
@@ -21,6 +22,7 @@ export default function ContactPage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <PageHero
+        image={photos.suvGarage}
         eyebrow="Contact"
         title="Let's talk about your garage"
         subtitle="Questions about setup, pricing, partnerships or moving your customers across? Send us a message — a real person in Accra will get back to you."
