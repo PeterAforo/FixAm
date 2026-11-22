@@ -72,7 +72,7 @@ const COLUMN_TINT: Partial<Record<JobStatus, string>> = {
 }
 
 const inputCls =
-  "min-h-10 rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+  "min-h-10 rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 export function JobsBoard({
   garageSlug,
@@ -212,7 +212,7 @@ export function JobsBoard({
       {/* Header + filters */}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold">Job board</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Job board</h1>
           <p className="text-muted-foreground">{effectiveJobs.length} active jobs</p>
         </div>
         <Button asChild>
@@ -258,7 +258,7 @@ export function JobsBoard({
       </div>
 
       {toast && (
-        <div className="rounded-lg border-2 border-warning bg-warning/10 px-4 py-2.5 text-sm font-semibold text-warning-foreground">
+        <div className="rounded-lg border border-warning bg-warning/10 px-4 py-2.5 text-sm font-semibold text-warning-foreground">
           {toast}
         </div>
       )}
@@ -271,7 +271,7 @@ export function JobsBoard({
             return (
               <div
                 key={status}
-                className={`flex w-64 shrink-0 flex-col rounded-xl border-2 bg-surface-muted/40 transition-colors ${COLUMN_TINT[status] ?? ""} ${
+                className={`flex w-64 shrink-0 flex-col rounded-xl border bg-surface-muted/40 transition-colors ${COLUMN_TINT[status] ?? ""} ${
                   dragOver === status ? "border-primary bg-primary/10 ring-2 ring-primary/30" : "border-transparent"
                 }`}
                 onDragOver={(e) => {
@@ -287,10 +287,10 @@ export function JobsBoard({
                 }}
               >
                 <div className="flex items-center justify-between px-3 py-2.5">
-                  <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  <span className="text-xs font-semibold text-muted-foreground">
                     {COLUMN_LABEL[status]}
                   </span>
-                  <span className="rounded-pill bg-surface px-2 py-0.5 text-xs font-bold">{colJobs.length}</span>
+                  <span className="rounded-pill bg-surface px-2 py-0.5 text-xs font-semibold">{colJobs.length}</span>
                 </div>
                 <div className="flex-1 space-y-2 overflow-y-auto px-2 pb-2" style={{ maxHeight: "calc(100vh - 320px)", minHeight: 120 }}>
                   {colJobs.map((j) => (
@@ -318,14 +318,14 @@ export function JobsBoard({
         <div className="space-y-6">
           {swimlanes.map((lane) => (
             <div key={lane.key}>
-              <h2 className="mb-2 font-display text-lg font-bold">{lane.label}</h2>
+              <h2 className="mb-2 text-[15px] font-semibold">{lane.label}</h2>
               <div className="flex gap-3 overflow-x-auto pb-2">
                 {statuses.map((status) => {
                   const laneJobs = lane.jobs.filter((j) => j.status === status)
                   if (laneJobs.length === 0 && swimlanes.length > 3) return null
                   return (
-                    <div key={status} className="w-56 shrink-0 rounded-lg border-2 border-dashed border-border p-2">
-                      <p className="mb-2 text-[10px] font-bold uppercase text-muted-foreground">
+                    <div key={status} className="w-56 shrink-0 rounded-lg border border-dashed border-border p-2">
+                      <p className="mb-2 text-[10px] font-semibold text-muted-foreground">
                         {COLUMN_LABEL[status]} · {laneJobs.length}
                       </p>
                       <div className="space-y-2">
@@ -377,13 +377,13 @@ function JobCard({
         e.dataTransfer.setData("text/job-id", job.id)
         e.dataTransfer.effectAllowed = "move"
       }}
-      className={`block rounded-lg border-2 border-border bg-card p-2.5 shadow-chunky transition-all hover:-translate-y-0.5 hover:shadow-pop ${job.priority === "urgent" ? "border-l-4 border-l-danger" : ""} ${compact ? "text-xs" : ""}`}
+      className={`block rounded-lg border border-border bg-card p-2.5 shadow-1 transition-all hover:shadow-pop ${job.priority === "urgent" ? "border-l-4 border-l-danger" : ""} ${compact ? "text-xs" : ""}`}
     >
       <div className="flex items-start gap-2">
         <CarAvatar type={vtype} color={job.colorHex ?? undefined} className="h-8 w-14 shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-1.5">
-            <span className="font-mono text-xs font-bold">{job.number}</span>
+            <span className="font-mono text-xs font-semibold">{job.number}</span>
             {job.priority !== "normal" && (
               <StatusPill tone={job.priority === "urgent" ? "danger" : "warning"}>{job.priority}</StatusPill>
             )}
@@ -405,7 +405,7 @@ function JobCard({
           <Car className="size-3" /> {job.vehicleLabel}
         </span>
         {cd && (
-          <span className={`flex items-center gap-1 font-bold ${cd.tone === "late" ? "text-danger" : cd.tone === "warn" ? "text-warning" : "text-muted-foreground"}`}>
+          <span className={`flex items-center gap-1 font-semibold ${cd.tone === "late" ? "text-danger" : cd.tone === "warn" ? "text-warning" : "text-muted-foreground"}`}>
             <Clock className="size-3" /> {cd.text}
           </span>
         )}
@@ -413,7 +413,7 @@ function JobCard({
       {(job.assignees.length > 0 || lane) && (
         <div className="mt-1.5 flex items-center gap-1">
           {job.assignees.slice(0, 3).map((a) => (
-            <span key={a.userId} className={`rounded-full border px-1.5 py-0.5 text-[10px] font-bold ${a.isLead ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>
+            <span key={a.userId} className={`rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${a.isLead ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}>
               {a.name.split(" ")[0]}
             </span>
           ))}

@@ -23,8 +23,8 @@ import { createInvoiceFromJob } from "@/lib/money/actions"
 import type { JobStatus } from "@/lib/jobs/transitions"
 
 const inputCls =
-  "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-const labelCls = "text-xs font-bold uppercase tracking-wide text-muted-foreground"
+  "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
+const labelCls = "text-xs font-semibold text-muted-foreground"
 
 const TABS = ["overview", "findings", "items", "tasks", "media", "timeline"] as const
 type Tab = (typeof TABS)[number]
@@ -228,7 +228,7 @@ export function JobDetailPanel(props: {
           <Link href={`/g/${garageSlug}/jobs`} className="text-sm font-semibold text-muted-foreground hover:text-foreground">
             ← Job board
           </Link>
-          <h1 className="mt-1 flex flex-wrap items-center gap-3 font-display text-3xl font-bold">
+          <h1 className="mt-1 flex flex-wrap items-center gap-3 font-display text-[30px] font-semibold tracking-[-0.025em]">
             <span className="font-mono">{job.number}</span>
             <StatusPill status={job.status} />
             {job.priority !== "normal" && <StatusPill tone={job.priority === "urgent" ? "danger" : "warning"}>{job.priority}</StatusPill>}
@@ -288,29 +288,29 @@ export function JobDetailPanel(props: {
       </header>
 
       {trackerUrl && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-info bg-info/10 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-info bg-info/10 px-4 py-3">
           <p className="text-sm font-semibold">Customer tracker link:</p>
           <code className="break-all text-xs">{trackerUrl}</code>
           <Button size="sm" variant="secondary" onClick={() => navigator.clipboard.writeText(trackerUrl)}>Copy</Button>
         </div>
       )}
 
-      {msg && <p className="rounded-lg border-2 border-danger bg-danger/10 px-4 py-2 text-sm font-semibold text-danger">{msg}</p>}
+      {msg && <p className="rounded-lg border border-danger bg-danger/10 px-4 py-2 text-sm font-semibold text-danger">{msg}</p>}
 
       {job.status === "ready" && (
         <motion.div
           variants={statusBounce}
           initial="initial"
           animate="animate"
-          className="flex items-center gap-3 rounded-xl border-2 border-success bg-success/10 px-4 py-3"
+          className="flex items-center gap-3 rounded-xl border border-success bg-success/10 px-4 py-3"
         >
           <PartyPopper className="size-5 text-success" />
-          <p className="text-sm font-bold text-success">Ready for pickup — the customer has been notified.</p>
+          <p className="text-sm font-semibold text-success">Ready for pickup — the customer has been notified.</p>
         </motion.div>
       )}
 
       {job.status === "quality_check" && !job.qcSignedOff && canQcSignoff && (
-        <div className="flex items-center justify-between rounded-xl border-2 border-warning bg-warning/10 px-4 py-3">
+        <div className="flex items-center justify-between rounded-xl border border-warning bg-warning/10 px-4 py-3">
           <p className="text-sm text-muted-foreground">Run through the QC checklist, then sign off to unlock <b>Ready</b>.</p>
           <Button size="sm" variant="secondary" disabled={pending} onClick={qc}>
             <ShieldCheck className="size-4" /> Sign off QC
@@ -319,7 +319,7 @@ export function JobDetailPanel(props: {
       )}
 
       {!job.qcSignedOff && ["quality_check", "ready"].includes(job.status) === false && canQcSignoff && job.status !== "closed" && job.status !== "cancelled" && job.status !== "delivered" && (
-        <div className="flex items-center justify-between rounded-xl border-2 border-border bg-surface-muted/50 px-4 py-3">
+        <div className="flex items-center justify-between rounded-xl border border-border bg-surface-muted/50 px-4 py-3">
           <p className="text-sm text-muted-foreground">QC sign-off unlocks the <b>Ready</b> transition.</p>
           <Button size="sm" variant="secondary" disabled={pending} onClick={qc}>
             <ShieldCheck className="size-4" /> Sign off QC
@@ -328,12 +328,12 @@ export function JobDetailPanel(props: {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 overflow-x-auto border-b-2 border-border">
+      <div className="flex gap-1 overflow-x-auto border-b border-border">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-bold capitalize ${tab === t ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+            className={`px-4 py-2 text-sm font-semibold capitalize ${tab === t ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
           >
             {t}
           </button>
@@ -344,7 +344,7 @@ export function JobDetailPanel(props: {
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardContent className="space-y-3 p-5">
-              <h2 className="font-display text-lg font-bold">Complaint</h2>
+              <h2 className="text-[15px] font-semibold">Complaint</h2>
               <p className="text-sm">{job.complaint ?? "—"}</p>
               <dl className="grid grid-cols-2 gap-2 text-sm">
                 <dt className="text-muted-foreground">Odometer in</dt><dd className="font-semibold">{job.checkInOdometerKm?.toLocaleString() ?? "—"} km</dd>
@@ -358,7 +358,7 @@ export function JobDetailPanel(props: {
                   <p className={labelCls}>Assigned</p>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {assignments.map((a) => (
-                      <span key={a.userId} className="rounded-pill border-2 border-border bg-surface-muted px-2.5 py-1 text-xs font-bold">
+                      <span key={a.userId} className="rounded-pill border border-border bg-surface-muted px-2.5 py-1 text-xs font-semibold">
                         {a.name}{a.isLead ? " ★" : ""}
                       </span>
                     ))}
@@ -370,7 +370,7 @@ export function JobDetailPanel(props: {
 
           <Card>
             <CardContent className="p-5">
-              <h2 className="font-display text-lg font-bold">Estimate ({items.length} lines)</h2>
+              <h2 className="text-[15px] font-semibold">Estimate ({items.length} lines)</h2>
               {items.length === 0 ? (
                 <p className="mt-2 text-sm text-muted-foreground">No items yet — add parts, labour and fees on the Items tab.</p>
               ) : (
@@ -382,7 +382,7 @@ export function JobDetailPanel(props: {
                     </li>
                   ))}
                   {items.length > 8 && <li className="text-xs text-muted-foreground">+{items.length - 8} more</li>}
-                  <li className="flex justify-between border-t-2 border-border pt-2 font-bold">
+                  <li className="flex justify-between border-t border-border pt-2 font-semibold">
                     <span>Subtotal</span><span>{ghs(subtotal)}</span>
                   </li>
                 </ul>
@@ -392,7 +392,7 @@ export function JobDetailPanel(props: {
 
           <Card className="lg:col-span-2">
             <CardContent className="p-5">
-              <h2 className="font-display text-lg font-bold">Oil &amp; service</h2>
+              <h2 className="text-[15px] font-semibold">Oil &amp; service</h2>
               <p className="mt-1 text-xs text-muted-foreground">
                 Recorded on delivery — sets the next oil-change interval (grade-based defaults).
               </p>
@@ -427,9 +427,9 @@ export function JobDetailPanel(props: {
       {tab === "findings" && (
         <Card>
           <CardContent className="space-y-4 p-5">
-            <h2 className="font-display text-lg font-bold">Findings</h2>
+            <h2 className="text-[15px] font-semibold">Findings</h2>
             {canUpdate && (
-              <div className="grid gap-2 rounded-xl border-2 border-dashed border-border p-3 sm:grid-cols-[1fr_1fr_auto]">
+              <div className="grid gap-2 rounded-xl border border-dashed border-border p-3 sm:grid-cols-[1fr_1fr_auto]">
                 <input className={inputCls} placeholder="Finding title *" value={finding.title} onChange={(e) => setFinding({ ...finding, title: e.target.value })} />
                 <input className={inputCls} placeholder="Details" value={finding.description} onChange={(e) => setFinding({ ...finding, description: e.target.value })} />
                 <div className="flex gap-2">
@@ -447,7 +447,7 @@ export function JobDetailPanel(props: {
             ) : (
               <ul className="space-y-2">
                 {findings.map((f) => (
-                  <li key={f.id} className="rounded-lg border-2 border-border p-3">
+                  <li key={f.id} className="rounded-lg border border-border p-3">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold">{f.title}</p>
                       <StatusPill tone={f.severity === "urgent" ? "danger" : f.severity === "recommended" ? "warning" : "neutral"}>{f.severity.replace(/_/g, " ")}</StatusPill>
@@ -466,11 +466,11 @@ export function JobDetailPanel(props: {
         <Card>
           <CardContent className="space-y-4 p-5">
             <div className="flex items-center justify-between">
-              <h2 className="font-display text-lg font-bold">Job items</h2>
-              <span className="text-sm font-bold">{ghs(subtotal)}</span>
+              <h2 className="text-[15px] font-semibold">Job items</h2>
+              <span className="text-sm font-semibold">{ghs(subtotal)}</span>
             </div>
             {canUpdate && (
-              <div className="grid gap-2 rounded-xl border-2 border-dashed border-border p-3 sm:grid-cols-[110px_1fr_80px_110px_90px_auto]">
+              <div className="grid gap-2 rounded-xl border border-dashed border-border p-3 sm:grid-cols-[110px_1fr_80px_110px_90px_auto]">
                 <select className={inputCls} value={item.type} onChange={(e) => setItem({ ...item, type: e.target.value })}>
                   <option value="labour">Labour</option>
                   <option value="part">Part</option>
@@ -489,7 +489,7 @@ export function JobDetailPanel(props: {
             ) : (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b-2 border-border text-left text-xs uppercase text-muted-foreground">
+                  <tr className="border-b border-border text-left text-xs text-muted-foreground">
                     <th className="py-2">Item</th><th>Type</th><th className="text-right">Qty</th><th className="text-right">Price</th><th className="text-right">Total</th><th>Status</th>
                   </tr>
                 </thead>
@@ -514,7 +514,7 @@ export function JobDetailPanel(props: {
       {tab === "tasks" && (
         <Card>
           <CardContent className="p-5">
-            <h2 className="font-display text-lg font-bold">Tasks &amp; checklist</h2>
+            <h2 className="text-[15px] font-semibold">Tasks &amp; checklist</h2>
             {tasks.length === 0 ? (
               <p className="mt-2 text-sm text-muted-foreground">No tasks — pick a template at check-in to generate the checklist.</p>
             ) : (
@@ -524,11 +524,11 @@ export function JobDetailPanel(props: {
                   return (
                     <li key={t.id}>
                       <button
-                        className="flex w-full items-center gap-3 rounded-lg border-2 border-border px-3 py-2.5 text-left hover:bg-surface-muted/60 disabled:opacity-60"
+                        className="flex w-full items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left hover:bg-surface-muted/60 disabled:opacity-60"
                         disabled={!canToggle || pending}
                         onClick={() => toggleTask(t.id, !t.isDone)}
                       >
-                        <span className={`flex size-6 shrink-0 items-center justify-center rounded-md border-2 ${t.isDone ? "border-success bg-success text-success-foreground" : "border-border"}`}>
+                        <span className={`flex size-6 shrink-0 items-center justify-center rounded-md border ${t.isDone ? "border-success bg-success text-success-foreground" : "border-border"}`}>
                           {t.isDone && <CheckCircle2 className="size-4" />}
                         </span>
                         <span className={`flex-1 text-sm font-semibold ${t.isDone ? "line-through text-muted-foreground" : ""}`}>{t.title}</span>
@@ -547,9 +547,9 @@ export function JobDetailPanel(props: {
       {tab === "media" && (
         <Card>
           <CardContent className="space-y-4 p-5">
-            <h2 className="font-display text-lg font-bold">Photos &amp; media</h2>
+            <h2 className="text-[15px] font-semibold">Photos &amp; media</h2>
             {canMediaUpload && (
-              <div className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-dashed border-border p-3">
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-border p-3">
                 <select className={`${inputCls} w-auto`} value={mediaStage} onChange={(e) => setMediaStage(e.target.value)}>
                   <option value="check_in">Check-in</option>
                   <option value="diagnosis">Diagnosis</option>
@@ -568,7 +568,7 @@ export function JobDetailPanel(props: {
             ) : (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {media.map((m) => (
-                  <figure key={m.id} className="overflow-hidden rounded-lg border-2 border-border">
+                  <figure key={m.id} className="overflow-hidden rounded-lg border border-border">
                     {m.kind === "photo" ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={mediaUrl(m.storagePath)} alt={m.caption ?? "Job photo"} className="aspect-[4/3] w-full object-cover" />
@@ -589,7 +589,7 @@ export function JobDetailPanel(props: {
       {tab === "timeline" && (
         <Card>
           <CardContent className="p-5">
-            <h2 className="font-display text-lg font-bold">Status timeline</h2>
+            <h2 className="text-[15px] font-semibold">Status timeline</h2>
             {events.length === 0 ? (
               <p className="mt-2 text-sm text-muted-foreground">No events.</p>
             ) : (

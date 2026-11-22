@@ -36,7 +36,7 @@ type OrderRow = {
 
 type OrderDetail = NonNullable<Extract<Awaited<ReturnType<typeof getVendorOrderDetail>>, { ok: true; data: object }>["data"]>
 
-const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const inputCls = "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 export function MarketplacePanel(props: {
   garageId: string
@@ -148,7 +148,7 @@ export function MarketplacePanel(props: {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold">Marketplace</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Marketplace</h1>
           <p className="text-sm text-muted-foreground">
             Parts from approved vendors{garageLocation.region || garageLocation.city
               ? ` delivering to ${[garageLocation.city, garageLocation.region].filter(Boolean).join(", ")}`
@@ -171,7 +171,7 @@ export function MarketplacePanel(props: {
       {showCart && (
         <Card>
           <CardContent className="space-y-3 p-4">
-            <h2 className="font-display text-lg font-bold">Cart — grouped by vendor</h2>
+            <h2 className="text-[15px] font-semibold">Cart — grouped by vendor</h2>
             {[...new Set([...cart.values()].map((c) => c.product.vendorId))].map((vid) => {
               const lines = [...cart.values()].filter((c) => c.product.vendorId === vid)
               const vendor = lines[0]!.product.vendorName
@@ -195,7 +195,7 @@ export function MarketplacePanel(props: {
             })}
             <div className="flex flex-wrap items-end gap-3">
               <label className="text-sm">
-                <span className="mb-1 block text-xs font-semibold uppercase text-muted-foreground">Deliver to branch</span>
+                <span className="mb-1 block text-xs font-semibold text-muted-foreground">Deliver to branch</span>
                 <select value={branchId} onChange={(e) => setBranchId(e.target.value)} className={inputCls}>
                   {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
@@ -229,10 +229,10 @@ export function MarketplacePanel(props: {
           {groupedProducts.map((g) => (
             <section key={g.vendor}>
               <div className="mb-2 flex items-baseline gap-2">
-                <h2 className="font-display text-lg font-bold">
+                <h2 className="text-[15px] font-semibold">
                   {g.vendor}
                   {g.verified && (
-                    <span className="ml-2 rounded-pill border border-success/40 bg-success/10 px-2 py-0.5 align-middle text-xs font-bold text-success">
+                    <span className="ml-2 rounded-pill border border-success/40 bg-success/10 px-2 py-0.5 align-middle text-xs font-semibold text-success">
                       Verified
                     </span>
                   )}
@@ -250,7 +250,7 @@ export function MarketplacePanel(props: {
                             <p className="font-semibold leading-tight">{p.name}</p>
                             <p className="text-xs text-muted-foreground">{[p.brand, p.category].filter(Boolean).join(" · ")}</p>
                           </div>
-                          <span className="shrink-0 font-bold tabular-nums">{formatGHS(p.price)}</span>
+                          <span className="shrink-0 font-semibold tabular-nums">{formatGHS(p.price)}</span>
                         </div>
                         <p className="mt-2 text-xs text-muted-foreground">
                           {[p.stockStatus?.replace(/_/g, " "), p.quantityAvailable != null ? `${p.quantityAvailable} avail` : null,
@@ -266,7 +266,7 @@ export function MarketplacePanel(props: {
             
             <div className="flex items-center gap-1">
                               <button className="h-7 w-7 rounded-lg border border-border text-sm" onClick={() => setQty(p.id, inCart - (p.minOrderQty ?? 1))}>−</button>
-                              <span className="w-8 text-center text-sm font-bold tabular-nums">{inCart}</span>
+                              <span className="w-8 text-center text-sm font-semibold tabular-nums">{inCart}</span>
                               <button className="h-7 w-7 rounded-lg border border-border text-sm" onClick={() => setQty(p.id, inCart + (p.minOrderQty ?? 1))}>+</button>
                             </div>
                           )}
@@ -295,11 +295,11 @@ export function MarketplacePanel(props: {
               <CardContent className="p-4">
                 <button className="flex w-full flex-wrap items-center justify-between gap-2 text-left" onClick={() => toggleOrder(o.id)}>
                   <div>
-                    <p className="font-mono text-sm font-bold">{o.number}</p>
+                    <p className="font-mono text-sm font-semibold">{o.number}</p>
                     <p className="text-xs text-muted-foreground">{o.vendorName} · {o.branchName ?? ""} · {o.origin.replace(/_/g, " ")}{o.jobId ? " · job-linked" : ""}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-bold tabular-nums">{formatGHS(o.total)}</span>
+                    <span className="font-semibold tabular-nums">{formatGHS(o.total)}</span>
                     <StatusPill status={o.status} tone={statusTone(o.status)} />
                     {o.paymentStatus === "pending" && <StatusPill status="unpaid" tone="warning" />}
                   </div>

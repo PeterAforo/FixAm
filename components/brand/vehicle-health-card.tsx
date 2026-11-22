@@ -43,7 +43,7 @@ function HealthRing({
             strokeDashoffset={status === "unknown" ? 2 * Math.PI * 18 : 2 * Math.PI * 18 * 0.25}
           />
         </svg>
-        <span className={cn("absolute inset-0 flex items-center justify-center font-display text-[9px] font-bold uppercase leading-none", RING_TEXT[status])}>
+        <span className={cn("absolute inset-0 flex items-center justify-center font-display text-[9px] font-bold leading-none", RING_TEXT[status])}>
           {label}
         </span>
       </div>
@@ -81,7 +81,7 @@ export function VehicleHealthCard({
   const scoreTone =
     score == null ? "text-muted-foreground" : score.score >= 80 ? "text-success" : score.score >= 50 ? "text-warning" : "text-danger"
   return (
-    <div className={cn("overflow-hidden rounded-xl border-2 border-border bg-card shadow-chunky", className)}>
+    <div className={cn("overflow-hidden rounded-xl border border-border bg-card shadow-1", className)}>
       {score && (
         <div className="flex items-center gap-4 border-b border-border bg-gradient-to-r from-primary/10 via-transparent to-transparent px-5 py-4">
           <div className="relative size-16 shrink-0">
@@ -100,7 +100,7 @@ export function VehicleHealthCard({
             </span>
           </div>
           <div className="min-w-0">
-            <p className="font-display text-sm font-bold uppercase tracking-wide">FixAm Score</p>
+            <p className="font-display text-sm font-bold">FixAm Score</p>
             {score.tips.length > 0 ? (
               <ul className="mt-0.5 space-y-0.5">
                 {score.tips.map((t) => (
@@ -116,12 +116,12 @@ export function VehicleHealthCard({
       <div className="p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-sm font-bold tracking-widest">
-            <span className="rounded-sm border-2 border-midnight-700 bg-plate px-1.5 py-0.5 text-midnight-900">
+          <p className="font-mono text-sm font-semibold">
+            <span className="rounded-sm border border-midnight-700 bg-plate px-1.5 py-0.5 text-midnight-900">
               {plate.toUpperCase()}
             </span>
           </p>
-          {nickname && <p className="mt-1 font-display text-lg font-bold">{nickname}</p>}
+          {nickname && <p className="mt-1 text-[15px] font-semibold">{nickname}</p>}
         </div>
       </div>
       <CarAvatar type={type} color={color} className="my-3 max-h-24" title={`${nickname ?? "Vehicle"} ${plate}`} />

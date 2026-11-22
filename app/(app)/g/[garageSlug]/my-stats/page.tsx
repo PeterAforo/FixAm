@@ -31,7 +31,7 @@ export default async function MyStatsPage({ params }: { params: Promise<{ garage
   const { garageSlug } = await params
   return (
     <div className="mx-auto max-w-3xl p-4 md:p-8">
-      <h1 className="font-display text-3xl font-bold">My stats</h1>
+      <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">My stats</h1>
       <Suspense fallback={<div className="mt-6 h-64 animate-pulse rounded-2xl bg-surface" />}>
         <StatsLoader garageSlug={garageSlug} />
       </Suspense>

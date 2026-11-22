@@ -50,8 +50,8 @@ export type CatalogueEntry = {
 const COLORS = ["White", "Black", "Silver", "Grey", "Red", "Blue", "Gold", "Brown", "Green", "Yellow", "Orange", "Maroon"]
 
 const inputCls =
-  "min-h-11 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-const labelCls = "text-xs font-bold uppercase tracking-wide text-muted-foreground"
+  "min-h-11 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
+const labelCls = "text-xs font-semibold text-muted-foreground"
 
 export function VehicleFormDrawer({
   garageId,
@@ -142,19 +142,19 @@ export function VehicleFormDrawer({
       {open && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/40" role="dialog" aria-modal="true" aria-label={initial ? "Edit vehicle" : "New vehicle"}>
           <button className="absolute inset-0 cursor-default" aria-label="Close" onClick={onClose} />
-          <div className="relative flex h-full w-full max-w-md flex-col border-l-2 border-border bg-surface shadow-chunky">
-            <header className="flex items-center justify-between border-b-2 border-border px-5 py-4">
-              <h2 className="font-display text-xl font-bold">{initial ? "Edit vehicle" : "New vehicle"}</h2>
+          <div className="relative flex h-full w-full max-w-md flex-col border-l border-border bg-surface shadow-1">
+            <header className="flex items-center justify-between border-b border-border px-5 py-4">
+              <h2 className="font-display text-xl font-semibold">{initial ? "Edit vehicle" : "New vehicle"}</h2>
               <button onClick={onClose} className="rounded-lg p-2 hover:bg-surface-muted" aria-label="Close">
                 <X className="size-5" />
               </button>
             </header>
 
             <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-              {error && <p className="rounded-lg border-2 border-danger bg-danger/10 px-3 py-2 text-sm font-semibold text-danger">{error}</p>}
+              {error && <p className="rounded-lg border border-danger bg-danger/10 px-3 py-2 text-sm font-semibold text-danger">{error}</p>}
               {duplicate && (
-                <div className="rounded-lg border-2 border-warning bg-warning/10 px-3 py-2 text-sm">
-                  <p className="font-bold">This plate is already registered.</p>
+                <div className="rounded-lg border border-warning bg-warning/10 px-3 py-2 text-sm">
+                  <p className="font-semibold">This plate is already registered.</p>
                   <a className="font-semibold text-primary underline" href={`/g/${garageSlug}/vehicles/${duplicate.id}`}>
                     Open {duplicate.plate} →
                   </a>
@@ -175,7 +175,7 @@ export function VehicleFormDrawer({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls}>Plate number *</label>
-                  <input className={`${inputCls} font-mono uppercase`} placeholder="GR 1234-24" value={form.plateNumber} onChange={(e) => set("plateNumber", e.target.value)} />
+                  <input className={`${inputCls} font-mono`} placeholder="GR 1234-24" value={form.plateNumber} onChange={(e) => set("plateNumber", e.target.value)} />
                   {ferr("plateNumber") && <p className="mt-1 text-xs font-semibold text-danger">{ferr("plateNumber")}</p>}
                 </div>
                 <div>
@@ -273,7 +273,7 @@ export function VehicleFormDrawer({
               </div>
             </div>
 
-            <footer className="border-t-2 border-border px-5 py-4">
+            <footer className="border-t border-border px-5 py-4">
               <Button className="w-full" disabled={pending} onClick={submit}>
                 {pending ? "Saving…" : initial ? "Save changes" : "Register vehicle"}
               </Button>

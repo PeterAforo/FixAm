@@ -46,7 +46,7 @@ export function BillingPanel({ garageId, billing }: { garageId: string; billing:
       <Card><CardContent className="p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <p className="font-display text-lg font-bold">{billing.planName ?? "No plan"}</p>
+            <p className="text-[15px] font-semibold">{billing.planName ?? "No plan"}</p>
             <p className="text-xs text-muted-foreground">
               {billing.isComplimentary ? "Complimentary (pilot)" : `Status: ${billing.status.replace(/_/g, " ")}`}
               {billing.trialEndsAt ? ` · trial ends ${new Date(billing.trialEndsAt).toLocaleDateString("en-GH")}` : ""}
@@ -76,9 +76,9 @@ export function BillingPanel({ garageId, billing }: { garageId: string; billing:
                 key={p.id}
                 type="button"
                 onClick={() => setSelected(p.code)}
-                className={`rounded-xl border-2 p-3 text-left transition-colors ${selected === p.code ? "border-primary bg-primary/5" : "border-border hover:bg-surface-muted"}`}
+                className={`rounded-xl border p-3 text-left transition-colors ${selected === p.code ? "border-primary bg-primary/5" : "border-border hover:bg-surface-muted"}`}
               >
-                <p className="font-bold">{p.name}</p>
+                <p className="font-semibold">{p.name}</p>
                 <p className="text-sm">{gh(p.priceMonthly)}/mo</p>
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   {p.maxStaff != null ? `${p.maxStaff} staff` : "∞ staff"} · {p.messageAllowance} msgs/mo

@@ -32,7 +32,7 @@ async function Loader({ garageSlug }: { garageSlug: string }) {
 export default async function RenewalsPage({ params }: { params: Promise<{ garageSlug: string }> }) {
   const { garageSlug } = await params
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-5 py-6 md:px-10 md:py-8">
       <div className="mx-auto max-w-7xl">
         <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-muted" />}>
           <Loader garageSlug={garageSlug} />

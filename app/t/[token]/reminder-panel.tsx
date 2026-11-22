@@ -461,7 +461,7 @@ function RenewalTracker(props: {
   if (!loaded) return <p className="mt-3 text-sm text-muted-foreground">Loading renewal…</p>
   if (!r) return <p className="mt-3 rounded-lg bg-success/10 p-3 text-sm text-success">Renewal request received — {garageName} will be in touch. No further reminders for this item.</p>
 
-  const gh = (p: number | null) => (p != null ? `GH? ${(p / 100).toLocaleString("en-GH", { minimumFractionDigits: 2 })}` : "—")
+  const gh = (p: number | null) => (p != null ? `GH₵ ${(p / 100).toLocaleString("en-GH", { minimumFractionDigits: 2 })}` : "—")
 
   return (
     <div className="mt-3 space-y-3 rounded-lg border-2 border-border p-4">

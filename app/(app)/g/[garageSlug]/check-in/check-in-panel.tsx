@@ -10,8 +10,8 @@ import { createCustomer } from "@/lib/customers/actions"
 import { createVehicle } from "@/lib/vehicles/actions"
 
 const inputCls =
-  "min-h-11 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-const labelCls = "text-xs font-bold uppercase tracking-wide text-muted-foreground"
+  "min-h-11 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
+const labelCls = "text-xs font-semibold text-muted-foreground"
 
 type CustomerOpt = { id: string; name: string; phone: string; type: string }
 type VehicleOpt = {
@@ -271,7 +271,7 @@ export function CheckInPanel({
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-display text-3xl font-bold">Check in vehicle</h1>
+        <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Check in vehicle</h1>
         <p className="text-muted-foreground">Fast intake — customer, vehicle, complaint, odometer, assignment.</p>
         {/* Stepper */}
         <ol className="mt-4 flex items-center gap-2">
@@ -280,7 +280,7 @@ export function CheckInPanel({
               <button
                 type="button"
                 onClick={() => i < step && setStep(i)}
-                className={`flex size-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold ${
+                className={`flex size-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold ${
                   i < step ? "border-success bg-success text-success-foreground"
                   : i === step ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-surface text-muted-foreground"
@@ -290,20 +290,20 @@ export function CheckInPanel({
               >
                 {i < step ? <CheckCircle2 className="size-4" /> : i + 1}
               </button>
-              <span className={`hidden text-xs font-bold sm:block ${i === step ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
+              <span className={`hidden text-xs font-semibold sm:block ${i === step ? "text-foreground" : "text-muted-foreground"}`}>{label}</span>
               {i < STEPS.length - 1 && <span className={`h-0.5 flex-1 rounded ${i < step ? "bg-success" : "bg-border"}`} />}
             </li>
           ))}
         </ol>
       </header>
 
-      {error && <p className="rounded-lg border-2 border-danger bg-danger/10 px-4 py-3 text-sm font-semibold text-danger">{error}</p>}
+      {error && <p className="rounded-lg border border-danger bg-danger/10 px-4 py-3 text-sm font-semibold text-danger">{error}</p>}
 
       {/* 1. Customer & vehicle */}
       {step === 0 && (
       <Card>
         <CardContent className="space-y-4 p-5">
-          <h2 className="font-display text-lg font-bold">1 · Customer &amp; vehicle</h2>
+          <h2 className="text-[15px] font-semibold">1 · Customer &amp; vehicle</h2>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -351,7 +351,7 @@ export function CheckInPanel({
           </div>
 
           {showNewCustomer && (
-            <div className="grid gap-3 rounded-xl border-2 border-dashed border-border p-4 sm:grid-cols-3">
+            <div className="grid gap-3 rounded-xl border border-dashed border-border p-4 sm:grid-cols-3">
               <input className={inputCls} placeholder="Full name *" value={ncName} onChange={(e) => setNcName(e.target.value)} />
               <input className={inputCls} placeholder="Phone *" value={ncPhone} onChange={(e) => setNcPhone(e.target.value)} />
               <Button size="sm" onClick={quickAddCustomer} disabled={pending || !ncName.trim() || !ncPhone.trim()}>
@@ -361,8 +361,8 @@ export function CheckInPanel({
           )}
 
           {showNewVehicle && (
-            <div className="grid gap-3 rounded-xl border-2 border-dashed border-border p-4 sm:grid-cols-5">
-              <input className={`${inputCls} font-mono uppercase`} placeholder="Plate *" value={nv.plate} onChange={(e) => setNv({ ...nv, plate: e.target.value })} />
+            <div className="grid gap-3 rounded-xl border border-dashed border-border p-4 sm:grid-cols-5">
+              <input className={`${inputCls} font-mono`} placeholder="Plate *" value={nv.plate} onChange={(e) => setNv({ ...nv, plate: e.target.value })} />
               <input className={inputCls} placeholder="Make *" value={nv.make} onChange={(e) => setNv({ ...nv, make: e.target.value })} />
               <input className={inputCls} placeholder="Model *" value={nv.model} onChange={(e) => setNv({ ...nv, model: e.target.value })} />
               <input className={inputCls} placeholder="Year" value={nv.year} onChange={(e) => setNv({ ...nv, year: e.target.value })} />
@@ -379,7 +379,7 @@ export function CheckInPanel({
       {step === 1 && (
       <Card>
         <CardContent className="space-y-4 p-5">
-          <h2 className="font-display text-lg font-bold">2 · Job details</h2>
+          <h2 className="text-[15px] font-semibold">2 · Job details</h2>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -438,7 +438,7 @@ export function CheckInPanel({
       {step === 2 && (
       <Card>
         <CardContent className="space-y-4 p-5">
-          <h2 className="font-display text-lg font-bold">3 · Assignment</h2>
+          <h2 className="text-[15px] font-semibold">3 · Assignment</h2>
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <label className={labelCls}>Branch *</label>
@@ -455,7 +455,7 @@ export function CheckInPanel({
             </div>
             <div>
               <label className={labelCls}>Mechanics</label>
-              <div className="mt-1 flex max-h-28 flex-wrap gap-1.5 overflow-y-auto rounded-lg border-2 border-border p-2">
+              <div className="mt-1 flex max-h-28 flex-wrap gap-1.5 overflow-y-auto rounded-lg border border-border p-2">
                 {mechanics.length === 0 && <span className="text-xs text-muted-foreground">No staff</span>}
                 {mechanics.map((m) => {
                   const on = mechanicIds.includes(m.userId)
@@ -466,7 +466,7 @@ export function CheckInPanel({
                       type="button"
                       disabled={!branchOk}
                       onClick={() => setMechanicIds(on ? mechanicIds.filter((x) => x !== m.userId) : [...mechanicIds, m.userId])}
-                      className={`rounded-pill border-2 px-2.5 py-1 text-xs font-bold ${on ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"} disabled:opacity-40`}
+                      className={`rounded-pill border px-2.5 py-1 text-xs font-semibold ${on ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"} disabled:opacity-40`}
                     >
                       {m.name}
                     </button>
@@ -484,8 +484,8 @@ export function CheckInPanel({
       {step === 3 && (
       <Card>
         <CardContent className="space-y-4 p-5">
-          <h2 className="font-display text-lg font-bold">4 · Customer signature</h2>
-          <div className="rounded-xl border-2 border-border bg-white">
+          <h2 className="text-[15px] font-semibold">4 · Customer signature</h2>
+          <div className="rounded-xl border border-border bg-white">
             <canvas
               ref={canvasRef}
               width={640}
@@ -514,7 +514,7 @@ export function CheckInPanel({
         <Button variant="secondary" onClick={back} disabled={step === 0}>
           <ChevronLeft className="size-4" /> Back
         </Button>
-        <span className="text-xs font-bold text-muted-foreground">Step {step + 1} of {STEPS.length}</span>
+        <span className="text-xs font-semibold text-muted-foreground">Step {step + 1} of {STEPS.length}</span>
         {step < STEPS.length - 1 ? (
           <Button onClick={next}>
             Next <ChevronRight className="size-4" />

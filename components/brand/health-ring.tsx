@@ -70,7 +70,7 @@ export function HealthRing({
         />
         <g transform={`translate(${size / 2} ${size / 2})`}>{children}</g>
       </motion.svg>
-      {label ? <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{label}</span> : null}
+      {label ? <span className="text-[10px] font-semibold text-muted-foreground">{label}</span> : null}
     </div>
   )
 }

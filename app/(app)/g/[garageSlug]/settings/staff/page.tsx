@@ -40,7 +40,7 @@ async function StaffLoader({ params }: { params: Promise<{ garageSlug: string }>
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-display text-3xl font-bold text-foreground">Team</h1>
+        <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em] text-foreground">Team</h1>
         <p className="text-muted-foreground">
           {garage.name} · invite staff, change roles, suspend access
         </p>
@@ -61,7 +61,7 @@ export default function StaffSettingsPage({
   params: Promise<{ garageSlug: string }>
 }) {
   return (
-    <main className="min-h-screen bg-background p-6 md:p-10">
+    <main className="min-h-screen bg-background px-5 py-6 md:px-10 md:py-8">
       <div className="mx-auto max-w-4xl">
         <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-muted" />}>
           <StaffLoader params={params} />

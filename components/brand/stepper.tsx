@@ -31,7 +31,7 @@ export function Stepper({
             <span className="flex items-center gap-3">
               <span
                 className={cn(
-                  "flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-border font-display text-sm font-bold",
+                  "flex size-10 shrink-0 items-center justify-center rounded-full border border-border font-display text-sm font-bold",
                   step.state === "done" && "bg-success text-success-foreground",
                   step.state === "current" && "bg-primary text-primary-foreground",
                   step.state === "upcoming" && "bg-muted text-muted-foreground"
@@ -42,7 +42,7 @@ export function Stepper({
               </span>
               <span
                 className={cn(
-                  "text-sm font-bold",
+                  "text-sm font-semibold",
                   step.state === "upcoming" ? "text-muted-foreground" : "text-foreground"
                 )}
               >
@@ -52,7 +52,7 @@ export function Stepper({
             {!last && (
               <span
                 className={cn(
-                  "mx-3 hidden h-0.5 flex-1 border-t-2 border-dashed md:block",
+                  "mx-3 hidden h-0.5 flex-1 border-t border-dashed md:block",
                   step.state === "done" ? "border-success" : "border-border"
                 )}
                 aria-hidden

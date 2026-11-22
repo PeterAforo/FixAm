@@ -46,8 +46,8 @@ const CHANNELS = [
 ] as const
 
 const inputCls =
-  "min-h-11 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-const labelCls = "text-xs font-bold uppercase tracking-wide text-muted-foreground"
+  "min-h-11 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
+const labelCls = "text-xs font-semibold text-muted-foreground"
 
 export function CustomerFormDrawer({
   garageId,
@@ -150,9 +150,9 @@ export function CustomerFormDrawer({
         onClick={onClose}
         aria-label="Close"
       />
-      <div className="relative flex h-full w-full max-w-md flex-col border-l-2 border-border bg-background shadow-chunky">
-        <header className="flex items-center justify-between border-b-2 border-border px-5 py-4">
-          <h2 className="font-display text-xl font-bold">
+      <div className="relative flex h-full w-full max-w-md flex-col border-l border-border bg-background shadow-1">
+        <header className="flex items-center justify-between border-b border-border px-5 py-4">
+          <h2 className="font-display text-xl font-semibold">
             {form.id ? "Edit customer" : "New customer"}
           </h2>
           <button onClick={onClose} className="rounded-lg p-2 hover:bg-surface-muted" aria-label="Close">
@@ -243,7 +243,7 @@ export function CustomerFormDrawer({
                     key={ch.value}
                     type="button"
                     onClick={() => toggleChannel(ch.value)}
-                    className={`rounded-pill border-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${
+                    className={`rounded-pill border px-3 py-1.5 text-xs font-semibold transition-colors ${
                       active
                         ? "border-border bg-primary text-primary-foreground"
                         : "border-border bg-surface text-muted-foreground hover:bg-surface-muted"
@@ -302,16 +302,16 @@ export function CustomerFormDrawer({
           </label>
 
           {error && (
-            <p role="alert" className="rounded-lg border-2 border-danger bg-danger/10 px-3 py-2 text-sm font-semibold text-danger">
+            <p role="alert" className="rounded-lg border border-danger bg-danger/10 px-3 py-2 text-sm font-semibold text-danger">
               {error}
             </p>
           )}
           {duplicate && (
-            <div className="rounded-lg border-2 border-accent bg-accent/10 px-3 py-2 text-sm">
+            <div className="rounded-lg border border-accent bg-accent/10 px-3 py-2 text-sm">
               <p className="font-semibold">A customer with this phone already exists:</p>
               <Link
                 href={`/g/${garageSlug}/customers/${duplicate.id}`}
-                className="font-bold text-primary underline"
+                className="font-semibold text-primary underline"
                 onClick={onClose}
               >
                 Open {duplicate.name} →
@@ -320,7 +320,7 @@ export function CustomerFormDrawer({
           )}
         </form>
 
-        <footer className="border-t-2 border-border px-5 py-4">
+        <footer className="border-t border-border px-5 py-4">
           <Button type="button" className="w-full" disabled={pending} onClick={submit}>
             {pending ? "Saving…" : form.id ? "Save changes" : "Create customer"}
           </Button>

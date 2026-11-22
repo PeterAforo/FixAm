@@ -16,7 +16,7 @@ const META: Record<SyncState, { icon: typeof Clock; cls: string; label: string }
 export function SyncBadge({ state, onRetry, className }: { state: SyncState; onRetry?: () => void; className?: string }) {
   const { icon: Icon, cls, label } = META[state]
   return (
-    <span className={cn("inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide", cls, className)}>
+    <span className={cn("inline-flex items-center gap-1 text-[10px] font-semibold", cls, className)}>
       <Icon className={cn("size-3.5", state === "syncing" && "animate-spin")} />
       {label}
       {state === "failed" && onRetry ? (

@@ -36,7 +36,7 @@ type Data = {
   canOrder: boolean
 }
 
-const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const inputCls = "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 const EMPTY_FORM = {
   partId: "", sku: "", name: "", brand: "", category: "", unit: "pcs",
@@ -165,13 +165,13 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Parts & stock</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Parts & stock</h1>
           <p className="text-sm text-muted-foreground">
             {data.parts.length} parts{lowCount > 0 ? ` · ${lowCount} low on stock` : ""}
           </p>
         </div>
         <div className="flex gap-2">
-          <a href={`/g/${garageSlug}/purchase-orders`} className="inline-flex min-h-10 items-center rounded-lg border-2 border-border bg-surface px-4 text-sm font-bold">Purchase orders →</a>
+          <a href={`/g/${garageSlug}/purchase-orders`} className="inline-flex min-h-10 items-center rounded-lg border border-border bg-surface px-4 text-sm font-semibold">Purchase orders →</a>
           <Button variant="secondary" onClick={() => setTab(tab === "import" ? "catalogue" : "import")}>
             {tab === "import" ? "Catalogue" : "Import CSV"}
           </Button>
@@ -194,7 +194,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
             if (data.branchId) q.set("branch", data.branchId)
             router.push(`/g/${garageSlug}/parts${q.size ? `?${q}` : ""}`)
           }}>
-            <input name="q" placeholder="Search name, SKU, barcode…" className="min-h-10 w-64 rounded-lg border-2 border-border bg-surface px-3 text-sm" />
+            <input name="q" placeholder="Search name, SKU, barcode…" className="min-h-10 w-64 rounded-lg border border-border bg-surface px-3 text-sm" />
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" name="low" value="1" defaultChecked={false} className="h-4 w-4" /> Low stock only
             </label>
@@ -204,7 +204,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
           {showForm && (
             <Card>
               <CardContent className="p-4">
-                <h2 className="font-display text-lg font-bold">{form.partId ? "Edit part" : "New part"}</h2>
+                <h2 className="text-[15px] font-semibold">{form.partId ? "Edit part" : "New part"}</h2>
                 <form onSubmit={submitPart} className="mt-3 grid gap-3 sm:grid-cols-3">
                   <input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="SKU *" className={inputCls} required />
                   <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Name *" className={inputCls} required />
@@ -231,7 +231,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
             <CardContent className="overflow-x-auto p-0">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                     <th className="px-4 py-3">Part</th>
                     <th className="px-4 py-3">SKU</th>
                     <th className="px-4 py-3">Branch</th>
@@ -250,7 +250,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
                   {data.parts.map((p) => {
                     const low = p.onHand != null && p.reorderLevel != null && p.onHand <= p.reorderLevel
                     return (
-                      <tr key={p.id} className="border-b last:border-0">
+                      <tr key={`${p.id}-${p.branchId ?? "all"}`} className="border-b last:border-0">
                         <td className="px-4 py-3">
                           <p className="font-medium">{p.name}{!p.isActive && <span className="ml-2 text-xs text-muted-foreground">(inactive)</span>}</p>
                           <p className="text-xs text-muted-foreground">{[p.brand, p.category].filter(Boolean).join(" · ")}{p.preferredVendorName ? ` · ${p.preferredVendorName}` : ""}</p>
@@ -287,7 +287,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
       {tab === "import" && (
         <Card>
           <CardContent className="p-4">
-            <h2 className="font-display text-lg font-bold">Import parts from CSV</h2>
+            <h2 className="text-[15px] font-semibold">Import parts from CSV</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Columns: <code>sku, name, brand, category, unit, cost price, selling price, barcode</code>. Existing SKUs are updated.
             </p>
@@ -328,7 +328,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setAdjustFor(null)}>
           <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <CardContent className="p-4">
-              <h3 className="font-display text-lg font-bold">Adjust stock — {adjustFor.name}</h3>
+              <h3 className="text-[15px] font-semibold">Adjust stock — {adjustFor.name}</h3>
               <p className="text-xs text-muted-foreground">On hand {adjustFor.onHand ?? 0} · branch {adjustFor.branchName}</p>
               <form onSubmit={submitAdjust} className="mt-3 space-y-3">
                 <input value={adjustForm.quantity} onChange={(e) => setAdjustForm({ ...adjustForm, quantity: e.target.value })} placeholder="Quantity (+ in / − out)" inputMode="decimal" className={inputCls} required />
@@ -349,7 +349,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setTransferFor(null)}>
           <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <CardContent className="p-4">
-              <h3 className="font-display text-lg font-bold">Transfer — {transferFor.name}</h3>
+              <h3 className="text-[15px] font-semibold">Transfer — {transferFor.name}</h3>
               <form onSubmit={submitTransfer} className="mt-3 space-y-3">
                 <select value={transferForm.toBranchId} onChange={(e) => setTransferForm({ ...transferForm, toBranchId: e.target.value })} className={inputCls} required>
                   <option value="">To branch…</option>
@@ -371,7 +371,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setConfigFor(null)}>
           <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <CardContent className="p-4">
-              <h3 className="font-display text-lg font-bold">Stock settings — {configFor.name}</h3>
+              <h3 className="text-[15px] font-semibold">Stock settings — {configFor.name}</h3>
               <form onSubmit={submitConfig} className="mt-3 space-y-3">
                 <input value={configForm.reorderLevel} onChange={(e) => setConfigForm({ ...configForm, reorderLevel: e.target.value })} placeholder="Reorder level" inputMode="decimal" className={inputCls} />
                 <input value={configForm.reorderQuantity} onChange={(e) => setConfigForm({ ...configForm, reorderQuantity: e.target.value })} placeholder="Reorder quantity" inputMode="decimal" className={inputCls} />

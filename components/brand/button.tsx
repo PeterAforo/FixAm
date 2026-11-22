@@ -1,4 +1,4 @@
-import { Slot } from "@radix-ui/react-slot"
+import { Slot, Slottable } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Loader2 } from "lucide-react"
 import type * as React from "react"
@@ -54,17 +54,32 @@ function Button({
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & { asChild?: boolean; loading?: boolean }) {
-  const Comp = asChild ? Slot : "button"
+  const cls = cn(buttonVariants({ variant, size }), className)
+  if (asChild) {
+    // Slot requires exactly one element child — a leading `null` from the
+    // loading ternary makes Children.count === 2 and throws. Slottable marks
+    // the real target when the spinner is also rendered.
+    return (
+      <Slot className={cls} {...props}>
+        {loading
+          ? [
+              <Loader2 key="spinner" className="animate-spin" aria-hidden />,
+              <Slottable key="child">{children}</Slottable>,
+            ]
+          : children}
+      </Slot>
+    )
+  }
   return (
-    <Comp
-      className={cn(buttonVariants({ variant, size }), className)}
+    <button
+      className={cls}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       {...props}
     >
       {loading ? <Loader2 className="animate-spin" aria-hidden /> : null}
       {children}
-    </Comp>
+    </button>
   )
 }
 

@@ -56,21 +56,21 @@ async function Loader({ garageSlug }: { garageSlug: string }) {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <div>
-        <h1 className="font-display text-2xl font-bold">Settings</h1>
+        <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Settings</h1>
         <p className="text-sm text-muted-foreground">{garage.name}</p>
       </div>
 
       <section>
-        <h2 className="font-display text-lg font-bold">Team &amp; templates</h2>
+        <h2 className="text-[15px] font-semibold">Team &amp; templates</h2>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          <Link href={`/g/${garageSlug}/settings/staff`} className="rounded-xl border-2 border-border bg-card p-4 text-sm font-semibold hover:bg-surface-muted">Staff &amp; invites →</Link>
-          <Link href={`/g/${garageSlug}/settings/templates`} className="rounded-xl border-2 border-border bg-card p-4 text-sm font-semibold hover:bg-surface-muted">Message templates →</Link>
+          <Link href={`/g/${garageSlug}/settings/staff`} className="rounded-xl border border-border bg-card p-4 text-sm font-semibold hover:bg-surface-muted">Staff &amp; invites →</Link>
+          <Link href={`/g/${garageSlug}/settings/templates`} className="rounded-xl border border-border bg-card p-4 text-sm font-semibold hover:bg-surface-muted">Message templates →</Link>
         </div>
       </section>
 
       {canManageSettings && (
         <section>
-          <h2 className="font-display text-lg font-bold">Directory &amp; vehicle coverage</h2>
+          <h2 className="text-[15px] font-semibold">Directory &amp; vehicle coverage</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Appear in the public garage directory and tell customers which vehicles you service.
           </p>
@@ -88,7 +88,7 @@ async function Loader({ garageSlug }: { garageSlug: string }) {
       )}
 
       <section>
-        <h2 className="font-display text-lg font-bold">Billing &amp; plan</h2>
+        <h2 className="text-[15px] font-semibold">Billing &amp; plan</h2>
         {billing.ok && billing.data ? (
           <BillingPanel garageId={garage.id} billing={billing.data} />
         ) : (
@@ -102,7 +102,7 @@ async function Loader({ garageSlug }: { garageSlug: string }) {
 export default async function SettingsPage({ params }: { params: Promise<{ garageSlug: string }> }) {
   const { garageSlug } = await params
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-5 py-6 md:px-10 md:py-8">
       <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-muted" />}>
         <Loader garageSlug={garageSlug} />
       </Suspense>

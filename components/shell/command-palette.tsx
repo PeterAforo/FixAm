@@ -134,21 +134,21 @@ function PaletteDialog({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search pages, plates, customers…"
-          className="w-full border-b-2 border-border bg-transparent px-4 py-3 text-base outline-none placeholder:text-muted-foreground"
+          className="w-full border-b border-input bg-transparent px-4 py-3 text-base outline-none placeholder:text-muted-foreground"
           aria-label="Command palette search"
         />
         <ul className="max-h-80 overflow-y-auto p-2">
           {current && (current.vehicles.length > 0 || current.customers.length > 0) && (
             <>
               {current.vehicles.length > 0 && (
-                <li className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                <li className="px-3 pb-1 pt-2 text-[10px] font-semibold text-muted-foreground">
                   Vehicles
                 </li>
               )}
               {current.vehicles.map((v) => (
                 <li key={`v-${v.id}`}>
                   <button
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold hover:bg-surface-muted"
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold hover:bg-surface-muted"
                     onClick={() => {
                       onClose()
                       router.push(`${base}${v.path}`)
@@ -160,14 +160,14 @@ function PaletteDialog({
                 </li>
               ))}
               {current.customers.length > 0 && (
-                <li className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                <li className="px-3 pb-1 pt-2 text-[10px] font-semibold text-muted-foreground">
                   Customers
                 </li>
               )}
               {current.customers.map((c) => (
                 <li key={`c-${c.id}`}>
                   <button
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold hover:bg-surface-muted"
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold hover:bg-surface-muted"
                     onClick={() => {
                       onClose()
                       router.push(`${base}${c.path}`)
@@ -190,7 +190,7 @@ function PaletteDialog({
             return (
               <li key={item.route}>
                 <button
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-bold hover:bg-surface-muted"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold hover:bg-surface-muted"
                   onClick={() => {
                     onClose()
                     router.push(href(item.route))
@@ -203,7 +203,7 @@ function PaletteDialog({
             )
           })}
         </ul>
-        <p className="border-t-2 border-border px-4 py-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+        <p className="border-t border-border px-4 py-2 text-[10px] text-muted-foreground">
           Esc to close
         </p>
       </Card>

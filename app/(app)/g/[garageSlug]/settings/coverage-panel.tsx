@@ -7,7 +7,7 @@ import { Button } from "@/components/brand/button"
 import { addGarageCoverage, removeGarageCoverage } from "@/lib/discovery/coverage-actions"
 
 const inputCls =
-  "min-h-11 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+  "min-h-11 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 type CoverageRow = {
   id: string
@@ -76,7 +76,7 @@ export function CoveragePanel({
   }
 
   return (
-    <div className="mt-3 rounded-2xl border-2 border-border bg-card p-5">
+    <div className="mt-3 rounded-2xl border border-border bg-card p-5">
       <p className="text-sm text-muted-foreground">
         Declare which makes and models your garage services. This powers the public directory —
         customers searching for a garage for their car will find you here.

@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill } from "@/components/brand/status-pill"
 import { createBooking, updateBookingStatus } from "@/lib/bookings/actions"
 
-const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const inputCls = "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 type Booking = {
   id: string
@@ -101,7 +101,7 @@ export function BookingsPanel(props: {
     <div className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-bold">Bookings</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Bookings</h1>
           <p className="text-muted-foreground">
             {new Date(`${day}T00:00:00`).toLocaleDateString("en-GH", { weekday: "long", day: "numeric", month: "long" })}
           </p>
@@ -159,7 +159,7 @@ export function BookingsPanel(props: {
             <Card key={b.id}>
               <CardContent className="flex flex-wrap items-center gap-3 p-4">
                 <div className="w-20 shrink-0">
-                  <p className="font-mono text-sm font-bold">{fmtTime(b.startsAt)}</p>
+                  <p className="font-mono text-sm font-semibold">{fmtTime(b.startsAt)}</p>
                   <p className="text-xs text-muted-foreground">{fmtTime(b.endsAt)}</p>
                 </div>
                 <div className="min-w-0 flex-1">

@@ -30,7 +30,7 @@ export function Badge({
     >
       <div
         className={cn(
-          "flex items-center justify-center rounded-full border-2 border-border font-display font-bold",
+          "flex items-center justify-center rounded-full border border-border font-display font-bold",
           unlocked
             ? "bg-[image:linear-gradient(135deg,#7C6CFF,#5E4DF0)] text-white shadow-pop"
             : "bg-muted text-muted-foreground grayscale"
@@ -40,7 +40,7 @@ export function Badge({
       >
         {icon ?? <span className="text-lg">{label.slice(0, 1)}</span>}
       </div>
-      <span className={cn("max-w-20 text-center text-[10px] font-bold leading-tight", unlocked ? "text-foreground" : "text-muted-foreground")}>
+      <span className={cn("max-w-20 text-center text-[10px] font-semibold leading-tight", unlocked ? "text-foreground" : "text-muted-foreground")}>
         {label}
       </span>
       {!unlocked && progress !== undefined ? (

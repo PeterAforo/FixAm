@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation"
 import { Suspense } from "react"
 import { connection } from "next/server"
 import Link from "next/link"
-import { and, desc, eq, isNull, sql } from "drizzle-orm"
+import { and, desc, eq, inArray, isNull } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { customers, garages, jobAssignments, jobs, vehicles } from "@/lib/db/schema"
 import { getSessionUserId, ensureUser } from "@/lib/auth/ensure-user"
@@ -46,14 +46,14 @@ async function MyJobsLoader({ params }: { params: Promise<{ garageSlug: string }
     .innerJoin(vehicles, eq(jobs.vehicleId, vehicles.id))
     .innerJoin(customers, eq(jobs.customerId, customers.id))
     .innerJoin(jobAssignments, and(eq(jobAssignments.jobId, jobs.id), eq(jobAssignments.userId, userId)))
-    .where(and(eq(jobs.garageId, garage.id), isNull(jobs.deletedAt), sql`${jobs.status} = ANY(${[...ACTIVE]}::job_status[])`))
+    .where(and(eq(jobs.garageId, garage.id), isNull(jobs.deletedAt), inArray(jobs.status, [...ACTIVE])))
     .orderBy(desc(jobs.promisedAt))
     .limit(100)
 
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-display text-3xl font-bold">My jobs</h1>
+        <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">My jobs</h1>
         <p className="text-muted-foreground">{rows.length} active assignments</p>
       </header>
       {rows.length === 0 ? (
@@ -62,10 +62,10 @@ async function MyJobsLoader({ params }: { params: Promise<{ garageSlug: string }
         <div className="grid gap-3 sm:grid-cols-2">
           {rows.map((j) => (
             <Link key={j.id} href={`/g/${garageSlug}/my-jobs/${j.id}`}>
-              <Card className="h-full transition-transform hover:-translate-y-0.5">
+              <Card className="h-full transition-transform">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="font-mono text-sm font-bold">{j.number}</p>
+                    <p className="font-mono text-sm font-semibold">{j.number}</p>
                     <StatusPill status={j.status} />
                   </div>
                   <p className="mt-1 flex items-center gap-2 text-sm font-semibold">
@@ -93,7 +93,7 @@ async function MyJobsLoader({ params }: { params: Promise<{ garageSlug: string }
 
 export default function MyJobsPage({ params }: { params: Promise<{ garageSlug: string }> }) {
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-5 py-6 md:px-10 md:py-8">
       <div className="mx-auto max-w-4xl">
         <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-muted" />}>
           <MyJobsLoader params={params} />

@@ -59,7 +59,7 @@ export function MoMoPayForm({
             type="button"
             onClick={() => setChannel(c)}
             aria-pressed={channel === c}
-            className={`rounded-xl border-2 px-3 py-3 text-sm font-semibold transition-colors ${
+            className={`rounded-xl border px-3 py-3 text-sm font-semibold transition-colors ${
               channel === c ? "border-primary bg-primary-subtle text-primary" : "border-border bg-surface"
             }`}
           >
@@ -77,7 +77,7 @@ export function MoMoPayForm({
                 type="button"
                 onClick={() => setNetwork(n.id)}
                 aria-pressed={network === n.id}
-                className={`rounded-lg border-2 px-2 py-2.5 text-xs font-bold uppercase ${
+                className={`rounded-lg border px-2 py-2.5 text-xs font-semibold ${
                   network === n.id ? "border-primary bg-primary-subtle text-primary" : "border-border"
                 }`}
               >
@@ -91,7 +91,7 @@ export function MoMoPayForm({
             placeholder="MoMo number e.g. 0241234567"
             inputMode="tel"
             aria-label="Mobile money number"
-            className="min-h-12 w-full rounded-xl border-2 border-border bg-background px-4 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="min-h-12 w-full rounded-xl border border-input bg-background px-4 text-base outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
           />
         </div>
       ) : (
@@ -101,20 +101,20 @@ export function MoMoPayForm({
           placeholder="Email for receipt (optional)"
           type="email"
           aria-label="Email for receipt"
-          className="min-h-12 w-full rounded-xl border-2 border-border bg-background px-4 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="min-h-12 w-full rounded-xl border border-input bg-background px-4 text-base outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
         />
       )}
 
       {error && <p className="rounded-lg bg-danger-subtle px-3 py-2 text-sm font-semibold text-danger">{error}</p>}
 
       {waitingText ? (
-        <div className="rounded-2xl border-2 border-border bg-surface-sunken p-5 text-center">
+        <div className="rounded-2xl border border-border bg-surface-sunken p-5 text-center">
           <div className="mx-auto w-fit animate-pulse">
             <Smartphone className="size-12 text-primary" />
           </div>
-          <p className="mt-3 font-display text-lg font-bold">Approve on your phone</p>
+          <p className="mt-3 text-[15px] font-semibold">Approve on your phone</p>
           <p className="mt-1 text-sm text-muted-foreground">{waitingText}</p>
-          <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-warning-subtle px-3 py-1 text-xs font-bold">
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-warning-subtle px-3 py-1 text-xs font-semibold">
             <span className="size-2 animate-ping rounded-full bg-warning" /> Waiting for confirmation…
           </p>
         </div>

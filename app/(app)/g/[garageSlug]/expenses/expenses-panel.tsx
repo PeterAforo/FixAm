@@ -24,7 +24,7 @@ type Data = {
   to: string
 }
 
-const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const inputCls = "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 const today = () => new Date().toISOString().slice(0, 10)
 
 export function ExpensesPanel(props: {
@@ -92,7 +92,7 @@ export function ExpensesPanel(props: {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Expenses & cash-up</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Expenses & cash-up</h1>
           <p className="text-sm text-muted-foreground">
             {data.expenses.length} expenses · {formatGHS(total)} in period {data.from} → {data.to}
           </p>
@@ -105,8 +105,8 @@ export function ExpensesPanel(props: {
           if (fd.get("to")) q.set("to", String(fd.get("to")))
           router.push(`/g/${garageSlug}/expenses${q.size ? `?${q}` : ""}`)
         }}>
-          <input name="from" type="date" defaultValue={data.from} className="min-h-10 rounded-lg border-2 border-border bg-surface px-2 text-sm" />
-          <input name="to" type="date" defaultValue={data.to} className="min-h-10 rounded-lg border-2 border-border bg-surface px-2 text-sm" />
+          <input name="from" type="date" defaultValue={data.from} className="min-h-10 rounded-lg border border-border bg-surface px-2 text-sm" />
+          <input name="to" type="date" defaultValue={data.to} className="min-h-10 rounded-lg border border-border bg-surface px-2 text-sm" />
           <Button type="submit" variant="secondary">Apply</Button>
         </form>
       </div>
@@ -128,7 +128,7 @@ export function ExpensesPanel(props: {
             <CardContent className="p-0">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                     <th className="px-4 py-3">Date</th>
                     <th className="px-4 py-3">Description</th>
                     <th className="px-4 py-3">Category</th>
@@ -163,7 +163,7 @@ export function ExpensesPanel(props: {
           {canManage && (
             <Card>
               <CardContent className="p-4">
-                <h2 className="font-display text-lg font-bold">Record expense</h2>
+                <h2 className="text-[15px] font-semibold">Record expense</h2>
                 <form onSubmit={submitExpense} className="mt-3 space-y-3">
                   <select value={expForm.categoryId} onChange={(e) => setExpForm({ ...expForm, categoryId: e.target.value })} className={inputCls} required>
                     {data.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -197,7 +197,7 @@ export function ExpensesPanel(props: {
             <CardContent className="p-0">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                     <th className="px-4 py-3">Date</th>
                     <th className="px-4 py-3">Branch</th>
                     <th className="px-4 py-3 text-right">Expected</th>
@@ -235,7 +235,7 @@ export function ExpensesPanel(props: {
           {canCashUp && (
             <Card>
               <CardContent className="p-4">
-                <h2 className="font-display text-lg font-bold">End-of-day cash-up</h2>
+                <h2 className="text-[15px] font-semibold">End-of-day cash-up</h2>
                 <p className="mt-1 text-xs text-muted-foreground">Expected = succeeded cash payments minus cash expenses for the branch and date.</p>
                 <form onSubmit={submitCashUp} className="mt-3 space-y-3">
                   <select value={cashForm.branchId} onChange={(e) => setCashForm({ ...cashForm, branchId: e.target.value })} className={inputCls}>

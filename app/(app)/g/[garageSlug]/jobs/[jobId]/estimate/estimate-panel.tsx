@@ -10,7 +10,7 @@ import { Check, X } from "lucide-react"
 import { approveEstimateOnBehalf, createEstimate, sendEstimate } from "@/lib/estimates/actions"
 
 const ghs = (p: number) => `GH₵ ${(p / 100).toLocaleString("en-GH", { minimumFractionDigits: 2 })}`
-const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const inputCls = "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 type EstimateRow = {
   id: string
@@ -115,7 +115,7 @@ export function EstimatePanel(props: {
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Link href={`/g/${garageSlug}/jobs/${job.id}`} className="text-sm text-muted-foreground hover:underline">← {job.number}</Link>
-          <h1 className="font-display text-2xl font-bold">Estimate</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Estimate</h1>
         </div>
         {canCreate && (
           <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ export function EstimatePanel(props: {
                 Subtotal {ghs(latest.subtotal)} · Discount {ghs(latest.discountTotal)} · Tax {ghs(latest.taxTotal)}
                 {latest.depositRequired > 0 && <> · Deposit {ghs(latest.depositRequired)}</>}
               </div>
-              <p className="text-lg font-bold">Total {ghs(latest.total)}</p>
+              <p className="text-lg font-semibold">Total {ghs(latest.total)}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               {canSend && ["draft", "superseded"].includes(latest.status) && (
@@ -215,11 +215,11 @@ export function EstimatePanel(props: {
       {/* Customer preview — what the /t approval link looks like */}
       {latest && (
         <aside className={`${showPreview ? "" : "hidden"} lg:sticky lg:top-6 lg:block`}>
-          <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Customer preview</p>
+          <p className="mb-2 text-center text-[10px] font-semibold text-muted-foreground">Customer preview</p>
           <Card className="overflow-hidden">
             <div className="bg-[image:var(--gradient-ignite)] px-4 py-3 text-center text-white">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/70">Estimate {latest.number}</p>
-              <p className="font-display text-lg font-bold">Job {job.number}</p>
+              <p className="text-[10px] font-semibold text-white/70">Estimate {latest.number}</p>
+              <p className="text-[15px] font-semibold">Job {job.number}</p>
             </div>
             <CardContent className="divide-y p-0">
               {estimateItems.map((i) => (
@@ -228,7 +228,7 @@ export function EstimatePanel(props: {
                     <p className="truncate text-xs font-semibold">{i.description}</p>
                     <p className="text-[10px] text-muted-foreground">×{i.quantity}</p>
                   </div>
-                  <span className="text-xs font-bold tabular-nums">{ghs(Math.round(i.quantity * i.unitPrice - i.discountAmount))}</span>
+                  <span className="text-xs font-semibold tabular-nums">{ghs(Math.round(i.quantity * i.unitPrice - i.discountAmount))}</span>
                   <span className="flex gap-1">
                     <span className="flex size-6 items-center justify-center rounded-md bg-success text-success-foreground"><Check className="size-3" /></span>
                     <span className="flex size-6 items-center justify-center rounded-md bg-danger text-danger-foreground"><X className="size-3" /></span>
@@ -246,7 +246,7 @@ export function EstimatePanel(props: {
           <button
             type="button"
             onClick={() => setShowPreview((s) => !s)}
-            className="mt-2 w-full text-center text-xs font-bold text-primary lg:hidden"
+            className="mt-2 w-full text-center text-xs font-semibold text-primary lg:hidden"
           >
             {showPreview ? "Hide preview" : "Show customer preview"}
           </button>

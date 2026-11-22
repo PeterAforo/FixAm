@@ -2,20 +2,20 @@ import { cva, type VariantProps } from "class-variance-authority"
 import type * as React from "react"
 import { cn } from "@/lib/utils"
 
-const cardVariants = cva("rounded-2xl text-card-foreground", {
+const cardVariants = cva("rounded-[18px] text-card-foreground", {
   variants: {
     variant: {
       /** Elevation 1 — default work surface. */
-      default: "border border-border bg-card shadow-1",
+      default: "border border-border bg-card shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
       /** Hover lift + press — tappable cards. */
       interactive:
-        "border border-border bg-card shadow-1 transition-[transform,box-shadow] duration-fast hover:shadow-2 active:scale-[0.99]",
+        "border border-border bg-card shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-[transform,box-shadow,border-color] duration-fast hover:border-border-strong hover:shadow-2 active:scale-[0.99]",
       /** Elevation 2 — raised emphasis. */
       raised: "border border-border bg-card shadow-2",
       /** Gradient money card — white text. */
       money: "border border-transparent bg-[image:var(--gradient-ignite)] text-white shadow-3",
       /** Playful pop — chunky offset shadow for badges/empty states. */
-      pop: "border-2 border-foreground bg-card shadow-pop",
+      pop: "border border-foreground bg-card shadow-pop",
       /** Glass — for bars over imagery. */
       glass: "border border-white/20 bg-white/70 shadow-2 backdrop-blur-md",
     },

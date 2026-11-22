@@ -31,7 +31,7 @@ type Data = {
   canReceive: boolean
 }
 
-const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const inputCls = "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 export function PosOrdersPanel(props: { garageSlug: string; garageId: string; data: Data }) {
   const { garageSlug, garageId, data } = props
@@ -106,7 +106,7 @@ export function PosOrdersPanel(props: { garageSlug: string; garageId: string; da
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Purchase orders</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Purchase orders</h1>
           <p className="text-sm text-muted-foreground">{data.orders.length} orders</p>
         </div>
         {data.canCreate && <Button onClick={() => setShowCreate(!showCreate)}>{showCreate ? "Close" : "New PO"}</Button>}
@@ -117,7 +117,7 @@ export function PosOrdersPanel(props: { garageSlug: string; garageId: string; da
       <div className="flex flex-wrap gap-2">
         {STATUS_TABS.map((s) => (
           <a key={s || "all"} href={`/g/${garageSlug}/purchase-orders${s ? `?status=${s}` : ""}`}
-            className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${!s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+            className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${!s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
             {s ? s.replace(/_/g, " ") : "All"}
           </a>
         ))}
@@ -126,7 +126,7 @@ export function PosOrdersPanel(props: { garageSlug: string; garageId: string; da
       {showCreate && (
         <Card>
           <CardContent className="p-4">
-            <h2 className="font-display text-lg font-bold">New purchase order</h2>
+            <h2 className="text-[15px] font-semibold">New purchase order</h2>
             <form onSubmit={submitCreate} className="mt-3 space-y-3">
               <div className="grid gap-3 sm:grid-cols-3">
                 <select value={poForm.branchId} onChange={(e) => setPoForm({ ...poForm, branchId: e.target.value })} className={inputCls} required>
@@ -166,7 +166,7 @@ export function PosOrdersPanel(props: { garageSlug: string; garageId: string; da
         <CardContent className="overflow-x-auto p-0">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">PO #</th>
                 <th className="px-4 py-3">Supplier</th>
                 <th className="px-4 py-3">Branch</th>
@@ -183,7 +183,7 @@ export function PosOrdersPanel(props: { garageSlug: string; garageId: string; da
               )}
               {data.orders.map((o) => (
                 <tr key={o.id} className="border-b last:border-0">
-                  <td className="px-4 py-3 font-mono text-xs font-bold">{o.number}</td>
+                  <td className="px-4 py-3 font-mono text-xs font-semibold">{o.number}</td>
                   <td className="px-4 py-3">{o.vendorName ?? o.externalSupplierName ?? "—"}</td>
                   <td className="px-4 py-3">{o.branchName ?? "—"}</td>
                   <td className="px-4 py-3 tabular-nums">{o.receivedCount}/{o.orderedCount}</td>
@@ -214,7 +214,7 @@ export function PosOrdersPanel(props: { garageSlug: string; garageId: string; da
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setReceiveFor(null)}>
           <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
             <CardContent className="p-4">
-              <h3 className="font-display text-lg font-bold">Receive — {receiveFor.number}</h3>
+              <h3 className="text-[15px] font-semibold">Receive — {receiveFor.number}</h3>
               {!receiveItems ? (
                 <p className="py-6 text-sm text-muted-foreground">Loading…</p>
               ) : (
@@ -224,7 +224,7 @@ export function PosOrdersPanel(props: { garageSlug: string; garageId: string; da
                       <span className="min-w-0 flex-1 truncate">{l.partName} <span className="text-xs text-muted-foreground">({l.remaining} remaining)</span></span>
                       <input value={l.quantity} inputMode="decimal"
                         onChange={(e) => setReceiveItems(receiveItems.map((x) => x.itemId === l.itemId ? { ...x, quantity: e.target.value } : x))}
-                        className="h-9 w-24 rounded-lg border-2 border-border bg-surface px-2 text-right" />
+                        className="h-9 w-24 rounded-lg border border-border bg-surface px-2 text-right" />
                     </div>
                   ))}
                   <input value={receiveNotes} onChange={(e) => setReceiveNotes(e.target.value)} placeholder="Delivery note (optional)" className={`${inputCls} mt-2`} />

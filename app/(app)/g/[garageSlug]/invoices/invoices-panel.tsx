@@ -124,7 +124,7 @@ export function InvoicesPanel(props: {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Invoices</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Invoices</h1>
           <p className="text-sm text-muted-foreground">{rows.length} invoice{rows.length === 1 ? "" : "s"}</p>
         </div>
         <div className="flex gap-2">
@@ -137,7 +137,7 @@ export function InvoicesPanel(props: {
             name="q"
             defaultValue={q}
             placeholder="Search number, customer, phone…"
-            className="min-h-10 w-64 rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="min-h-10 w-64 rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
           />
           <Button type="submit" variant="secondary">Search</Button>
           </form>
@@ -160,7 +160,7 @@ export function InvoicesPanel(props: {
 
       {msg && <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{msg}</p>}
       {payLink && (
-        <div className="rounded-xl border-2 border-success/40 bg-success/10 p-4 text-sm">
+        <div className="rounded-xl border border-success/40 bg-success/10 p-4 text-sm">
           <p className="font-semibold">Invoice {payLink.number} issued.</p>
           <p className="mt-1 break-all text-muted-foreground">Pay link: {payLink.url}</p>
           <Button variant="secondary" className="mt-2" onClick={() => navigator.clipboard.writeText(payLink.url)}>Copy link</Button>
@@ -172,7 +172,7 @@ export function InvoicesPanel(props: {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                   <th className="px-4 py-3">Invoice</th>
                   <th className="px-4 py-3">Customer</th>
                   <th className="px-4 py-3">Branch</th>
@@ -223,18 +223,18 @@ export function InvoicesPanel(props: {
       {createOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-surface p-6 shadow-xl">
-            <h2 className="text-lg font-bold">New invoice</h2>
+            <h2 className="text-lg font-semibold tracking-[-0.01em]">New invoice</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="text-sm">
                 <span className="mb-1 block font-medium">Customer (optional)</span>
-                <select value={custId} onChange={(e) => setCustId(e.target.value)} className="min-h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm">
+                <select value={custId} onChange={(e) => setCustId(e.target.value)} className="min-h-10 w-full rounded-lg border border-border bg-background px-3 text-sm">
                   <option value="">Walk-in</option>
                   {customers.map((c) => <option key={c.id} value={c.id}>{c.name}{c.phone ? ` · ${c.phone}` : ""}</option>)}
                 </select>
               </label>
               <label className="text-sm">
                 <span className="mb-1 block font-medium">Notes</span>
-                <input value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm" />
+                <input value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" />
               </label>
             </div>
 
@@ -244,7 +244,7 @@ export function InvoicesPanel(props: {
                   <select
                     value={l.type}
                     onChange={(e) => setLines(lines.map((x, j) => j === i ? { ...x, type: e.target.value as typeof l.type } : x))}
-                    className="min-h-10 rounded-lg border-2 border-border bg-background px-2 text-sm"
+                    className="min-h-10 rounded-lg border border-border bg-background px-2 text-sm"
                   >
                     <option value="sundry">Sundry</option>
                     <option value="labour">Labour</option>
@@ -255,28 +255,28 @@ export function InvoicesPanel(props: {
                     value={l.description}
                     onChange={(e) => setLines(lines.map((x, j) => j === i ? { ...x, description: e.target.value } : x))}
                     placeholder="Description"
-                    className="min-h-10 rounded-lg border-2 border-border bg-background px-3 text-sm"
+                    className="min-h-10 rounded-lg border border-border bg-background px-3 text-sm"
                   />
                   <input
                     value={l.quantity}
                     onChange={(e) => setLines(lines.map((x, j) => j === i ? { ...x, quantity: e.target.value } : x))}
                     placeholder="Qty"
                     inputMode="decimal"
-                    className="min-h-10 rounded-lg border-2 border-border bg-background px-2 text-sm"
+                    className="min-h-10 rounded-lg border border-border bg-background px-2 text-sm"
                   />
                   <input
                     value={l.unitPrice}
                     onChange={(e) => setLines(lines.map((x, j) => j === i ? { ...x, unitPrice: e.target.value } : x))}
                     placeholder="Price GH₵"
                     inputMode="decimal"
-                    className="min-h-10 rounded-lg border-2 border-border bg-background px-2 text-sm"
+                    className="min-h-10 rounded-lg border border-border bg-background px-2 text-sm"
                   />
                   <input
                     value={l.discountAmount}
                     onChange={(e) => setLines(lines.map((x, j) => j === i ? { ...x, discountAmount: e.target.value } : x))}
                     placeholder="Disc GH₵"
                     inputMode="decimal"
-                    className="min-h-10 rounded-lg border-2 border-border bg-background px-2 text-sm"
+                    className="min-h-10 rounded-lg border border-border bg-background px-2 text-sm"
                   />
                   <button
                     onClick={() => setLines(lines.filter((_, j) => j !== i))}
@@ -301,13 +301,13 @@ export function InvoicesPanel(props: {
       {voidTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
-            <h2 className="text-lg font-bold">Void {voidTarget.number ?? "invoice"}</h2>
+            <h2 className="text-lg font-semibold tracking-[-0.01em]">Void {voidTarget.number ?? "invoice"}</h2>
             <p className="mt-1 text-sm text-muted-foreground">This cannot be undone. A reason is required.</p>
             <input
               value={voidReason}
               onChange={(e) => setVoidReason(e.target.value)}
               placeholder="Reason (e.g. raised in error)"
-              className="mt-4 min-h-10 w-full rounded-lg border-2 border-border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="mt-4 min-h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
             />
             <div className="mt-4 flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setVoidTarget(null)}>Cancel</Button>

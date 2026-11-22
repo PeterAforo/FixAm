@@ -38,7 +38,7 @@ export function Celebration({
         initial={{ scale: 0.5, opacity: 0, rotate: -6 }}
         animate={{ scale: 1, opacity: 1, rotate: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
-        className="relative w-full max-w-sm rounded-3xl border-2 border-border bg-card p-8 text-center shadow-4"
+        className="relative w-full max-w-sm rounded-3xl border border-border bg-card p-8 text-center shadow-4"
       >
         {onClose ? (
           <button
@@ -53,7 +53,7 @@ export function Celebration({
         <div className="mx-auto w-fit">
           <Torq pose={pose} size={120} />
         </div>
-        <h2 className="mt-4 font-display text-2xl font-bold">{title}</h2>
+        <h2 className="mt-4 font-display text-2xl font-semibold tracking-[-0.02em]">{title}</h2>
         {body ? <p className="mt-1 text-sm text-muted-foreground">{body}</p> : null}
         <div className="mt-6 flex justify-center gap-3">
           {action}

@@ -206,7 +206,7 @@ export function MechanicJobPanel(p: Props) {
     <div className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold">{p.job.number}</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">{p.job.number}</h1>
           <p className="text-sm text-muted-foreground">
             {p.vehicle && <><PlateChip plate={p.vehicle.plateNumber} /> {p.vehicle.make} {p.vehicle.model}</>}
             {p.customer && <> · {p.customer.name}</>}
@@ -228,7 +228,7 @@ export function MechanicJobPanel(p: Props) {
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-base">Timer</CardTitle></CardHeader>
         <CardContent className="flex items-center gap-4">
-          <span className="font-mono text-3xl font-bold tabular-nums">{fmtElapsed(elapsed)}</span>
+          <span className="font-mono text-3xl font-semibold tabular-nums">{fmtElapsed(elapsed)}</span>
           {timerStart ? (
             <Button onClick={stopTimer} disabled={pending}>Stop</Button>
           ) : (
@@ -252,7 +252,7 @@ export function MechanicJobPanel(p: Props) {
                 {t.isDone ? "✓" : ""}
               </span>
               <span className={t.isDone ? "text-muted-foreground line-through" : ""}>{t.title}</span>
-              {t.required && <span className="ml-auto text-[10px] font-semibold uppercase text-muted-foreground">required</span>}
+              {t.required && <span className="ml-auto text-[10px] font-semibold text-muted-foreground">required</span>}
             </button>
           ))}
         </CardContent>

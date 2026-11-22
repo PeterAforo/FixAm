@@ -23,7 +23,7 @@ export type CustomerRow = {
 }
 
 const inputCls =
-  "min-h-11 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+  "min-h-11 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 const TYPE_LABEL: Record<string, string> = {
   individual: "Individual",
@@ -82,7 +82,7 @@ export function CustomersPanel({
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold text-foreground">Customers</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em] text-foreground">Customers</h1>
           <p className="text-muted-foreground">
             {totals.total} total · {totals.business} business · {totals.fleet} fleet
           </p>
@@ -161,7 +161,7 @@ export function CustomersPanel({
                     className="flex flex-wrap items-center gap-3 px-5 py-4 transition-colors hover:bg-surface-muted/60"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-bold">{c.fullName}</p>
+                      <p className="truncate font-semibold">{c.fullName}</p>
                       <p className="truncate text-sm text-muted-foreground">
                         {c.companyName && c.companyName !== c.fullName ? `${c.companyName} · ` : ""}
                         {c.phone}

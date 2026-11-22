@@ -19,7 +19,7 @@ type Account = {
   statementDay: number | null
 }
 
-const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const inputCls = "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 export function CreditAccountsPanel(props: {
   garageSlug: string
@@ -55,7 +55,7 @@ export function CreditAccountsPanel(props: {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Credit accounts</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Credit accounts</h1>
           <p className="text-sm text-muted-foreground">{accounts.length} active account{accounts.length === 1 ? "" : "s"}</p>
         </div>
         {canManage && <Button onClick={() => setOpen(true)}>Open account</Button>}
@@ -67,7 +67,7 @@ export function CreditAccountsPanel(props: {
         <CardContent className="p-0">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">Customer</th>
                 <th className="px-4 py-3 text-right">Limit</th>
                 <th className="px-4 py-3 text-right">Balance</th>
@@ -112,7 +112,7 @@ export function CreditAccountsPanel(props: {
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
-            <h2 className="text-lg font-bold">Open credit account</h2>
+            <h2 className="text-lg font-semibold tracking-[-0.01em]">Open credit account</h2>
             <div className="mt-4 space-y-3">
               <label className="block text-sm">
                 <span className="mb-1 block font-medium">Customer</span>

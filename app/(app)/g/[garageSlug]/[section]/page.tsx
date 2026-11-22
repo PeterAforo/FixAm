@@ -57,7 +57,7 @@ async function Section({
   if (!allowed) notFound()
 
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-5 py-6 md:px-10 md:py-8">
       <EmptyState
         pose="thinking"
         title={label}

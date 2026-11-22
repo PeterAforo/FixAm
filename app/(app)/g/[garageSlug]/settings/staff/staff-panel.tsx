@@ -31,7 +31,7 @@ const ROLES = [
 ] as const
 
 const inputCls =
-  "min-h-11 rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+  "min-h-11 rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 export function StaffPanel({
   garageId,
@@ -104,7 +104,7 @@ export function StaffPanel({
         <CardContent>
           <form onSubmit={doInvite} className="flex flex-wrap items-end gap-3">
             <label className="min-w-48 flex-1 space-y-1">
-              <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              <span className="text-xs font-semibold text-muted-foreground">
                 Phone
               </span>
               <input
@@ -117,7 +117,7 @@ export function StaffPanel({
               />
             </label>
             <label className="space-y-1">
-              <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              <span className="text-xs font-semibold text-muted-foreground">
                 Role
               </span>
               <select className={inputCls} value={role} onChange={(e) => setRole(e.target.value)}>
@@ -129,7 +129,7 @@ export function StaffPanel({
               </select>
             </label>
             <label className="space-y-1">
-              <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              <span className="text-xs font-semibold text-muted-foreground">
                 Branch
               </span>
               <select
@@ -150,12 +150,12 @@ export function StaffPanel({
             </Button>
           </form>
           {error && (
-            <p role="alert" className="mt-3 rounded-lg border-2 border-danger bg-danger/10 px-3 py-2 text-sm font-semibold text-danger">
+            <p role="alert" className="mt-3 rounded-lg border border-danger bg-danger/10 px-3 py-2 text-sm font-semibold text-danger">
               {error}
             </p>
           )}
           {notice && (
-            <p className="mt-3 rounded-lg border-2 border-success bg-success/10 px-3 py-2 text-sm font-semibold text-success">
+            <p className="mt-3 rounded-lg border border-success bg-success/10 px-3 py-2 text-sm font-semibold text-success">
               {notice}
             </p>
           )}
@@ -171,7 +171,7 @@ export function StaffPanel({
             {staff.map((m) => (
               <li key={m.id} className="flex flex-wrap items-center gap-3 px-6 py-4">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold">{name(m)}</p>
+                  <p className="truncate font-semibold">{name(m)}</p>
                   <p className="truncate text-sm text-muted-foreground">
                     {m.email ?? m.phone ?? m.invitedEmail ?? m.invitedPhone ?? ""}
                     {m.branchName ? ` · ${m.branchName}` : " · all branches"}

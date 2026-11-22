@@ -30,7 +30,7 @@ export function StreakFlame({
           fill={atRisk ? "none" : "currentColor"}
         />
       </motion.span>
-      <span className={cn("font-display text-lg font-bold tabular-nums", atRisk ? "text-muted-foreground" : "text-foreground")}>
+      <span className={cn("text-[15px] font-semibold tabular-nums", atRisk ? "text-muted-foreground" : "text-foreground")}>
         {count}
       </span>
       <span className="text-xs font-semibold text-muted-foreground">day{count === 1 ? "" : "s"}</span>

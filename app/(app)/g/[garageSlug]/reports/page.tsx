@@ -77,7 +77,7 @@ export default function ReportsPage({
   searchParams: Promise<{ type?: string; period?: string; branch?: string }>
 }) {
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-5 py-6 md:px-10 md:py-8">
       <div className="mx-auto max-w-6xl">
         <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-muted" />}>
           <Loader params={params} searchParams={searchParams} />

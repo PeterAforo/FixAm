@@ -76,7 +76,7 @@ export function NotificationsBell({
       >
         <Bell className="size-5" />
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex size-5 items-center justify-center rounded-full border-2 border-border bg-danger text-[10px] font-bold text-danger-foreground">
+          <span className="absolute -right-0.5 -top-0.5 flex size-5 items-center justify-center rounded-full border border-border bg-danger text-[10px] font-semibold text-danger-foreground">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -90,7 +90,7 @@ export function NotificationsBell({
           />
           <Card className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)]">
             <CardContent className="p-0">
-              <p className="border-b-2 border-border px-4 py-3 text-sm font-bold">
+              <p className="border-b border-border px-4 py-3 text-sm font-semibold">
                 Notifications
               </p>
               {items.length === 0 ? (
@@ -101,13 +101,13 @@ export function NotificationsBell({
                 <ul className="max-h-80 divide-y divide-border overflow-y-auto">
                   {items.map((n) => (
                     <li key={n.id} className="px-4 py-3">
-                      <p className="text-sm font-bold">{n.title}</p>
+                      <p className="text-sm font-semibold">{n.title}</p>
                       {n.body && (
                         <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                           {n.body}
                         </p>
                       )}
-                      <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                      <p className="mt-1 text-[10px] text-muted-foreground">
                         {new Date(n.createdAt).toLocaleString("en-GH")}
                       </p>
                     </li>

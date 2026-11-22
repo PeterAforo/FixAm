@@ -101,11 +101,11 @@ export function PosPanel(props: {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Counter sale</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Counter sale</h1>
           <p className="text-sm text-muted-foreground">{cart.length} lines in cart</p>
         </div>
         <select value={branchId} onChange={(e) => setBranchId(e.target.value)}
-          className="min-h-10 rounded-lg border-2 border-border bg-surface px-3 text-sm">
+          className="min-h-10 rounded-lg border border-border bg-surface px-3 text-sm">
           {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
       </div>
@@ -115,7 +115,7 @@ export function PosPanel(props: {
       {receipt && (
         <Card className="border-success">
           <CardContent className="p-4">
-            <p className="font-display text-lg font-bold text-success">Sale complete</p>
+            <p className="text-[15px] font-semibold text-success">Sale complete</p>
             <p className="text-sm">Invoice {receipt.invoiceNumber} · Receipt {receipt.receiptNumber}</p>
             <p className="text-sm">Total {formatGHS(receipt.total)}{receipt.change > 0 ? ` · Change ${formatGHS(receipt.change)}` : ""}</p>
             <div className="mt-2 flex gap-2">
@@ -134,7 +134,7 @@ export function PosPanel(props: {
             value={q}
             onChange={(e) => onQuery(e.target.value)}
             placeholder="Search or scan barcode…"
-            className="min-h-12 w-full rounded-xl border-2 border-border bg-surface px-4 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="min-h-12 w-full rounded-xl border border-input bg-surface px-4 text-base outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
             autoFocus
           />
           <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -143,8 +143,8 @@ export function PosPanel(props: {
               const out = p.onHand != null && p.onHand - inCart <= 0
               return (
                 <button key={p.id} onClick={() => addToCart(p)} disabled={out}
-                  className="rounded-xl border-2 border-border bg-surface p-3 text-left transition hover:border-primary disabled:opacity-40">
-                  <p className="truncate text-sm font-bold">{p.name}</p>
+                  className="rounded-xl border border-border bg-surface p-3 text-left transition hover:border-primary disabled:opacity-40">
+                  <p className="truncate text-sm font-semibold">{p.name}</p>
                   <p className="text-xs text-muted-foreground">{p.sku}{p.brand ? ` · ${p.brand}` : ""}</p>
                   <div className="mt-1 flex items-center justify-between">
                     <span className="font-display font-bold">{formatGHS(p.sellingPrice)}</span>
@@ -162,7 +162,7 @@ export function PosPanel(props: {
         {/* cart */}
         <Card>
           <CardContent className="flex h-full flex-col p-4">
-            <h2 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">Cart</h2>
+            <h2 className="text-[15px] font-semibold text-foreground">Cart</h2>
             <div className="mt-2 flex-1 divide-y overflow-y-auto">
               {cart.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Tap parts to add</p>}
               {cart.map((l) => (
@@ -172,11 +172,11 @@ export function PosPanel(props: {
                     <p className="text-xs text-muted-foreground">{formatGHS(l.part.sellingPrice)} each</p>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button onClick={() => setQty(l.part.id, l.quantity - 1)} className="h-7 w-7 rounded-lg border-2 border-border text-sm font-bold">−</button>
-                    <span className="w-8 text-center text-sm font-bold tabular-nums">{l.quantity}</span>
-                    <button onClick={() => setQty(l.part.id, l.quantity + 1)} className="h-7 w-7 rounded-lg border-2 border-border text-sm font-bold">+</button>
+                    <button onClick={() => setQty(l.part.id, l.quantity - 1)} className="h-7 w-7 rounded-lg border border-border text-sm font-semibold">−</button>
+                    <span className="w-8 text-center text-sm font-semibold tabular-nums">{l.quantity}</span>
+                    <button onClick={() => setQty(l.part.id, l.quantity + 1)} className="h-7 w-7 rounded-lg border border-border text-sm font-semibold">+</button>
                   </div>
-                  <span className="w-20 text-right text-sm font-bold tabular-nums">{formatGHS(l.part.sellingPrice * l.quantity)}</span>
+                  <span className="w-20 text-right text-sm font-semibold tabular-nums">{formatGHS(l.part.sellingPrice * l.quantity)}</span>
                 </div>
               ))}
             </div>
@@ -186,9 +186,9 @@ export function PosPanel(props: {
               <div className="flex items-center justify-between gap-2">
                 <span className="text-muted-foreground">Discount %</span>
                 <input value={discount} onChange={(e) => setDiscount(e.target.value)} inputMode="decimal" placeholder="0"
-                  className="h-8 w-16 rounded-lg border-2 border-border bg-surface px-2 text-right text-sm" />
+                  className="h-8 w-16 rounded-lg border border-border bg-surface px-2 text-right text-sm" />
               </div>
-              <div className="flex justify-between text-base font-bold"><span>Total (est.)</span><span className="tabular-nums">{formatGHS(approxTotal)}</span></div>
+              <div className="flex justify-between text-base font-semibold"><span>Total (est.)</span><span className="tabular-nums">{formatGHS(approxTotal)}</span></div>
             </div>
 
             <div className="mt-3 grid grid-cols-5 gap-1">
@@ -196,7 +196,7 @@ export function PosPanel(props: {
                 const Icon = METHOD_META[m].icon
                 return (
                   <button key={m} onClick={() => setMethod(m)}
-                    className={`flex flex-col items-center gap-0.5 rounded-lg border-2 px-1 py-1.5 text-[11px] font-bold ${method === m ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface"}`}>
+                    className={`flex flex-col items-center gap-0.5 rounded-lg border px-1 py-1.5 text-[11px] font-semibold ${method === m ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface"}`}>
                     <Icon className="size-4" />
                     {METHOD_META[m].label}
                   </button>
@@ -210,13 +210,13 @@ export function PosPanel(props: {
                   {["exact", "50", "100", "200"].map((t) => (
                     <button key={t} type="button"
                       onClick={() => setTendered(t === "exact" ? String(approxTotal / 100) : t)}
-                      className="flex-1 rounded-lg border-2 border-border bg-surface px-1 py-1 text-[11px] font-bold text-muted-foreground hover:border-primary">
+                      className="flex-1 rounded-lg border border-border bg-surface px-1 py-1 text-[11px] font-semibold text-muted-foreground hover:border-primary">
                       {t === "exact" ? "Exact" : `GH₵${t}`}
                     </button>
                   ))}
                 </div>
                 <input value={tendered} onChange={(e) => setTendered(e.target.value)} placeholder="Cash tendered GH₵" inputMode="decimal"
-                  className="min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm" />
+                  className="min-h-10 w-full rounded-lg border border-border bg-surface px-3 text-sm" />
                 {tenderedNum > 0 && <p className="mt-1 text-right text-sm">Change: <b>{formatGHS(change)}</b></p>}
               </div>
             )}

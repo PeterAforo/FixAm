@@ -9,36 +9,42 @@ export function EmptyState({
   description,
   action,
   secondary,
+  compact = false,
   className,
 }: {
-  /** Custom icon (legacy). Ignored when `pose` is set. */
+  /** Custom icon. Ignored when `pose` is set. */
   icon?: React.ComponentType<{ className?: string }>
-  /** Torq pose — spec: empty states get a mascot moment. */
+  /** Torq pose — reserved for full-page empty states. */
   pose?: TorqPose
   title: string
   description?: string
   action?: React.ReactNode
   secondary?: React.ReactNode
+  /** Inline variant for use inside cards. */
+  compact?: boolean
   className?: string
 }) {
   const Icon = icon
   return (
     <div
       className={cn(
-        "flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-border bg-surface-muted/50 px-6 py-12 text-center",
+        "flex flex-col items-center text-center",
+        compact
+          ? "gap-2 px-4 py-8"
+          : "gap-4 rounded-[18px] border border-dashed border-border-strong bg-card/60 px-6 py-14",
         className
       )}
     >
-      {pose ? (
-        <Torq pose={pose} size={96} />
+      {pose && !compact ? (
+        <Torq pose={pose} size={88} />
       ) : Icon ? (
-        <span className="flex size-16 items-center justify-center rounded-full border-2 border-border bg-card shadow-1">
-          <Icon className="size-8 text-primary" />
+        <span className={cn("flex items-center justify-center rounded-xl bg-surface-muted text-muted-foreground", compact ? "size-10" : "size-12")}>
+          <Icon className={compact ? "size-5" : "size-6"} />
         </span>
       ) : null}
-      <div className="space-y-1">
-        <p className="font-display text-xl font-bold">{title}</p>
-        {description && <p className="text-sm text-muted-foreground">{description}</p>}
+      <div className="max-w-sm space-y-1">
+        <p className={cn("font-semibold", compact ? "text-sm" : "font-display text-xl tracking-[-0.02em]")}>{title}</p>
+        {description && <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>}
       </div>
       {action}
       {secondary}

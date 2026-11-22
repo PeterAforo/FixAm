@@ -25,8 +25,8 @@ import {
 import { VehicleFormDrawer, type VehicleFormValues } from "../vehicle-form-drawer"
 
 const inputCls =
-  "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-const labelCls = "text-xs font-bold uppercase tracking-wide text-muted-foreground"
+  "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
+const labelCls = "text-xs font-semibold text-muted-foreground"
 
 const BODY_TO_TYPE: Record<string, VehicleType> = {
   sedan: "sedan", hatchback: "hatchback", suv: "suv", pickup: "pickup",
@@ -353,7 +353,7 @@ export function VehicleProfilePanel(props: {
           <Link href={`/g/${garageSlug}/vehicles`} className="text-sm font-semibold text-muted-foreground hover:text-foreground">
             ← Vehicles
           </Link>
-          <h1 className="mt-1 flex flex-wrap items-center gap-3 font-display text-3xl font-bold">
+          <h1 className="mt-1 flex flex-wrap items-center gap-3 font-display text-[30px] font-semibold tracking-[-0.025em]">
             <PlateChip plate={vehicle.plateNumber} />
             <span>
               {vehicle.make} {vehicle.model}
@@ -391,32 +391,32 @@ export function VehicleProfilePanel(props: {
           {/* Mileage estimate (P1-03) */}
           <Card>
             <CardContent className="p-5">
-              <h2 className="flex items-center gap-2 font-display text-lg font-bold">
+              <h2 className="flex items-center gap-2 text-[15px] font-semibold">
                 <Gauge className="size-5 text-primary" /> Mileage estimate
               </h2>
               {mileage.kmPerDay != null ? (
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-xl border-2 border-border bg-surface-muted/50 p-3">
-                    <p className="text-xs font-bold uppercase text-muted-foreground">Rate</p>
-                    <p className="font-display text-xl font-bold">
+                  <div className="rounded-xl border border-border bg-surface-muted/50 p-3">
+                    <p className="text-xs font-semibold text-muted-foreground">Rate</p>
+                    <p className="font-display text-xl font-semibold">
                       ≈ {mileage.kmPerDay.toFixed(1)} km/day
                     </p>
                     <StatusPill tone={mileage.confidence === "high" ? "ok" : mileage.confidence === "medium" ? "info" : "warning"}>
                       {mileage.confidence ?? "low"} confidence
                     </StatusPill>
                   </div>
-                  <div className="rounded-xl border-2 border-border bg-surface-muted/50 p-3">
-                    <p className="text-xs font-bold uppercase text-muted-foreground">Est. odometer now</p>
-                    <p className="font-display text-xl font-bold">
+                  <div className="rounded-xl border border-border bg-surface-muted/50 p-3">
+                    <p className="text-xs font-semibold text-muted-foreground">Est. odometer now</p>
+                    <p className="font-display text-xl font-semibold">
                       {mileage.predictedOdometer?.toLocaleString() ?? "—"} km
                     </p>
                     <p className="text-xs text-muted-foreground">
                       last valid {mileage.lastValidKm?.toLocaleString() ?? "—"} km
                     </p>
                   </div>
-                  <div className="rounded-xl border-2 border-border bg-surface-muted/50 p-3">
-                    <p className="text-xs font-bold uppercase text-muted-foreground">Next due</p>
-                    <p className="font-display text-lg font-bold leading-tight">
+                  <div className="rounded-xl border border-border bg-surface-muted/50 p-3">
+                    <p className="text-xs font-semibold text-muted-foreground">Next due</p>
+                    <p className="text-[15px] font-semibold leading-tight">
                       {mileage.nextDue ? fmtDate(mileage.nextDue.effectiveDueDate) : "—"}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
@@ -435,7 +435,7 @@ export function VehicleProfilePanel(props: {
           {/* Odometer */}
           <Card>
             <CardContent className="p-5">
-              <h2 className="font-display text-lg font-bold">Odometer</h2>
+              <h2 className="text-[15px] font-semibold">Odometer</h2>
               {canRecordOdometer && (
                 <div className="mt-3 space-y-3">
                   <div className="flex flex-wrap items-end gap-3">
@@ -466,10 +466,10 @@ export function VehicleProfilePanel(props: {
 
               {flagged.length > 0 && (
                 <div className="mt-4 space-y-2">
-                  <p className="text-xs font-bold uppercase tracking-wide text-warning">Flagged readings</p>
+                  <p className="text-xs font-semibold text-warning">Flagged readings</p>
                   {flagged.map((r) => (
-                    <div key={r.id} className="flex flex-wrap items-center gap-3 rounded-lg border-2 border-warning/50 bg-warning/10 px-3 py-2 text-sm">
-                      <span className="font-bold">{r.readingKm.toLocaleString()} km</span>
+                    <div key={r.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-warning/50 bg-warning/10 px-3 py-2 text-sm">
+                      <span className="font-semibold">{r.readingKm.toLocaleString()} km</span>
                       <span className="text-muted-foreground">{fmtDate(r.readAt)}</span>
                       <span className="text-xs text-muted-foreground">{r.flagReason?.replace(/_/g, " ")}</span>
                       {canOverrideOdometer && (
@@ -490,7 +490,7 @@ export function VehicleProfilePanel(props: {
               <ul className="mt-4 divide-y divide-border">
                 {readings.slice(0, 10).map((r) => (
                   <li key={r.id} className="flex items-center gap-3 py-2 text-sm">
-                    <span className="font-bold">{r.readingKm.toLocaleString()} km</span>
+                    <span className="font-semibold">{r.readingKm.toLocaleString()} km</span>
                     <span className="text-muted-foreground">{fmtDate(r.readAt)}</span>
                     <span className="text-xs text-muted-foreground">{r.source.replace(/_/g, " ")}</span>
                     {r.status !== "valid" && <StatusPill tone={r.status === "flagged" ? "warning" : "danger"}>{r.status}</StatusPill>}
@@ -504,13 +504,13 @@ export function VehicleProfilePanel(props: {
           {/* Due items */}
           <Card>
             <CardContent className="p-5">
-              <h2 className="font-display text-lg font-bold">Open due items</h2>
+              <h2 className="text-[15px] font-semibold">Open due items</h2>
               {dueItems.length === 0 ? (
                 <p className="mt-2 text-sm text-muted-foreground">Nothing scheduled.</p>
               ) : (
                 <ul className="mt-3 space-y-2">
                   {dueItems.map((d) => (
-                    <li key={d.id} className="flex items-center gap-3 rounded-lg border-2 border-border px-3 py-2 text-sm">
+                    <li key={d.id} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2 text-sm">
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-semibold">{d.title}</p>
                         <p className="text-xs text-muted-foreground">
@@ -534,7 +534,7 @@ export function VehicleProfilePanel(props: {
             <Card>
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
-                  <h2 className="font-display text-lg font-bold">Oil change</h2>
+                  <h2 className="text-[15px] font-semibold">Oil change</h2>
                   <Button size="sm" variant="secondary" onClick={() => setOilOpen((v) => !v)}>
                     {oilOpen ? "Close" : "Record last oil change"}
                   </Button>
@@ -585,15 +585,15 @@ export function VehicleProfilePanel(props: {
           {/* Jobs */}
           <Card>
             <CardContent className="p-5">
-              <h2 className="font-display text-lg font-bold">Jobs</h2>
+              <h2 className="text-[15px] font-semibold">Jobs</h2>
               {jobs.length === 0 ? (
                 <p className="mt-2 text-sm text-muted-foreground">No jobs for this vehicle yet.</p>
               ) : (
                 <ul className="mt-3 space-y-2">
                   {jobs.map((j) => (
                     <li key={j.id}>
-                      <Link href={`/g/${garageSlug}/jobs/${j.id}`} className="flex items-center gap-3 rounded-lg border-2 border-border px-3 py-2 text-sm hover:bg-surface-muted/60">
-                        <span className="font-mono font-bold">{j.number}</span>
+                      <Link href={`/g/${garageSlug}/jobs/${j.id}`} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2 text-sm hover:bg-surface-muted/60">
+                        <span className="font-mono font-semibold">{j.number}</span>
                         <span className="min-w-0 flex-1 truncate text-muted-foreground">{j.complaint ?? "—"}</span>
                         <StatusPill status={j.status} />
                       </Link>
@@ -610,7 +610,7 @@ export function VehicleProfilePanel(props: {
           {/* Owner */}
           <Card>
             <CardContent className="p-5">
-              <h2 className="font-display text-lg font-bold">Owner</h2>
+              <h2 className="text-[15px] font-semibold">Owner</h2>
               {owner ? (
                 <div className="mt-2">
                   <Link href={`/g/${garageSlug}/customers/${owner.id}`} className="font-semibold text-primary hover:underline">
@@ -639,7 +639,7 @@ export function VehicleProfilePanel(props: {
               )}
 
               {canUpdateVehicle && owner && (
-                <div className="mt-4 border-t-2 border-border pt-4">
+                <div className="mt-4 border-t border-border pt-4">
                   <p className={labelCls}>Transfer ownership</p>
                   <div className="mt-2 space-y-2">
                     <select className={inputCls} value={transferTo} onChange={(e) => setTransferTo(e.target.value)}>
@@ -664,7 +664,7 @@ export function VehicleProfilePanel(props: {
           {/* Specs */}
           <Card>
             <CardContent className="p-5">
-              <h2 className="font-display text-lg font-bold">Details</h2>
+              <h2 className="text-[15px] font-semibold">Details</h2>
               <dl className="mt-3 space-y-1.5 text-sm">
                 {[
                   ["VIN", vehicle.vin],
@@ -689,7 +689,7 @@ export function VehicleProfilePanel(props: {
           <Card>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
-                <h2 className="font-display text-lg font-bold">Insurance</h2>
+                <h2 className="text-[15px] font-semibold">Insurance</h2>
                 {canUpdateVehicle && (
                   <Button size="sm" variant="secondary" onClick={() => (insOpen ? setInsOpen(false) : openInsuranceForm())}>
                     {insOpen ? "Close" : insurance.length ? "Add policy" : "Add policy"}
@@ -701,7 +701,7 @@ export function VehicleProfilePanel(props: {
               ) : (
                 <ul className="mt-2 space-y-2 text-sm">
                   {insurance.map((p) => (
-                    <li key={p.id} className="rounded-lg border-2 border-border p-3">
+                    <li key={p.id} className="rounded-lg border border-border p-3">
                       <p className="font-semibold">{p.insurerName}</p>
                       <p className="text-xs text-muted-foreground">
                         {p.policyType.replace(/_/g, " ")}{p.partnerName ? ` · via ${p.partnerName}` : ""}
@@ -744,7 +744,7 @@ export function VehicleProfilePanel(props: {
           <Card>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
-                <h2 className="font-display text-lg font-bold">DVLA records</h2>
+                <h2 className="text-[15px] font-semibold">DVLA records</h2>
                 {canUpdateVehicle && (
                   <Button size="sm" variant="secondary" onClick={() => setDvlaOpen(!dvlaOpen)}>
                     {dvlaOpen ? "Close" : "Add record"}
@@ -756,7 +756,7 @@ export function VehicleProfilePanel(props: {
               ) : (
                 <ul className="mt-2 space-y-2 text-sm">
                   {dvla.map((r) => (
-                    <li key={r.id} className="flex items-center justify-between rounded-lg border-2 border-border px-3 py-2">
+                    <li key={r.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
                       <div>
                         <p className="font-semibold">{r.type.replace(/_/g, " ")}</p>
                         {r.referenceNumber && <p className="text-xs text-muted-foreground">{r.referenceNumber}</p>}
@@ -789,7 +789,7 @@ export function VehicleProfilePanel(props: {
           {/* Documents */}
           <Card>
             <CardContent className="p-5">
-              <h2 className="font-display text-lg font-bold">Documents</h2>
+              <h2 className="text-[15px] font-semibold">Documents</h2>
               {canUpdateVehicle && (
                 <div className="mt-3 space-y-2">
                   <div className="grid grid-cols-2 gap-2">
@@ -810,7 +810,7 @@ export function VehicleProfilePanel(props: {
               {documents.length > 0 && (
                 <ul className="mt-3 space-y-2">
                   {documents.map((d) => (
-                    <li key={d.id} className="flex items-center gap-3 rounded-lg border-2 border-border px-3 py-2 text-sm">
+                    <li key={d.id} className="flex items-center gap-3 rounded-lg border border-border px-3 py-2 text-sm">
                       {d.mimeType?.startsWith("image/") ? <Camera className="size-4 shrink-0 text-muted-foreground" /> : <FileText className="size-4 shrink-0 text-muted-foreground" />}
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-semibold">{d.fileName ?? d.type.replace(/_/g, " ")}</p>
@@ -830,7 +830,7 @@ export function VehicleProfilePanel(props: {
       {/* Timeline */}
       <Card>
         <CardContent className="p-5">
-          <h2 className="font-display text-lg font-bold">Timeline</h2>
+          <h2 className="text-[15px] font-semibold">Timeline</h2>
           {timeline.length === 0 ? (
             <p className="mt-2 text-sm text-muted-foreground">Nothing yet.</p>
           ) : (

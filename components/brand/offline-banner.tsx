@@ -1,28 +1,35 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useSyncExternalStore } from "react"
 import { CloudOff, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
+
+function subscribe(onChange: () => void) {
+  window.addEventListener("online", onChange)
+  window.addEventListener("offline", onChange)
+  return () => {
+    window.removeEventListener("online", onChange)
+    window.removeEventListener("offline", onChange)
+  }
+}
 
 /**
  * Slim offline banner — spec OfflineBanner.
  * Shows sync queue count while offline; flashes "All synced" briefly on reconnect.
  */
 export function OfflineBanner({ queueCount = 0 }: { queueCount?: number }) {
-  const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine))
+  // Server snapshot is `true` so SSR/hydration never render the banner;
+  // the real navigator.onLine value applies after hydration.
+  const online = useSyncExternalStore(subscribe, () => navigator.onLine, () => true)
   const [justSynced, setJustSynced] = useState(false)
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined
     const on = () => {
-      setOnline(true)
       setJustSynced(true)
       timer = setTimeout(() => setJustSynced(false), 2000)
     }
-    const off = () => {
-      setOnline(false)
-      setJustSynced(false)
-    }
+    const off = () => setJustSynced(false)
     window.addEventListener("online", on)
     window.addEventListener("offline", off)
     return () => {

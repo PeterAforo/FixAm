@@ -16,7 +16,7 @@ type Suggestion = {
   zone: { fee?: number; etaHours?: number } | null
 }
 
-const inputCls = "min-h-9 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const inputCls = "min-h-9 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 /** Low-stock part → vendor suggestions → one-tap marketplace order. */
 export function ReorderDrawer(props: {
@@ -64,7 +64,7 @@ export function ReorderDrawer(props: {
       <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <CardContent className="max-h-[80vh] space-y-3 overflow-y-auto p-5">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-bold">Reorder — {partName}</h2>
+            <h2 className="text-[15px] font-semibold">Reorder — {partName}</h2>
             <button onClick={onClose} className="text-muted-foreground">✕</button>
           </div>
           {msg && <p className="rounded-lg bg-info/10 px-3 py-2 text-sm">{msg}</p>}
@@ -77,7 +77,7 @@ export function ReorderDrawer(props: {
           {(suggestions ?? []).map((s) => (
             <div key={s.productId} className="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{s.name} {s.isPreferred && <span className="ml-1 rounded bg-success/15 px-1.5 py-0.5 text-[10px] font-bold text-success">PREFERRED</span>}</p>
+                <p className="truncate text-sm font-semibold">{s.name} {s.isPreferred && <span className="ml-1 rounded bg-success/15 px-1.5 py-0.5 text-[10px] font-semibold text-success">PREFERRED</span>}</p>
                 <p className="text-xs text-muted-foreground">
                   {s.vendorName}{s.rating != null ? ` · ★${s.rating.toFixed(1)}` : ""}
                   {s.zone?.etaHours ? ` · ETA ~${s.zone.etaHours}h` : ""}

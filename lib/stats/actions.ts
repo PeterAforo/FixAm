@@ -55,12 +55,13 @@ export async function getMyStats(garageId: string): Promise<MyStats | null> {
   let leaderboard: MyStats["leaderboard"] = null
   if (garage?.leaderboardEnabled !== false) {
     const weekAgo = new Date(Date.now() - 7 * 86_400_000)
+    const weekAgoIso = weekAgo.toISOString()
     const rows = await db()
       .select({
         userId: mechanicStats.userId,
         name: users.fullName,
-        jobsThisWeek: sql<number>`(select count(*)::int from job_assignments ja join jobs j on j.id = ja.job_id where ja.garage_id = ${garageId} and ja.user_id = ${mechanicStats.userId} and j.status in ('delivered','closed') and j.delivered_at >= ${weekAgo})`,
-        minutesThisWeek: sql<number>`(select coalesce(sum(extract(epoch from (tl.ended_at - tl.started_at))/60),0)::int from time_logs tl where tl.garage_id = ${garageId} and tl.user_id = ${mechanicStats.userId} and tl.started_at >= ${weekAgo} and tl.ended_at is not null)`,
+        jobsThisWeek: sql<number>`(select count(*)::int from job_assignments ja join jobs j on j.id = ja.job_id where ja.garage_id = ${garageId} and ja.user_id = ${mechanicStats.userId} and j.status in ('delivered','closed') and j.delivered_at >= ${weekAgoIso})`,
+        minutesThisWeek: sql<number>`(select coalesce(sum(extract(epoch from (tl.ended_at - tl.started_at))/60),0)::int from time_logs tl where tl.garage_id = ${garageId} and tl.user_id = ${mechanicStats.userId} and tl.started_at >= ${weekAgoIso} and tl.ended_at is not null)`,
       })
       .from(mechanicStats)
       .innerJoin(users, eq(users.id, mechanicStats.userId))
@@ -81,7 +82,7 @@ export async function getMyStats(garageId: string): Promise<MyStats | null> {
       from job_assignments ja
       join jobs j on j.id = ja.job_id
       where ja.garage_id = ${garageId} and ja.user_id = ${userId}
-        and j.status in ('delivered','closed') and j.delivered_at >= ${since}
+        and j.status in ('delivered','closed') and j.delivered_at >= ${since.toISOString()}
         and j.deleted_at is null
     `)
     return Number(rows[0]?.n ?? 0)

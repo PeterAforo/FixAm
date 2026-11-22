@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation"
 import { Suspense } from "react"
 import { connection } from "next/server"
-import { and, asc, eq, isNull, sql, type SQL } from "drizzle-orm"
+import { and, asc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm"
 import { db } from "@/lib/db"
 import {
   bays,
@@ -132,7 +132,7 @@ async function JobsLoader({
         .select({ jobId: jobAssignments.jobId, userId: jobAssignments.userId, name: users.fullName, isLead: jobAssignments.isLead })
         .from(jobAssignments)
         .innerJoin(users, eq(jobAssignments.userId, users.id))
-        .where(and(eq(jobAssignments.garageId, garage.id), sql`${jobAssignments.jobId} = ANY(${filtered.map((f) => f.id)}::uuid[])`))
+        .where(and(eq(jobAssignments.garageId, garage.id), inArray(jobAssignments.jobId, filtered.map((f) => f.id))))
     : []
 
   const assigneesByJob = new Map<string, { userId: string; name: string; isLead: boolean }[]>()
@@ -203,7 +203,7 @@ export default function JobsPage({
   searchParams: Promise<{ mechanic?: string; priority?: string; branch?: string; swimlane?: string; q?: string; status?: string }>
 }) {
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-5 py-6 md:px-10 md:py-8">
       <div className="mx-auto max-w-[1400px]">
         <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-muted" />}>
           <JobsLoader params={params} searchParams={searchParams} />

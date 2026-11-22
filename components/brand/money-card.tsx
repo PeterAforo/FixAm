@@ -5,7 +5,7 @@ import { ArrowDownRight, ArrowUpRight } from "lucide-react"
 export type MoneyCardTone = "ignite" | "carbon" | "turbo" | "violet"
 
 const TONES: Record<MoneyCardTone, string> = {
-  ignite: "bg-[image:var(--gradient-ignite)]",
+  ignite: "bg-[image:linear-gradient(135deg,#FF7A3D,#D4430F)]",
   carbon: "bg-[image:var(--gradient-carbon-hero)]",
   turbo: "bg-[image:linear-gradient(135deg,#00C2B8,#008079)]",
   violet: "bg-[image:linear-gradient(135deg,#9B8CFF,#5E4DF0)]",
@@ -34,16 +34,16 @@ export function MoneyCard({
   const max = sparkline?.length ? Math.max(...sparkline.map(Math.abs), 1) : 1
 
   return (
-    <div className={cn("relative overflow-hidden rounded-2xl p-5 text-white shadow-3", TONES[tone], className)}>
-      <p className="text-xs font-semibold uppercase tracking-widest text-white/70">{label}</p>
-      <p className="mt-1 font-display text-3xl font-bold tabular-nums tracking-tight">
+    <div className={cn("relative overflow-hidden rounded-[18px] p-5 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_16px_40px_-16px_rgba(212,67,15,0.6)]", TONES[tone], className)}>
+      <p className="text-[13px] font-medium text-white/85">{label}</p>
+      <p className="mt-1 font-display text-[30px] font-semibold tracking-[-0.025em] tabular-nums tracking-tight">
         {formatGHS(BigInt(pesewas))}
       </p>
       <div className="mt-2 flex items-end justify-between gap-3">
         {delta !== undefined ? (
           <span
             className={cn(
-              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold",
+              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold",
               positive ? "bg-volt-400 text-carbon-900" : "bg-brake-400 text-white"
             )}
           >

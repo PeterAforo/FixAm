@@ -270,7 +270,7 @@ export async function checkInJob(rawInput: unknown): Promise<ActionResult<{ jobI
     if (items.length) {
       const skus = items.map((i) => i.sku).filter((s): s is string => Boolean(s))
       const partRows = skus.length
-        ? await db().select({ id: parts.id, sku: parts.sku }).from(parts).where(and(eq(parts.garageId, d.garageId), sql`${parts.sku} = ANY(${skus})`))
+        ? await db().select({ id: parts.id, sku: parts.sku }).from(parts).where(and(eq(parts.garageId, d.garageId), inArray(parts.sku, skus)))
         : []
       const partBySku = new Map(partRows.map((p) => [p.sku, p.id]))
       const itemRows = await Promise.all(
@@ -307,7 +307,7 @@ export async function checkInJob(rawInput: unknown): Promise<ActionResult<{ jobI
     const valid = await db()
       .select({ userId: memberships.userId })
       .from(memberships)
-      .where(and(eq(memberships.garageId, d.garageId), eq(memberships.status, "active"), sql`${memberships.userId} = ANY(${mechIds})`))
+      .where(and(eq(memberships.garageId, d.garageId), eq(memberships.status, "active"), inArray(memberships.userId, mechIds)))
     const validIds = new Set(valid.map((v) => v.userId))
     const ids = mechIds.filter((id) => validIds.has(id))
     if (ids.length) {

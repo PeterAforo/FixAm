@@ -1,9 +1,21 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useTransition } from "react"
+import { useState, useTransition, type ReactNode } from "react"
+import {
+  ArrowRight,
+  BellRing,
+  CalendarPlus,
+  CarFront,
+  CircleCheck,
+  Receipt,
+  ScanBarcode,
+  Wallet,
+  Wrench,
+} from "lucide-react"
 import { Button } from "@/components/brand/button"
-import { Card, CardContent } from "@/components/brand/card"
+import { Card } from "@/components/brand/card"
+import { EmptyState } from "@/components/brand/empty-state"
 import { MoneyCard } from "@/components/brand/money-card"
 import { StatTile } from "@/components/brand/stat-tile"
 import { StatusPill, statusTone } from "@/components/brand/status-pill"
@@ -15,23 +27,56 @@ import type { DashboardData } from "@/lib/dashboard"
 const STATUS_ORDER = [
   "booked", "checked_in", "in_progress", "waiting_parts", "quality_check", "ready", "delivered", "cancelled",
 ]
+const STATUS_BAR: Record<string, string> = {
+  booked: "#A79E91",
+  checked_in: "#00A39B",
+  in_progress: "#FF5A1F",
+  waiting_parts: "#FFB020",
+  quality_check: "#7C6CFF",
+  ready: "#A6D914",
+  delivered: "#2D375B",
+  cancelled: "#D3CABC",
+}
 
-function Sparkline({ data }: { data: { date: string; total: number }[] }) {
-  const w = 280, h = 56
-  const max = Math.max(1, ...data.map((d) => d.total))
-  const bw = w / data.length
+function CardHead({ title, href, linkLabel }: { title: string; href?: string; linkLabel?: string }) {
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="h-14 w-full" role="img" aria-label="7-day revenue">
-      {data.map((d, i) => {
-        const bh = (d.total / max) * (h - 8)
-        return (
-          <rect key={d.date} x={i * bw + 4} y={h - bh} width={Math.max(4, bw - 8)} height={Math.max(2, bh)} rx={3}
-            fill="var(--color-ignition-500)">
-            <title>{`${d.date.slice(5)}: ${formatGHS(d.total)}`}</title>
-          </rect>
-        )
-      })}
-    </svg>
+    <div className="flex items-center justify-between gap-3 px-5 pt-5">
+      <h2 className="text-[15px] font-semibold">{title}</h2>
+      {href && (
+        <Link href={href} className="inline-flex items-center gap-1 text-[13px] font-medium text-muted-foreground hover:text-foreground">
+          {linkLabel ?? "View all"} <ArrowRight className="size-3.5" />
+        </Link>
+      )}
+    </div>
+  )
+}
+
+function RevenueBars({ data }: { data: { date: string; total: number }[] }) {
+  const max = Math.max(1, ...data.map((d) => d.total))
+  const total = data.reduce((s, d) => s + d.total, 0)
+  return (
+    <div>
+      <p className="font-display text-2xl font-semibold tracking-[-0.02em] tabular-nums">{formatGHS(total)}</p>
+      <p className="text-xs text-muted-foreground">Collected in the last 7 days</p>
+      <div className="mt-4 flex h-24 items-end gap-2" role="img" aria-label="Revenue for the last 7 days">
+        {data.map((d, i) => {
+          const pct = Math.max(4, (d.total / max) * 100)
+          const isToday = i === data.length - 1
+          return (
+            <div key={d.date} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
+              <div
+                className="w-full rounded-md"
+                style={{ height: `${pct}%`, background: isToday ? "#FF5A1F" : "#F1D9CC" }}
+                title={`${d.date}: ${formatGHS(d.total)}`}
+              />
+              <span className="text-[11px] text-muted-foreground">
+                {new Date(`${d.date}T12:00:00`).toLocaleDateString("en-GH", { weekday: "narrow" })}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
@@ -41,6 +86,7 @@ function PayLinkButton({ garageId, invoiceId }: { garageId: string; invoiceId: s
   return (
     <Button
       variant="secondary"
+      size="sm"
       disabled={pending || done}
       onClick={() => startTransition(async () => {
         const res = await getInvoicePayLink({ garageId, invoiceId })
@@ -53,6 +99,11 @@ function PayLinkButton({ garageId, invoiceId }: { garageId: string; invoiceId: s
       {done ? "Link copied" : "Send pay link"}
     </Button>
   )
+}
+
+function greeting() {
+  const h = new Date().getHours()
+  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"
 }
 
 export function DashboardPanel(props: {
@@ -72,23 +123,34 @@ export function DashboardPanel(props: {
   const today = new Date().toLocaleDateString("en-GH", { weekday: "long", day: "numeric", month: "long" })
 
   const quickActions = [
-    canCheckIn && { href: `${base}/check-in`, label: "Check in vehicle" },
-    canBook && { href: `${base}/bookings`, label: "New booking" },
-    canPos && { href: `${base}/pos`, label: "Counter sale" },
-    canExpense && { href: `${base}/expenses`, label: "Record expense" },
-  ].filter(Boolean) as { href: string; label: string }[]
+    canCheckIn && { href: `${base}/check-in`, label: "Check in", icon: <CarFront /> },
+    canBook && { href: `${base}/bookings`, label: "New booking", icon: <CalendarPlus /> },
+    canPos && { href: `${base}/pos`, label: "Counter sale", icon: <ScanBarcode /> },
+    canExpense && { href: `${base}/expenses`, label: "Record expense", icon: <Receipt /> },
+  ].filter(Boolean) as { href: string; label: string; icon: ReactNode }[]
+
+  const statusEntries = STATUS_ORDER.map((s) => [s, data.jobsByStatus[s] ?? 0] as const).filter(([, n]) => n > 0)
+  const statusTotal = statusEntries.reduce((s, [, n]) => s + n, 0)
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      {/* Header */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold">Good day, {userName.split(" ")[0]}</h1>
-          <p className="text-sm text-muted-foreground">{garageName} · {today}</p>
+          <h1 className="font-display text-[30px] font-semibold leading-tight tracking-[-0.025em]">
+            {greeting()}, {userName.split(" ")[0]}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">{garageName} · {today}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {quickActions.map((a) => (
-            <Link key={a.href} href={a.href}>
-              <Button variant="secondary" className="!min-h-9 text-sm">{a.label}</Button>
+            <Link
+              key={a.href}
+              href={a.href}
+              className="inline-flex h-10 items-center gap-2 rounded-full border border-border-strong bg-card px-4 text-sm font-medium transition-colors hover:bg-surface-sunken [&>svg]:size-4 [&>svg]:text-muted-foreground"
+            >
+              {a.icon}
+              {a.label}
             </Link>
           ))}
         </div>
@@ -96,143 +158,163 @@ export function DashboardPanel(props: {
 
       <HelpTips />
 
-      {canSeeMoney && (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <div className="col-span-2 md:col-span-1">
-            <MoneyCard label="Today's revenue" pesewas={data.today.paymentsTotal} />
-          </div>
-          <StatTile label="Payments received" value={`${data.today.paymentsCount}`} />
-          <StatTile label="Jobs in progress" value={`${data.jobsInProgress}`} />
-          <StatTile label="Ready for pickup" value={`${data.readyJobs.length}`} />
-        </div>
-      )}
-
-      {!canSeeMoney && (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {([
-            ["Jobs in progress", `${data.jobsInProgress}`],
-            ["Ready for pickup", `${data.readyJobs.length}`],
-            ["Reminders this week", `${data.dueThisWeek.length}`],
-            ["Vehicles", "—"],
-          ] as const).map(([label, value]) => (
-            <Card key={label}>
-              <CardContent className="p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-                <p className="mt-1 font-display text-2xl font-bold tabular-nums">{value}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      {/* KPIs */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {canSeeMoney ? (
+          <>
+            <div className="col-span-2 lg:col-span-1">
+              <MoneyCard label="Today's revenue" pesewas={data.today.paymentsTotal} className="h-full" />
+            </div>
+            <StatTile label="Payments received" value={data.today.paymentsCount} icon={<Wallet />} hint="Today" />
+            <StatTile label="Jobs in progress" value={data.jobsInProgress} icon={<Wrench />} hint="Across the workshop" />
+            <StatTile label="Ready for pickup" value={data.readyJobs.length} icon={<CircleCheck />} hint="Waiting for customers" />
+          </>
+        ) : (
+          <>
+            <StatTile label="Jobs in progress" value={data.jobsInProgress} icon={<Wrench />} />
+            <StatTile label="Ready for pickup" value={data.readyJobs.length} icon={<CircleCheck />} />
+            <StatTile label="Reminders this week" value={data.dueThisWeek.length} icon={<BellRing />} />
+            <StatTile label="Vehicles" value="—" icon={<CarFront />} />
+          </>
+        )}
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-5">
-        {/* left — workshop now */}
+        {/* Left — workshop now */}
         <div className="space-y-4 lg:col-span-3">
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <h2 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">Jobs by status</h2>
-                <Link href={`${base}/jobs`} className="text-xs font-bold text-primary">Board →</Link>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {STATUS_ORDER.map((s) => {
-                  const n = data.jobsByStatus[s] ?? 0
-                  if (n === 0) return null
-                  return (
-                    <Link key={s} href={`${base}/jobs?status=${s}`}>
-                      <StatusPill status={s} tone={statusTone(s)}>{s.replace(/_/g, " ")} · {n}</StatusPill>
-                    </Link>
-                  )
-                })}
-                {Object.keys(data.jobsByStatus).length === 0 && (
-                  <p className="text-sm text-muted-foreground">No jobs yet</p>
-                )}
-              </div>
-            </CardContent>
+            <CardHead title="Workshop now" href={`${base}/jobs`} linkLabel="Job board" />
+            <div className="px-5 pb-5 pt-4">
+              {statusTotal === 0 ? (
+                <EmptyState
+                  compact
+                  icon={Wrench}
+                  title="No cars in the bays yet"
+                  description="Check a vehicle in and it will appear here and on the job board."
+                  action={
+                    canCheckIn ? (
+                      <Link href={`${base}/check-in`} className="mt-1 inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground">
+                        Check in a vehicle
+                      </Link>
+                    ) : undefined
+                  }
+                />
+              ) : (
+                <>
+                  <div className="flex h-2.5 overflow-hidden rounded-full bg-surface-muted">
+                    {statusEntries.map(([s, n]) => (
+                      <div key={s} style={{ width: `${(n / statusTotal) * 100}%`, background: STATUS_BAR[s] }} />
+                    ))}
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    {statusEntries.map(([s, n]) => (
+                      <Link
+                        key={s}
+                        href={`${base}/jobs?status=${s}`}
+                        className="flex items-center justify-between rounded-xl border border-border px-3 py-2.5 text-sm transition-colors hover:border-border-strong"
+                      >
+                        <span className="flex items-center gap-2 capitalize">
+                          <span className="size-2 rounded-full" style={{ background: STATUS_BAR[s] }} />
+                          {s.replace(/_/g, " ")}
+                        </span>
+                        <span className="font-semibold tabular-nums">{n}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </Card>
 
           <Card>
-            <CardContent className="p-4">
-              <h2 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">Ready for pickup</h2>
-              <div className="mt-3 divide-y">
-                {data.readyJobs.length === 0 && (
-                  <p className="py-6 text-center text-sm text-muted-foreground">Nothing waiting for collection</p>
-                )}
-                {data.readyJobs.map((j) => (
-                  <div key={j.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-                    <div>
-                      <p className="font-medium">{j.number} · {j.plateNumber ?? "—"}</p>
-                      <p className="text-xs text-muted-foreground">{j.customerName ?? "Walk-in"}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {canSeeMoney && j.balanceDue > 0 && (
-                        <span className="text-sm font-bold tabular-nums text-warning">{formatGHS(j.balanceDue)} due</span>
-                      )}
-                      {canSeeMoney && j.invoiceId && j.balanceDue > 0 && (
-                        <PayLinkButton garageId={garageId} invoiceId={j.invoiceId} />
-                      )}
-                      <Link href={`${base}/jobs/${j.id}`} className="text-sm font-bold text-primary">Open →</Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
+            <CardHead title="Ready for pickup" href={`${base}/jobs?status=ready`} />
+            <div className="px-5 pb-3 pt-2">
+              {data.readyJobs.length === 0 ? (
+                <EmptyState compact icon={CircleCheck} title="Nothing waiting for collection" description="Finished jobs show here so you can send a pay link in one tap." />
+              ) : (
+                <ul className="divide-y divide-border">
+                  {data.readyJobs.map((j) => (
+                    <li key={j.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="rounded-md border-[1.5px] border-foreground bg-white px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[#16130F]">
+                          {j.plateNumber ?? "—"}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{j.customerName ?? "Walk-in"}</p>
+                          <p className="text-xs text-muted-foreground">{j.number}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {canSeeMoney && j.balanceDue > 0 && (
+                          <span className="text-sm font-semibold tabular-nums">{formatGHS(j.balanceDue)} <span className="font-normal text-muted-foreground">due</span></span>
+                        )}
+                        {canSeeMoney && j.invoiceId && j.balanceDue > 0 && (
+                          <PayLinkButton garageId={garageId} invoiceId={j.invoiceId} />
+                        )}
+                        <Link href={`${base}/jobs/${j.id}`} className="text-sm font-medium text-muted-foreground hover:text-foreground">Open</Link>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </Card>
         </div>
 
-        {/* right — money & reminders */}
+        {/* Right — money & reminders */}
         <div className="space-y-4 lg:col-span-2">
           {canSeeMoney && (
             <Card>
-              <CardContent className="p-4">
-                <h2 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">Money</h2>
-                <div className="mt-3 space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Outstanding invoices</span><span className="font-bold tabular-nums">{formatGHS(data.outstanding.invoiceBalances)}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Overdue instalments</span><span className="font-bold tabular-nums">{formatGHS(data.outstanding.instalmentsOverdue)}</span></div>
-                  <div className="flex gap-3 pt-1">
-                    <Link href={`${base}/invoices`} className="text-xs font-bold text-primary">Invoices →</Link>
-                    <Link href={`${base}/credit`} className="text-xs font-bold text-primary">Credit →</Link>
-                  </div>
+              <CardHead title="Money owed" href={`${base}/invoices`} linkLabel="Invoices" />
+              <div className="px-5 pb-5 pt-3 text-sm">
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-muted-foreground">Outstanding invoices</span>
+                  <span className="font-semibold tabular-nums">{formatGHS(data.outstanding.invoiceBalances)}</span>
                 </div>
-              </CardContent>
+                <div className="flex items-center justify-between border-t border-border-subtle py-2">
+                  <span className="text-muted-foreground">Overdue instalments</span>
+                  <span className="font-semibold tabular-nums">{formatGHS(data.outstanding.instalmentsOverdue)}</span>
+                </div>
+                <Link href={`${base}/credit`} className="mt-2 inline-flex items-center gap-1 text-[13px] font-medium text-muted-foreground hover:text-foreground">
+                  Credit accounts <ArrowRight className="size-3.5" />
+                </Link>
+              </div>
             </Card>
           )}
 
           <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <h2 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">Reminders due this week</h2>
-                <Link href={`${base}/vehicles`} className="text-xs font-bold text-primary">Vehicles →</Link>
-              </div>
-              <div className="mt-3 space-y-2">
-                {data.dueThisWeek.length === 0 && (
-                  <p className="text-sm text-muted-foreground">All clear</p>
-                )}
-                {data.dueThisWeek.map((d) => (
-                  <div key={d.id} className="flex items-center justify-between gap-2 text-sm">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{d.title}</p>
-                      <p className="text-xs text-muted-foreground">{d.customerName ?? ""} · {d.effectiveDueDate}</p>
-                    </div>
-                    <StatusPill status={d.status} tone={statusTone(d.status)} />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
+            <CardHead title="Reminders this week" href={`${base}/reminders`} />
+            <div className="px-5 pb-4 pt-2">
+              {data.dueThisWeek.length === 0 ? (
+                <EmptyState compact icon={BellRing} title="All clear" description="No oil, insurance or DVLA reminders due in the next 7 days." />
+              ) : (
+                <ul className="divide-y divide-border">
+                  {data.dueThisWeek.map((d) => (
+                    <li key={d.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{d.title}</p>
+                        <p className="text-xs text-muted-foreground">{d.customerName ?? ""} · {d.effectiveDueDate}</p>
+                      </div>
+                      <StatusPill status={d.status} tone={statusTone(d.status)} size="sm" />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </Card>
 
           {canSeeMoney && (
             <Card>
-              <CardContent className="p-4">
-                <h2 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">Last 7 days</h2>
-                <div className="mt-3">
-                  <Sparkline data={data.sparkline} />
-                </div>
-                <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-                  <span>Cash today: {formatGHS(data.today.cashTotal - data.today.cashExpenses)}</span>
-                  <Link href={`${base}/reports`} className="font-bold text-primary">Reports →</Link>
-                </div>
-              </CardContent>
+              <CardHead title="Last 7 days" href={`${base}/reports`} linkLabel="Reports" />
+              <div className="px-5 pb-5 pt-3">
+                <RevenueBars data={data.sparkline} />
+                <p className="mt-4 border-t border-border-subtle pt-3 text-xs text-muted-foreground">
+                  Cash in hand today:{" "}
+                  <span className="font-semibold text-foreground tabular-nums">
+                    {formatGHS(data.today.cashTotal - data.today.cashExpenses)}
+                  </span>
+                </p>
+              </div>
             </Card>
           )}
         </div>

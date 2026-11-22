@@ -51,7 +51,7 @@ export function Avatar({
       {online !== undefined ? (
         <span
           className={cn(
-            "absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-card",
+            "absolute -bottom-0.5 -right-0.5 size-3 rounded-full border border-card",
             online ? "bg-success" : "bg-muted-foreground/50"
           )}
         />

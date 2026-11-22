@@ -30,11 +30,11 @@ export function ReviewsPanel({ garageId, reviews }: { garageId: string; reviews:
   }
 
   return (
-    <ul className="mt-3 divide-y divide-border rounded-2xl border-2 border-border bg-card">
+    <ul className="mt-3 divide-y divide-border rounded-2xl border border-border bg-card">
       {reviews.map((r) => (
         <li key={r.id} className="flex items-start justify-between gap-3 p-4">
           <div className="min-w-0">
-            <p className="text-sm font-bold">
+            <p className="text-sm font-semibold">
               {"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}
               <span className="ml-2 text-xs font-normal text-muted-foreground">
                 {r.portalPhone.slice(-4).padStart(r.portalPhone.length, "•")} · {r.createdAt}
@@ -43,7 +43,7 @@ export function ReviewsPanel({ garageId, reviews }: { garageId: string; reviews:
             {r.comment && <p className="mt-1 text-sm">{r.comment}</p>}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <span className={`rounded-pill px-2 py-0.5 text-xs font-bold ${r.status === "published" ? "bg-success/15 text-success" : "bg-surface-muted text-muted-foreground"}`}>
+            <span className={`rounded-pill px-2 py-0.5 text-xs font-semibold ${r.status === "published" ? "bg-success/15 text-success" : "bg-surface-muted text-muted-foreground"}`}>
               {r.status}
             </span>
             <Button

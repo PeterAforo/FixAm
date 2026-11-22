@@ -9,7 +9,7 @@ import { sendReminderNow, upsertMessageTemplate } from "@/lib/reminders/actions"
 
 type Data = Extract<Awaited<ReturnType<typeof import("@/lib/reminders/actions").listRemindersData>>, { ok: true }>["data"]
 
-const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const inputCls = "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 export function RemindersPanel({ garageId, data }: { garageId: string; data: Data }) {
   const router = useRouter()
@@ -62,7 +62,7 @@ export function RemindersPanel({ garageId, data }: { garageId: string; data: Dat
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold">Reminders</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Reminders</h1>
           <p className="text-sm text-muted-foreground">{upcoming.length} open items · {overdue.length} overdue · hourly engine scan</p>
         </div>
         <div className="flex gap-2">
@@ -81,12 +81,12 @@ export function RemindersPanel({ garageId, data }: { garageId: string; data: Dat
         <div className="space-y-4">
           {overdue.length > 0 && (
             <section>
-              <h2 className="mb-2 font-display text-lg font-bold text-danger">Overdue</h2>
+              <h2 className="mb-2 text-[15px] font-semibold text-danger">Overdue</h2>
               <DueTable items={overdue} canSend={data.canSend} pending={pending} onSend={sendNow} />
             </section>
           )}
           <section>
-            <h2 className="mb-2 font-display text-lg font-bold">Upcoming &amp; due</h2>
+            <h2 className="mb-2 text-[15px] font-semibold">Upcoming &amp; due</h2>
             <DueTable items={dueSoon} canSend={data.canSend} pending={pending} onSend={sendNow} />
           </section>
         </div>
@@ -96,7 +96,7 @@ export function RemindersPanel({ garageId, data }: { garageId: string; data: Dat
         <Card><CardContent className="p-0">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">When</th><th className="px-4 py-3">Channel</th>
                 <th className="px-4 py-3">Template</th><th className="px-4 py-3">Items</th>
                 <th className="px-4 py-3">Status</th><th className="px-4 py-3">Converted</th>
@@ -132,7 +132,7 @@ export function RemindersPanel({ garageId, data }: { garageId: string; data: Dat
           <Card><CardContent className="p-0">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                   <th className="px-4 py-3">Key</th><th className="px-4 py-3">Channel</th>
                   <th className="px-4 py-3">Override</th><th className="px-4 py-3"></th>
                 </tr>
@@ -163,7 +163,7 @@ export function RemindersPanel({ garageId, data }: { garageId: string; data: Dat
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setEditTpl(null)}>
           <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
             <CardContent className="p-5">
-              <h3 className="font-display text-lg font-bold">{editTpl.key} · {editTpl.channel}</h3>
+              <h3 className="text-[15px] font-semibold">{editTpl.key} · {editTpl.channel}</h3>
               {editTpl.isOverride && <p className="mt-1 text-xs text-muted-foreground">Currently overriding platform default.</p>}
               {!editTpl.isOverride && editTpl.platformBody && (
                 <p className="mt-2 rounded-lg bg-muted p-2 text-xs text-muted-foreground">Default: {editTpl.platformBody.slice(0, 140)}{editTpl.platformBody.length > 140 ? "…" : ""}</p>
@@ -199,7 +199,7 @@ function DueTable(props: { items: Data["items"]; canSend: boolean; pending: bool
     <Card><CardContent className="p-0">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+          <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
             <th className="px-4 py-3">Due item</th><th className="px-4 py-3">Customer / vehicle</th>
             <th className="px-4 py-3">Effective</th><th className="px-4 py-3">In</th>
             <th className="px-4 py-3">Status</th><th className="px-4 py-3">Stage</th><th className="px-4 py-3"></th>

@@ -27,7 +27,7 @@ type Props = {
   chargeable: { id: string; number: string | null; balanceDue: number }[]
 }
 
-const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const inputCls = "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 export function CreditAccountPanel(p: Props) {
   const router = useRouter()
@@ -80,7 +80,7 @@ export function CreditAccountPanel(p: Props) {
         <Link href={`/g/${p.garageSlug}/credit`} className="text-sm text-muted-foreground hover:underline">← Credit accounts</Link>
         <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold">{p.customer?.fullName ?? "Credit account"}</h1>
+            <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">{p.customer?.fullName ?? "Credit account"}</h1>
             <p className="text-sm text-muted-foreground">
               {p.customer?.phone ?? ""} · Terms {p.account.paymentTermsDays} days · Statement day {p.account.statementDay ?? "—"}
             </p>
@@ -94,15 +94,15 @@ export function CreditAccountPanel(p: Props) {
       {/* Balance + limit */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Card><CardContent className="p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Balance</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums">{formatGHS(p.account.balance)}</p>
+          <p className="text-xs font-semibold text-muted-foreground">Balance</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums">{formatGHS(p.account.balance)}</p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Credit limit</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums">{formatGHS(p.account.creditLimit)}</p>
+          <p className="text-xs font-semibold text-muted-foreground">Credit limit</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums">{formatGHS(p.account.creditLimit)}</p>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Utilisation</p>
+          <p className="text-xs font-semibold text-muted-foreground">Utilisation</p>
           <div className="mt-2 h-3 w-full rounded-full bg-muted">
             <div className={`h-3 rounded-full ${utilisation > 90 ? "bg-danger" : utilisation > 70 ? "bg-warning" : "bg-success"}`} style={{ width: `${utilisation}%` }} />
           </div>
@@ -113,7 +113,7 @@ export function CreditAccountPanel(p: Props) {
       {/* Ageing */}
       <Card>
         <CardContent className="p-4">
-          <h2 className="font-display text-lg font-bold">Ageing</h2>
+          <h2 className="text-[15px] font-semibold">Ageing</h2>
           <div className="mt-3 flex h-4 w-full overflow-hidden rounded-full">
             {totalAgeing > 0 && BUCKETS.map(([key, , cls]) => (
               <div key={key} className={cls} style={{ width: `${(p.ageing[key] / totalAgeing) * 100}%` }} title={`${key}: ${formatGHS(p.ageing[key])}`} />
@@ -134,7 +134,7 @@ export function CreditAccountPanel(p: Props) {
       <Card>
         <CardContent className="p-0">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
-            <h2 className="font-display text-lg font-bold">Open invoices</h2>
+            <h2 className="text-[15px] font-semibold">Open invoices</h2>
             {p.canPay && p.openInvoices.length > 0 && (
               <Button size="sm" onClick={() => {
                 setPayAmount((p.account.balance / 100).toFixed(2))
@@ -145,7 +145,7 @@ export function CreditAccountPanel(p: Props) {
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">Invoice</th>
                 <th className="px-4 py-3">Due</th>
                 <th className="px-4 py-3 text-right">Balance</th>
@@ -178,7 +178,7 @@ export function CreditAccountPanel(p: Props) {
         <Card>
           <CardContent className="flex flex-wrap items-end gap-3 p-4">
             <div className="min-w-56 flex-1">
-              <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-muted-foreground">Charge invoice to account</label>
+              <label className="mb-1 block text-xs font-semibold text-muted-foreground">Charge invoice to account</label>
               <select value={chargeInvoiceId} onChange={(e) => setChargeInvoiceId(e.target.value)} className={inputCls}>
                 <option value="">Select invoice…</option>
                 {p.chargeable.map((i) => (
@@ -195,10 +195,10 @@ export function CreditAccountPanel(p: Props) {
       {/* Statements */}
       <Card>
         <CardContent className="p-0">
-          <h2 className="border-b px-4 py-3 font-display text-lg font-bold">Statements</h2>
+          <h2 className="border-b px-4 py-3 text-[15px] font-semibold">Statements</h2>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">Period</th>
                 <th className="px-4 py-3 text-right">Closing balance</th>
                 <th className="px-4 py-3">Sent</th>
@@ -230,7 +230,7 @@ export function CreditAccountPanel(p: Props) {
       {payOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-6 shadow-xl">
-            <h2 className="text-lg font-bold">Record credit payment</h2>
+            <h2 className="text-lg font-semibold tracking-[-0.01em]">Record credit payment</h2>
             <label className="mt-4 block text-sm">
               <span className="mb-1 block font-medium">Amount (GH₵)</span>
               <input value={payAmount} onChange={(e) => setPayAmount(e.target.value)} inputMode="decimal" className={inputCls} />
@@ -242,7 +242,7 @@ export function CreditAccountPanel(p: Props) {
               </select>
             </label>
             <div className="mt-4 space-y-2">
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Allocate to invoices</p>
+              <p className="text-xs font-semibold text-muted-foreground">Allocate to invoices</p>
               {p.openInvoices.map((i) => (
                 <div key={i.id} className="flex items-center justify-between gap-3 text-sm">
                   <span className="flex-1">{i.number ?? "Invoice"} <span className="text-muted-foreground">(bal {formatGHS(i.balanceDue)})</span></span>
@@ -251,7 +251,7 @@ export function CreditAccountPanel(p: Props) {
                     onChange={(e) => setAllocations({ ...allocations, [i.id]: e.target.value })}
                     placeholder="0.00"
                     inputMode="decimal"
-                    className="min-h-9 w-28 rounded-lg border-2 border-border bg-background px-2 text-sm"
+                    className="min-h-9 w-28 rounded-lg border border-border bg-background px-2 text-sm"
                   />
                 </div>
               ))}

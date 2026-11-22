@@ -172,7 +172,7 @@ async function ProfileLoader({
         </Link>
         <header className="mt-2 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="font-display text-3xl font-bold text-foreground">
+            <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em] text-foreground">
               {customer.fullName}
             </h1>
             <p className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground">
@@ -262,7 +262,7 @@ async function ProfileLoader({
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b-2 border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <tr className="border-b border-border text-left text-xs text-muted-foreground">
                       <th className="px-6 py-2">Vehicle</th>
                       <th className="px-3 py-2 text-right">Jobs</th>
                       <th className="px-6 py-2 text-right">Total spend</th>
@@ -398,16 +398,16 @@ async function ProfileLoader({
           <CardContent className="grid gap-4 text-sm sm:grid-cols-2">
             {customer.address && (
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Address</p>
+                <p className="text-xs font-semibold text-muted-foreground">Address</p>
                 <p>{customer.address}</p>
               </div>
             )}
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Channels</p>
+              <p className="text-xs font-semibold text-muted-foreground">Channels</p>
               <p>{(customer.preferredChannels ?? []).join(", ") || "—"}</p>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Opt-ins</p>
+              <p className="text-xs font-semibold text-muted-foreground">Opt-ins</p>
               <p>
                 WhatsApp {customer.whatsappOptIn ? "on" : "off"} · Marketing{" "}
                 {customer.marketingOptIn ? "on" : "off"}
@@ -415,7 +415,7 @@ async function ProfileLoader({
             </div>
             {creditRows[0] && (
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Credit account</p>
+                <p className="text-xs font-semibold text-muted-foreground">Credit account</p>
                 <p>
                   Limit <MoneyText pesewas={creditRows[0].creditLimit} /> · balance{" "}
                   <MoneyText pesewas={creditRows[0].balance} /> · {creditRows[0].paymentTermsDays}d terms ·{" "}
@@ -425,7 +425,7 @@ async function ProfileLoader({
             )}
             {customer.notes && (
               <div className="sm:col-span-2">
-                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Notes</p>
+                <p className="text-xs font-semibold text-muted-foreground">Notes</p>
                 <p className="whitespace-pre-wrap">{customer.notes}</p>
               </div>
             )}
@@ -442,7 +442,7 @@ export default function CustomerProfilePage({
   params: Promise<{ garageSlug: string; customerId: string }>
 }) {
   return (
-    <div className="p-6 md:p-10">
+    <div className="px-5 py-6 md:px-10 md:py-8">
       <div className="mx-auto max-w-6xl">
         <Suspense fallback={<div className="h-64 animate-pulse rounded-2xl bg-muted" />}>
           <ProfileLoader params={params} />

@@ -29,7 +29,7 @@ export function MyStatsPanel({ garageId, stats, canManage }: { garageId: string;
   return (
     <div className="mt-6 space-y-6">
       {/* Streak hero — spec: StreakFlame hero, Torq cool_shades at 7+ */}
-      <Card className="border-2 border-accent/40 bg-accent/5">
+      <Card className="border border-accent/40 bg-accent/5">
         <CardContent className="flex flex-wrap items-center gap-5 p-6">
           {stats.currentStreak >= 7 ? <Torq pose="cool_shades" size={88} /> : null}
           <div className="min-w-0 flex-1">
@@ -39,8 +39,8 @@ export function MyStatsPanel({ garageId, stats, canManage }: { garageId: string;
             </p>
           </div>
           <div className="text-right">
-            <p className="font-display text-3xl font-bold tabular-nums">{stats.jobsCompleted}</p>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">lifetime jobs</p>
+            <p className="font-display text-[30px] font-semibold tracking-[-0.025em] tabular-nums">{stats.jobsCompleted}</p>
+            <p className="text-xs font-semibold text-muted-foreground">lifetime jobs</p>
           </div>
         </CardContent>
       </Card>
@@ -57,9 +57,9 @@ export function MyStatsPanel({ garageId, stats, canManage }: { garageId: string;
 
       {/* Badges shelf — spec: locked badges show progress hint */}
       <section>
-        <h2 className="font-display text-lg font-bold">Badges</h2>
+        <h2 className="text-[15px] font-semibold">Badges</h2>
         {stats.badges.length === 0 ? (
-          <p className="mt-3 rounded-xl border-2 border-dashed border-border p-4 text-sm text-muted-foreground">
+          <p className="mt-3 rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
             No badges yet — complete jobs to earn your first one.
           </p>
         ) : (
@@ -74,7 +74,7 @@ export function MyStatsPanel({ garageId, stats, canManage }: { garageId: string;
       {/* Leaderboard — top 5, friendly framing */}
       {stats.leaderboard && stats.leaderboard.length > 0 && (
         <section>
-          <h2 className="font-display text-lg font-bold">This week on the floor</h2>
+          <h2 className="text-[15px] font-semibold">This week on the floor</h2>
           <Card className="mt-3"><CardContent className="p-4">
             <div className="space-y-2">
               {stats.leaderboard.slice(0, 5).map((r, i) => (
@@ -89,7 +89,7 @@ export function MyStatsPanel({ garageId, stats, canManage }: { garageId: string;
                       style={{ width: `${Math.round((r.jobsThisWeek / maxWeekJobs) * 100)}%` }}
                     />
                   </div>
-                  <span className="w-16 text-right text-sm font-bold tabular-nums">{r.jobsThisWeek} jobs</span>
+                  <span className="w-16 text-right text-sm font-semibold tabular-nums">{r.jobsThisWeek} jobs</span>
                 </div>
               ))}
             </div>
@@ -98,7 +98,7 @@ export function MyStatsPanel({ garageId, stats, canManage }: { garageId: string;
       )}
 
       {canManage && (
-        <div className="flex items-center justify-between rounded-xl border-2 border-border bg-card p-4">
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
           <div>
             <p className="font-semibold">Weekly leaderboard</p>
             <p className="text-sm text-muted-foreground">{stats.leaderboardEnabled ? "Mechanics can see rankings" : "Hidden from the team"}</p>

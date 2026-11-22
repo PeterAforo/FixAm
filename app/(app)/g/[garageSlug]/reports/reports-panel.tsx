@@ -34,7 +34,7 @@ function BarList({ title, rows, color }: { title: string; rows: [string, number]
   return (
     <Card>
       <CardContent className="p-4">
-        <h3 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">{title}</h3>
+        <h3 className="text-[15px] font-semibold text-foreground">{title}</h3>
         <div className="mt-3 space-y-2">
           {rows.length === 0 && <p className="text-sm text-muted-foreground">No data</p>}
           {rows.map(([label, v]) => (
@@ -60,7 +60,7 @@ function DailyChart({ data }: { data: { date: string; revenue: number; payments:
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">Daily revenue vs collections</h3>
+          <h3 className="text-[15px] font-semibold text-foreground">Daily revenue vs collections</h3>
           <div className="flex gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: CHART.revenue }} />Invoiced</span>
             <span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: CHART.payments }} />Payments</span>
@@ -121,14 +121,14 @@ export function ReportsPanel(props: {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Reports</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Reports</h1>
           <p className="text-sm text-muted-foreground">
             {type === "day" ? `Day report — ${mt.periodStart}` : `Month report — ${mt.periodStart.slice(0, 7)}`}
             {" · "}{source === "live" ? "Live figures" : "Nightly snapshot"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-lg border-2 border-border bg-surface p-0.5">
+          <div className="flex rounded-lg border border-border bg-surface p-0.5">
             {(["day", "month"] as const).map((t) => (
               <button key={t} onClick={() => router.push(qs({ type: t, period: t === "month" ? period.slice(0, 7) : period }))}
                 className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize ${type === t ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
@@ -138,14 +138,14 @@ export function ReportsPanel(props: {
           </div>
           {type === "day" ? (
             <input type="date" defaultValue={period} onChange={(e) => e.target.value && router.push(qs({ period: e.target.value }))}
-              className="min-h-10 rounded-lg border-2 border-border bg-surface px-2 text-sm" />
+              className="min-h-10 rounded-lg border border-border bg-surface px-2 text-sm" />
           ) : (
             <input type="month" defaultValue={period.slice(0, 7)} onChange={(e) => e.target.value && router.push(qs({ type: "month", period: e.target.value }))}
-              className="min-h-10 rounded-lg border-2 border-border bg-surface px-2 text-sm" />
+              className="min-h-10 rounded-lg border border-border bg-surface px-2 text-sm" />
           )}
           {branches.length > 1 && (
             <select value={branchId ?? ""} onChange={(e) => router.push(qs({ branch: e.target.value }))}
-              className="min-h-10 rounded-lg border-2 border-border bg-surface px-2 text-sm">
+              className="min-h-10 rounded-lg border border-border bg-surface px-2 text-sm">
               <option value="">All branches</option>
               {branches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
@@ -169,8 +169,8 @@ export function ReportsPanel(props: {
         ] as const).map(([label, value, delta]) => (
           <Card key={label}>
             <CardContent className="p-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-              <p className="mt-1 font-display text-xl font-bold tabular-nums">{value}</p>
+              <p className="text-xs font-medium text-muted-foreground">{label}</p>
+              <p className="mt-1 font-display text-xl font-semibold tabular-nums">{value}</p>
               {delta}
             </CardContent>
           </Card>
@@ -178,9 +178,9 @@ export function ReportsPanel(props: {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Card><CardContent className="p-4"><p className="text-xs uppercase tracking-wide text-muted-foreground">Jobs completed</p><p className="font-display text-xl font-bold">{mt.jobsCompleted}</p>{cmp && <Delta current={mt.jobsCompleted} previous={cmp.jobsCompleted} />}</CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs uppercase tracking-wide text-muted-foreground">Jobs created</p><p className="font-display text-xl font-bold">{mt.jobsCreated}</p></CardContent></Card>
-        <Card><CardContent className="p-4"><p className="text-xs uppercase tracking-wide text-muted-foreground">Invoices issued</p><p className="font-display text-xl font-bold">{mt.sales.invoiceCount}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Jobs completed</p><p className="font-display text-xl font-semibold">{mt.jobsCompleted}</p>{cmp && <Delta current={mt.jobsCompleted} previous={cmp.jobsCompleted} />}</CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Jobs created</p><p className="font-display text-xl font-semibold">{mt.jobsCreated}</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Invoices issued</p><p className="font-display text-xl font-semibold">{mt.sales.invoiceCount}</p></CardContent></Card>
       </div>
 
       {mt.dailyBreakdown.length > 1 && <DailyChart data={mt.dailyBreakdown} />}
@@ -203,16 +203,16 @@ export function ReportsPanel(props: {
       {/* outstanding */}
       <Card>
         <CardContent className="p-4">
-          <h3 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">Outstanding balances</h3>
+          <h3 className="text-[15px] font-semibold text-foreground">Outstanding balances</h3>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             {([
               ["Unpaid invoices", mt.outstanding.invoiceBalances],
               ["Overdue instalments", mt.outstanding.instalmentsOverdue],
               ["Credit account balances", mt.outstanding.creditBalances],
             ] as const).map(([label, v]) => (
-              <div key={label} className="rounded-xl border-2 border-border bg-surface-muted p-3">
+              <div key={label} className="rounded-xl border border-border bg-surface-muted p-3">
                 <p className="text-xs text-muted-foreground">{label}</p>
-                <p className="font-display text-lg font-bold tabular-nums">{formatGHS(v)}</p>
+                <p className="text-[15px] font-semibold tabular-nums">{formatGHS(v)}</p>
               </div>
             ))}
           </div>
@@ -223,7 +223,7 @@ export function ReportsPanel(props: {
       <Card>
         <CardContent className="p-0">
           <div className="border-b px-4 py-3">
-            <h3 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">Staff performance — jobs delivered</h3>
+            <h3 className="text-[15px] font-semibold text-foreground">Staff performance — jobs delivered</h3>
           </div>
           <table className="w-full text-sm">
             <tbody>

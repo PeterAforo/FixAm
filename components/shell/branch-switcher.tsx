@@ -23,8 +23,8 @@ export function BranchSwitcher({
   const [open, setOpen] = useState(false)
   if (branches.length <= 1) {
     return (
-      <span className="hidden items-center gap-1.5 text-sm font-bold text-muted-foreground sm:inline-flex">
-        <MapPin className="size-4" />
+      <span className="inline-flex min-w-0 items-center gap-1 truncate text-xs text-muted-foreground">
+        <MapPin className="size-3.5 shrink-0" />
         {branches[0]?.name ?? "All branches"}
       </span>
     )
@@ -36,7 +36,7 @@ export function BranchSwitcher({
       <Button
         type="button"
         variant="ghost"
-        className="hidden min-h-11 px-3 sm:inline-flex"
+        className="!min-h-0 gap-1 !px-1.5 py-0.5 text-xs font-medium"
         onClick={() => setOpen((o) => !o)}
       >
         <MapPin className="size-4" />
@@ -53,7 +53,7 @@ export function BranchSwitcher({
             <ul className="p-2">
               <li>
                 <button
-                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-bold hover:bg-surface-muted"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-surface-muted"
                   onClick={() => {
                     document.cookie = `${COOKIE}=; path=/; max-age=0`
                     setOpen(false)
@@ -66,7 +66,7 @@ export function BranchSwitcher({
               {branches.map((b) => (
                 <li key={b.id}>
                   <button
-                    className="w-full rounded-lg px-3 py-2 text-left text-sm font-bold hover:bg-surface-muted"
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-surface-muted"
                     onClick={() => {
                       document.cookie = `${COOKIE}=${b.id}; path=/`
                       setOpen(false)

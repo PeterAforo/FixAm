@@ -26,7 +26,7 @@ type Line = {
   taxes: { code: string; rate_bp: number; amount: number }[]
 }
 
-const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const inputCls = "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 const todayISO = () => new Date().toISOString().slice(0, 10)
 
 export function InvoiceDetailPanel(props: {
@@ -193,7 +193,7 @@ export function InvoiceDetailPanel(props: {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href={`/g/${p.garageSlug}/invoices`} className="text-sm text-muted-foreground hover:underline">← Invoices</Link>
-          <h1 className="mt-1 text-2xl font-bold">{inv.number ?? "Draft invoice"}</h1>
+          <h1 className="mt-1 font-display text-[30px] font-semibold tracking-[-0.025em]">{inv.number ?? "Draft invoice"}</h1>
           <p className="text-sm text-muted-foreground">
             {p.customer?.fullName ?? "No customer"}
             {p.vehicle ? ` · ${p.vehicle.plateNumber} ${p.vehicle.make ?? ""} ${p.vehicle.model ?? ""}`.trim() : ""}
@@ -234,7 +234,7 @@ export function InvoiceDetailPanel(props: {
 
       {msg && <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{msg}</p>}
       {payLink && (
-        <div className="rounded-xl border-2 border-success/40 bg-success/10 p-4 text-sm">
+        <div className="rounded-xl border border-success/40 bg-success/10 p-4 text-sm">
           <p className="font-semibold">Invoice issued.</p>
           <p className="mt-1 break-all text-muted-foreground">Customer pay link: {payLink}</p>
           <Button variant="secondary" className="mt-2" onClick={() => navigator.clipboard.writeText(payLink)}>Copy link</Button>
@@ -248,7 +248,7 @@ export function InvoiceDetailPanel(props: {
         <CardContent className="p-0">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">Description</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3 text-right">Qty</th>
@@ -283,7 +283,7 @@ export function InvoiceDetailPanel(props: {
             <div className="flex justify-between"><dt className="text-muted-foreground">Subtotal</dt><dd className="tabular-nums">{formatGHS(inv.subtotal)}</dd></div>
             {inv.discountTotal > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">Discount</dt><dd className="tabular-nums">−{formatGHS(inv.discountTotal)}</dd></div>}
             {inv.taxTotal > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">Tax</dt><dd className="tabular-nums">{formatGHS(inv.taxTotal)}</dd></div>}
-            <div className="flex justify-between border-t pt-1 font-bold"><dt>Total</dt><dd className="tabular-nums">{formatGHS(inv.total)}</dd></div>
+            <div className="flex justify-between border-t pt-1 font-semibold"><dt>Total</dt><dd className="tabular-nums">{formatGHS(inv.total)}</dd></div>
             {inv.depositApplied > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">Deposit applied</dt><dd className="tabular-nums">−{formatGHS(inv.depositApplied)}</dd></div>}
             <div className="flex justify-between"><dt className="text-muted-foreground">Paid</dt><dd className="tabular-nums">{formatGHS(inv.amountPaid)}</dd></div>
             <div className="flex justify-between font-semibold"><dt>Balance due</dt><dd className="tabular-nums">{formatGHS(inv.balanceDue)}</dd></div>
@@ -301,7 +301,7 @@ export function InvoiceDetailPanel(props: {
       {voidOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
-            <h2 className="text-lg font-bold">Void {inv.number ?? "invoice"}</h2>
+            <h2 className="text-lg font-semibold tracking-[-0.01em]">Void {inv.number ?? "invoice"}</h2>
             <input
               value={voidReason}
               onChange={(e) => setVoidReason(e.target.value)}
@@ -317,7 +317,7 @@ export function InvoiceDetailPanel(props: {
       )}
 
       {planLinks.length > 0 && (
-        <div className="rounded-xl border-2 border-info bg-info/10 p-4 text-sm">
+        <div className="rounded-xl border border-info bg-info/10 p-4 text-sm">
           <p className="font-semibold">Payment plan created — instalment pay links:</p>
           <ul className="mt-2 space-y-1">
             {planLinks.map((l) => (
@@ -336,7 +336,7 @@ export function InvoiceDetailPanel(props: {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-display text-lg font-bold">
+              <h2 className="text-[15px] font-semibold">
                 Payment plan · {p.plan.frequency} · {p.plan.status}
               </h2>
               {p.canPlan && p.plan.status === "active" && (
@@ -345,7 +345,7 @@ export function InvoiceDetailPanel(props: {
             </div>
             <table className="mt-3 w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                   <th className="py-2">#</th>
                   <th className="py-2">Due</th>
                   <th className="py-2 text-right">Amount</th>
@@ -387,7 +387,7 @@ export function InvoiceDetailPanel(props: {
       {planOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-6 shadow-xl">
-            <h2 className="text-lg font-bold">Payment plan</h2>
+            <h2 className="text-lg font-semibold tracking-[-0.01em]">Payment plan</h2>
             <p className="mt-1 text-sm text-muted-foreground">Balance: {formatGHS(inv.balanceDue)}</p>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <label className="text-sm">
@@ -422,8 +422,8 @@ export function InvoiceDetailPanel(props: {
             </div>
 
             {planPreview && (
-              <div className="mt-4 rounded-xl border-2 border-border p-3">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">Schedule preview</p>
+              <div className="mt-4 rounded-xl border border-border p-3">
+                <p className="mb-2 text-xs font-semibold text-muted-foreground">Schedule preview</p>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
                   {planPreview.map((s) => (
                     <div key={s.sequence} className="flex justify-between">
@@ -447,14 +447,14 @@ export function InvoiceDetailPanel(props: {
       {payOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
-            <h2 className="text-lg font-bold">Record payment</h2>
+            <h2 className="text-lg font-semibold tracking-[-0.01em]">Record payment</h2>
             <p className="mt-1 text-sm text-muted-foreground">Balance due: {formatGHS(inv.balanceDue)}</p>
             <div className="mt-4 grid grid-cols-3 gap-2">
               {["cash", "momo", "card", "bank_transfer", "cheque", "other"].map((m) => (
                 <button
                   key={m}
                   onClick={() => setPay({ ...pay, method: m })}
-                  className={`rounded-lg border-2 px-2 py-2 text-xs font-bold capitalize ${pay.method === m ? "border-primary bg-primary/10" : "border-border"}`}
+                  className={`rounded-lg border px-2 py-2 text-xs font-semibold capitalize ${pay.method === m ? "border-primary bg-primary/10" : "border-border"}`}
                 >
                   {m.replace("_", " ")}
                 </button>
@@ -498,7 +498,7 @@ export function InvoiceDetailPanel(props: {
       {creditOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
-            <h2 className="text-lg font-bold">Credit note</h2>
+            <h2 className="text-lg font-semibold tracking-[-0.01em]">Credit note</h2>
             <p className="mt-1 text-sm text-muted-foreground">Balance due: {formatGHS(inv.balanceDue)}</p>
             <input
               value={credit.amount}

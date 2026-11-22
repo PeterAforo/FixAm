@@ -28,7 +28,7 @@ const statusToneVariants = cva(
       },
       variant: {
         subtle: "border-transparent",
-        solid: "border-2 border-border",
+        solid: "border border-border",
       },
     },
     defaultVariants: { size: "md", variant: "subtle" },

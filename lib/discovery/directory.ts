@@ -72,7 +72,7 @@ export async function listDirectoryGarages(opts: {
   const conditions = [
     eq(garages.status, "active"),
     isNull(garages.deletedAt),
-    sql`${garages.id} = ANY(${[...eligible]}::uuid[])`,
+    inArray(garages.id, [...eligible]),
   ]
   if (term) {
     conditions.push(or(ilike(garages.name, `%${term}%`), ilike(garages.city, `%${term}%`), ilike(garages.region, `%${term}%`))!)
@@ -112,7 +112,7 @@ export async function listDirectoryGarages(opts: {
         count: sql<number>`count(*)::int`,
       })
       .from(garageReviews)
-      .where(and(sql`${garageReviews.garageId} = ANY(${ids}::uuid[])`, eq(garageReviews.status, "published")))
+      .where(and(inArray(garageReviews.garageId, ids), eq(garageReviews.status, "published")))
       .groupBy(garageReviews.garageId),
     db()
       .select({
@@ -123,11 +123,11 @@ export async function listDirectoryGarages(opts: {
         catalogModelId: garageVehicleCoverage.catalogModelId,
       })
       .from(garageVehicleCoverage)
-      .where(and(sql`${garageVehicleCoverage.garageId} = ANY(${ids}::uuid[])`, eq(garageVehicleCoverage.isActive, true))),
+      .where(and(inArray(garageVehicleCoverage.garageId, ids), eq(garageVehicleCoverage.isActive, true))),
     db()
       .selectDistinct({ garageId: jobTemplates.garageId, name: jobTemplates.name })
       .from(jobTemplates)
-      .where(sql`${jobTemplates.garageId} = ANY(${ids}::uuid[])`),
+      .where(inArray(jobTemplates.garageId, ids)),
   ])
 
   const ratingMap = new Map(reviewAgg.map((r) => [r.garageId, r]))
@@ -252,11 +252,11 @@ export async function directoryCoverageOptions() {
     .where(eq(garageVehicleCoverage.isActive, true))
   const makeIds = [...new Set(rows.map((r) => r.makeId).filter(Boolean))] as string[]
   const makes = makeIds.length
-    ? await db().select({ id: vehicleMakes.id, name: vehicleMakes.name }).from(vehicleMakes).where(sql`${vehicleMakes.id} = ANY(${makeIds}::uuid[])`)
+    ? await db().select({ id: vehicleMakes.id, name: vehicleMakes.name }).from(vehicleMakes).where(inArray(vehicleMakes.id, makeIds))
     : []
   const modelIds = [...new Set(rows.map((r) => r.modelId).filter(Boolean))] as string[]
   const models = modelIds.length
-    ? await db().select({ id: vehicleModels.id, name: vehicleModels.name, makeId: vehicleModels.makeId }).from(vehicleModels).where(sql`${vehicleModels.id} = ANY(${modelIds}::uuid[])`)
+    ? await db().select({ id: vehicleModels.id, name: vehicleModels.name, makeId: vehicleModels.makeId }).from(vehicleModels).where(inArray(vehicleModels.id, modelIds))
     : []
   return { makes, models }
 }

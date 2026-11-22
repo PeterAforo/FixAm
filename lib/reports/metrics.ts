@@ -173,7 +173,7 @@ export async function computePeriodMetrics(
   const jobBranch = branchId ? eq(jobs.branchId, branchId) : undefined
   const [completedRows, createdRows] = await Promise.all([
     db().select({ count: sql<string>`count(*)` }).from(jobs)
-      .where(and(eq(jobs.garageId, garageId), sql`${jobs.deliveredAt} >= ${start}`, sql`${jobs.deliveredAt} < ${end}`, ...(jobBranch ? [jobBranch] : []))),
+      .where(and(eq(jobs.garageId, garageId), gte(jobs.deliveredAt, start), lt(jobs.deliveredAt, end), ...(jobBranch ? [jobBranch] : []))),
     db().select({ count: sql<string>`count(*)` }).from(jobs)
       .where(and(eq(jobs.garageId, garageId), gte(jobs.createdAt, start), lt(jobs.createdAt, end), ...(jobBranch ? [jobBranch] : []))),
   ])
@@ -238,8 +238,8 @@ export async function computePeriodMetrics(
     .innerJoin(users, eq(jobAssignments.userId, users.id))
     .where(and(
       eq(jobs.garageId, garageId),
-      sql`${jobs.deliveredAt} >= ${start}`,
-      sql`${jobs.deliveredAt} < ${end}`,
+      gte(jobs.deliveredAt, start),
+      lt(jobs.deliveredAt, end),
       ...(jobBranch ? [jobBranch] : []),
     ))
     .groupBy(jobAssignments.userId, users.fullName)

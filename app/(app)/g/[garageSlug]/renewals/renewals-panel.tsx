@@ -13,7 +13,7 @@ import {
   startRenewalProcessing,
 } from "@/lib/renewals/actions"
 
-const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const inputCls = "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 type Renewal = {
   id: string
@@ -92,7 +92,7 @@ export function RenewalsPanel({ garageId, renewals, canProcess }: {
     <div>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold">Renewals</h1>
+          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Renewals</h1>
           <p className="text-sm text-muted-foreground">Insurance &amp; DVLA agent renewals</p>
         </div>
         {msg && <p className="text-sm font-semibold text-success">{msg}</p>}
@@ -103,7 +103,7 @@ export function RenewalsPanel({ garageId, renewals, canProcess }: {
           const items = renewals.filter((r) => col.statuses.includes(r.status))
           return (
             <div key={col.key} className="rounded-xl bg-surface-muted/50 p-3">
-              <h2 className="px-1 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+              <h2 className="px-1 text-xs font-semibold text-muted-foreground">
                 {col.label} <span className="ml-1">({items.length})</span>
               </h2>
               <div className="mt-2 space-y-2">
@@ -111,7 +111,7 @@ export function RenewalsPanel({ garageId, renewals, canProcess }: {
                   <Card key={r.id}><CardContent className="p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="text-sm font-bold">{r.number}</p>
+                        <p className="text-sm font-semibold">{r.number}</p>
                         <p className="text-xs text-muted-foreground">{kindLabel(r)} · {r.vehicleLabel}</p>
                       </div>
                       <StatusPill status={r.status.replace(/_/g, " ")} />
@@ -159,7 +159,7 @@ export function RenewalsPanel({ garageId, renewals, canProcess }: {
                     )}
 
                     {quoteFor === r.id && (
-                      <div className="mt-2 space-y-1.5 rounded-lg border-2 border-border p-2">
+                      <div className="mt-2 space-y-1.5 rounded-lg border border-border p-2">
                         <input className={inputCls} type="number" min={0} step="0.01" placeholder="Official fee GH₵ *" value={quoteForm.officialFee} onChange={(e) => setQuoteForm({ ...quoteForm, officialFee: e.target.value })} />
                         <input className={inputCls} type="number" min={0} step="0.01" placeholder="Service fee GH₵" value={quoteForm.serviceFee} onChange={(e) => setQuoteForm({ ...quoteForm, serviceFee: e.target.value })} />
                         <input className={inputCls} placeholder="Notes" value={quoteForm.notes} onChange={(e) => setQuoteForm({ ...quoteForm, notes: e.target.value })} />
@@ -168,7 +168,7 @@ export function RenewalsPanel({ garageId, renewals, canProcess }: {
                     )}
 
                     {completeFor === r.id && (
-                      <div className="mt-2 space-y-1.5 rounded-lg border-2 border-border p-2">
+                      <div className="mt-2 space-y-1.5 rounded-lg border border-border p-2">
                         {r.kind === "insurance" && (
                           <>
                             <input className={inputCls} placeholder="Insurer name" value={completeForm.insurerName} onChange={(e) => setCompleteForm({ ...completeForm, insurerName: e.target.value })} />
