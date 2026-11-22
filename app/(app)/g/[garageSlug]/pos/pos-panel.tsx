@@ -4,7 +4,16 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react"
 import { Button } from "@/components/brand/button"
 import { Card, CardContent } from "@/components/brand/card"
 import { formatGHS } from "@/lib/money"
+import { Banknote, Building2, CreditCard, HelpCircle, Smartphone } from "lucide-react"
 import { completePosSale, posSearch } from "@/lib/pos/actions"
+
+const METHOD_META: Record<(typeof METHODS)[number], { label: string; icon: typeof Banknote }> = {
+  cash: { label: "Cash", icon: Banknote },
+  momo: { label: "MoMo", icon: Smartphone },
+  card: { label: "Card", icon: CreditCard },
+  bank_transfer: { label: "Transfer", icon: Building2 },
+  other: { label: "Other", icon: HelpCircle },
+}
 
 type Part = {
   id: string; sku: string; name: string; brand: string | null
@@ -183,16 +192,29 @@ export function PosPanel(props: {
             </div>
 
             <div className="mt-3 grid grid-cols-5 gap-1">
-              {METHODS.map((m) => (
-                <button key={m} onClick={() => setMethod(m)}
-                  className={`rounded-lg border-2 px-1 py-1.5 text-xs font-bold capitalize ${method === m ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface"}`}>
-                  {m === "bank_transfer" ? "transfer" : m}
-                </button>
-              ))}
+              {METHODS.map((m) => {
+                const Icon = METHOD_META[m].icon
+                return (
+                  <button key={m} onClick={() => setMethod(m)}
+                    className={`flex flex-col items-center gap-0.5 rounded-lg border-2 px-1 py-1.5 text-[11px] font-bold ${method === m ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface"}`}>
+                    <Icon className="size-4" />
+                    {METHOD_META[m].label}
+                  </button>
+                )
+              })}
             </div>
 
             {method === "cash" && (
               <div className="mt-2">
+                <div className="mb-1.5 flex gap-1">
+                  {["exact", "50", "100", "200"].map((t) => (
+                    <button key={t} type="button"
+                      onClick={() => setTendered(t === "exact" ? String(approxTotal / 100) : t)}
+                      className="flex-1 rounded-lg border-2 border-border bg-surface px-1 py-1 text-[11px] font-bold text-muted-foreground hover:border-primary">
+                      {t === "exact" ? "Exact" : `GH₵${t}`}
+                    </button>
+                  ))}
+                </div>
                 <input value={tendered} onChange={(e) => setTendered(e.target.value)} placeholder="Cash tendered GH₵" inputMode="decimal"
                   className="min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm" />
                 {tenderedNum > 0 && <p className="mt-1 text-right text-sm">Change: <b>{formatGHS(change)}</b></p>}
