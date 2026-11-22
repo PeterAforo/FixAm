@@ -110,10 +110,25 @@ export function OrderPanel({ garageSlug, data }: { garageSlug: string; data: Sho
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6 md:p-10">
-      <header>
-        <p className="text-sm font-semibold uppercase tracking-wide text-primary">{data.garage.name}</p>
-        <h1 className="font-display text-3xl font-bold">Order parts</h1>
-        <p className="text-muted-foreground">Garage stock for pickup or fitting, plus parts delivered from our vendor network.</p>
+      <header className="flex items-center gap-4">
+        <div
+          className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-xl font-bold text-white"
+          style={{ background: data.garage.brandColor ?? "var(--color-primary)" }}
+        >
+          {data.garage.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={data.garage.logoUrl} alt="" className="size-full object-cover" />
+          ) : (
+            data.garage.name.slice(0, 1).toUpperCase()
+          )}
+        </div>
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-wide text-primary">{data.garage.name}</p>
+          <h1 className="font-display text-3xl font-bold">Order parts</h1>
+          <p className="text-muted-foreground">
+            {[data.garage.city, data.garage.region].filter(Boolean).join(", ") || "Garage stock for pickup or fitting"} · parts delivered from our vendor network.
+          </p>
+        </div>
       </header>
 
       {/* step 1: phone + vehicle */}

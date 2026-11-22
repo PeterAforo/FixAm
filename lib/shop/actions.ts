@@ -79,7 +79,7 @@ export async function getPublicShop(rawInput: unknown) {
   return {
     ok: true as const,
     data: {
-      garage: { id: garage.id, name: garage.name, slug: garage.slug, city: garage.city, region: garage.region },
+      garage: { id: garage.id, name: garage.name, slug: garage.slug, city: garage.city, region: garage.region, brandColor: garage.brandColor ?? null, logoUrl: garage.logoUrl ?? null, phone: garage.phone ?? null },
       branches: branchRows,
       parts: partRows.map((p) => ({
         ...p, sellingPrice: Number(p.sellingPrice), onHand: Number(p.onHand),
