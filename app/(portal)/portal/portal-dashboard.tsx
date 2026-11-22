@@ -6,6 +6,7 @@ import { Button } from "@/components/brand/button"
 import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill } from "@/components/brand/status-pill"
 import { VehicleHealthCard } from "@/components/brand/vehicle-health-card"
+import { Torq } from "@/components/brand/torq"
 import { portalLogout, portalApproveFleetEstimates, updatePortalPreferences } from "@/lib/portal/actions"
 import { requestDataExport, requestDataDeletion } from "@/lib/privacy/actions"
 import { PortalVehiclesCard } from "./portal-vehicles"
@@ -17,7 +18,7 @@ type Ring = { status: "ok" | "soon" | "overdue" | "unknown"; nextDue?: string }
 
 export type PortalData = {
   customers: { id: string; garageId: string; fullName: string; garageName: string; preferredChannels: string[] | null; whatsappOptIn: boolean | null; marketingOptIn: boolean | null }[]
-  vehicles: { id: string; garageId: string; plateNumber: string; make: string; model: string; year: number | null; color: string | null; bodyType: string | null; fuelType: string | null; lastOdometerKm: number | null; lastOdometerAt: string | null; garageName: string; rings: { oil: Ring; insurance: Ring; dvla: Ring; issues: Ring } }[]
+  vehicles: { id: string; garageId: string; plateNumber: string; make: string; model: string; year: number | null; color: string | null; bodyType: string | null; fuelType: string | null; lastOdometerKm: number | null; lastOdometerAt: string | null; garageName: string; rings: { oil: Ring; insurance: Ring; dvla: Ring; issues: Ring }; fixamScore?: { score: number; tips: string[] } }[]
   dueItems: { id: string; type: string; title: string; effectiveDueDate: string; vehicleId: string; status: string; vehicleLabel: string }[]
   invoices: { id: string; number: string | null; garageId: string; garageName: string; status: string; total: number | null; balanceDue: number | null; issuedAt: string; payUrl: string | null }[]
   plans: { id: string; garageName: string; totalAmount: number | null; status: string; instalments: { id: string; sequence: number; dueDate: string; amount: number | null; amountPaid: number | null; status: string; payUrl: string | null }[] }[]
@@ -84,9 +85,12 @@ export function PortalDashboard({ phone, data, fleets = [], claimedVehicles = []
   return (
     <main className="mx-auto max-w-5xl p-4 md:p-8">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-bold">Hi{first?.fullName ? `, ${first.fullName.split(" ")[0]}` : ""}</h1>
-          <p className="text-sm text-muted-foreground">{phone} · {data.customers.length} garage{data.customers.length === 1 ? "" : "s"} linked</p>
+        <div className="flex items-center gap-3">
+          <Torq pose="wave" className="size-14" />
+          <div>
+            <h1 className="font-display text-2xl font-bold">Hi{first?.fullName ? `, ${first.fullName.split(" ")[0]}` : ""}</h1>
+            <p className="text-sm text-muted-foreground">{phone} · {data.customers.length} garage{data.customers.length === 1 ? "" : "s"} linked</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Link href="/portal/settings" className="rounded-lg border-2 border-border bg-card px-3 py-1.5 text-sm font-semibold hover:bg-surface-muted">Profile</Link>
@@ -185,6 +189,7 @@ export function PortalDashboard({ phone, data, fleets = [], claimedVehicles = []
                   insurance={v.rings.insurance}
                   dvla={v.rings.dvla}
                   issues={v.rings.issues}
+                  score={v.fixamScore}
                 />
                 <p className="mt-1 text-center text-xs text-muted-foreground">{v.garageName}</p>
               </Link>

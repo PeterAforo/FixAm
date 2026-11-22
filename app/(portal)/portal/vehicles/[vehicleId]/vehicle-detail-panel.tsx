@@ -6,12 +6,18 @@ import { Button } from "@/components/brand/button"
 import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill } from "@/components/brand/status-pill"
 import { portalUpdateMileage, submitGarageReview } from "@/lib/portal/actions"
+import { VehicleHealthCard, type RingStatus } from "@/components/brand/vehicle-health-card"
+import type { VehicleType } from "@/components/brand/car-avatar"
 
 const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
 const fmtDate = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("en-GH", { day: "numeric", month: "short", year: "numeric" }) : "—")
 
+type Ring = { status: RingStatus; nextDue?: string }
+
 type Data = {
-  vehicle: { id: string; plateNumber: string; make: string; model: string; year: number | null; garageName: string; lastOdometerKm: number | null; lastOdometerAt: string | null; catalogMakeId?: string | null; catalogModelId?: string | null }
+  vehicle: { id: string; plateNumber: string; make: string; model: string; year: number | null; garageName: string; lastOdometerKm: number | null; lastOdometerAt: string | null; catalogMakeId?: string | null; catalogModelId?: string | null; color?: string | null; colorHex?: string | null; bodyType?: string | null }
+  rings: { oil: Ring; insurance: Ring; dvla: Ring; issues: Ring }
+  fixamScore: { score: number; tips: string[] }
   jobs: { id: string; number: string; status: string; complaint: string | null; createdAt: string; promisedAt: string | null; deliveredAt: string | null }[]
   odometer: { id: string; readingKm: number; readAt: string; source: string }[]
   documents: { id: string; type: string; fileName: string | null; expiresOn: string | null }[]
@@ -42,6 +48,7 @@ export function VehicleDetailPanel({
   const [reviewText, setReviewText] = useState(existingReview?.comment ?? "")
   const [reviewMsg, setReviewMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const v = data.vehicle
+  const vtype = ({ sedan: "sedan", hatchback: "hatchback", suv: "suv", pickup: "pickup", van: "van", bus: "bus", truck: "truck", motorbike: "motorbike" } as Record<string, VehicleType>)[v.bodyType ?? ""] ?? "sedan"
 
   function submitReview(e: React.FormEvent) {
     e.preventDefault()
@@ -70,13 +77,21 @@ export function VehicleDetailPanel({
 
   return (
     <div className="mt-6 space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold">{v.make} {v.model}{v.year ? ` ${v.year}` : ""}</h1>
-        <p className="text-sm text-muted-foreground">
-          {v.plateNumber} · {v.garageName}
-          {v.lastOdometerKm != null ? ` · ${v.lastOdometerKm.toLocaleString()} km (${fmtDate(v.lastOdometerAt)})` : ""}
-        </p>
-      </div>
+      <VehicleHealthCard
+        plate={v.plateNumber}
+        nickname={`${v.make} ${v.model}${v.year ? ` ${v.year}` : ""}`}
+        type={vtype}
+        color={v.colorHex ?? v.color ?? undefined}
+        oil={data.rings.oil}
+        insurance={data.rings.insurance}
+        dvla={data.rings.dvla}
+        issues={data.rings.issues}
+        score={data.fixamScore}
+      />
+      <p className="-mt-3 text-sm text-muted-foreground">
+        {v.garageName}
+        {v.lastOdometerKm != null ? ` · ${v.lastOdometerKm.toLocaleString()} km (${fmtDate(v.lastOdometerAt)})` : ""}
+      </p>
 
       {/* Mileage update */}
       <Card><CardContent className="p-4">

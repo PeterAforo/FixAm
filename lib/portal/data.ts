@@ -1,6 +1,7 @@
 import "server-only"
 import { createHash, randomBytes } from "crypto"
 import { and, desc, eq, inArray, isNull } from "drizzle-orm"
+import { computeFixAmScore } from "@/lib/domain/fixam-score"
 import { db } from "@/lib/db"
 import {
   bookings,
@@ -163,23 +164,34 @@ export async function getPortalOverview(phone: string) {
     return { status: "ok", nextDue }
   }
 
+  const RING_TYPES = new Set(["oil_change", "insurance", "roadworthy", "registration_licence", "drivers_licence"])
+  const todayISO = new Date().toISOString().slice(0, 10)
+
   const vehicleList = vehicleRows.map((v) => {
     const insEnd = insEndRows.filter((r) => r.vehicleId === v.id).map((r) => r.endDate).sort()[0] ?? null
     const dvlaEnd = dvlaEndRows.filter((r) => r.vehicleId === v.id).map((r) => r.expiryDate).sort()[0] ?? null
     const serviceDue = dueRows
       .filter((d) => d.vehicleId === v.id && (d.type === "oil_change" || d.type === "general_service"))
       .map((d) => d.effectiveDueDate).sort()[0] ?? null
+    const rings = {
+      oil: ringFor(daysUntil(serviceDue)),
+      insurance: ringFor(daysUntil(insEnd)),
+      dvla: ringFor(daysUntil(dvlaEnd)),
+      issues: { status: "unknown" as const },
+    }
+    const otherDue = dueRows.filter((d) => d.vehicleId === v.id && !RING_TYPES.has(d.type))
+    const otherDueOverdue = otherDue.filter((d) => d.status === "overdue" || d.effectiveDueDate <= todayISO).length
+    const otherDueSoon = otherDue.filter((d) => ["due_soon", "due", "scheduled"].includes(d.status)).length
     return {
       ...v,
       garageName: custs.find((c) => c.garageId === v.garageId)?.garageName ?? "",
       lastOdometerKm: v.lastOdometerKm,
       lastOdometerAt: v.lastOdometerAt?.toISOString() ?? null,
-      rings: {
-        oil: ringFor(daysUntil(serviceDue)),
-        insurance: ringFor(daysUntil(insEnd)),
-        dvla: ringFor(daysUntil(dvlaEnd)),
-        issues: { status: "unknown" as const },
-      },
+      rings,
+      fixamScore: computeFixAmScore({
+        oil: rings.oil, insurance: rings.insurance, dvla: rings.dvla, issues: rings.issues,
+        otherDueSoon, otherDueOverdue,
+      }),
     }
   })
 
@@ -247,6 +259,42 @@ export async function getPortalVehicle(phone: string, vehicleId: string) {
 
   const garageName = custs.find((c) => c.garageId === v.garageId)?.garageName ?? ""
 
+  // Health rings + FixAm Score (same rules as staff vehicle profile)
+  const daysUntilD = (d: string | Date | null): number | null => {
+    if (!d) return null
+    const dt = typeof d === "string" ? new Date(`${d}T00:00:00Z`) : d
+    return Math.ceil((dt.getTime() - Date.now()) / 86_400_000)
+  }
+  const ringForD = (days: number | null): { status: "ok" | "soon" | "overdue" | "unknown"; nextDue?: string } => {
+    if (days == null) return { status: "unknown" }
+    const nextDue = new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10)
+    if (days < 0) return { status: "overdue", nextDue }
+    if (days <= 14) return { status: "soon", nextDue }
+    return { status: "ok", nextDue }
+  }
+  const insEnd = insRows.map((p) => p.endDate).sort()[0] ?? null
+  const dvlaEnd = dvlaRows.map((r) => r.expiryDate).sort()[0] ?? null
+  const serviceDue = dueRows
+    .filter((d) => d.type === "oil_change" || d.type === "general_service")
+    .map((d) => d.effectiveDueDate).sort()[0] ?? null
+  const openJobs = jobRows.filter((j) => !["delivered", "closed"].includes(j.status))
+  const rings = {
+    oil: ringForD(daysUntilD(serviceDue)),
+    insurance: ringForD(daysUntilD(insEnd)),
+    dvla: ringForD(daysUntilD(dvlaEnd)),
+    issues: {
+      status: (openJobs.length === 0 ? "ok" : openJobs.some((j) => j.status === "quality_check" || j.status === "ready") ? "soon" : "overdue") as "ok" | "soon" | "overdue",
+    },
+  }
+  const RING_TYPES = new Set(["oil_change", "insurance", "roadworthy", "registration_licence", "drivers_licence"])
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const otherDue = dueRows.filter((d) => !RING_TYPES.has(d.type))
+  const fixamScore = computeFixAmScore({
+    oil: rings.oil, insurance: rings.insurance, dvla: rings.dvla, issues: rings.issues,
+    otherDueSoon: otherDue.filter((d) => ["due_soon", "due", "scheduled"].includes(d.status)).length,
+    otherDueOverdue: otherDue.filter((d) => d.status === "overdue" || d.effectiveDueDate <= todayISO).length,
+  })
+
   return {
     vehicle: {
       id: v.id, plateNumber: v.plateNumber, make: v.make, model: v.model, year: v.year,
@@ -254,7 +302,10 @@ export async function getPortalVehicle(phone: string, vehicleId: string) {
       lastOdometerKm: v.lastOdometerKm, lastOdometerAt: v.lastOdometerAt?.toISOString() ?? null,
       catalogMakeId: v.catalogMakeId, catalogModelId: v.catalogModelId,
       garageId: v.garageId, garageName,
+      colorHex: v.colorHex,
     },
+    rings,
+    fixamScore,
     jobs: jobRows.map((j) => ({
       ...j,
       createdAt: j.createdAt.toISOString(),
