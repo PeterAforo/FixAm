@@ -234,7 +234,8 @@ export async function getBookingForCheckIn(rawInput: unknown): Promise<
 
 export async function getPublicBookingInfo(rawInput: unknown): Promise<
   ActionResult<{
-    garageId: string; garageName: string; garagePhone: string;
+    garageId: string; garageName: string; garagePhone: string; garageAddress: string | null;
+    garageBrandColor: string | null; garageLogoUrl: string | null;
     branches: { id: string; name: string; bayCount: number }[];
     services: { id: string; name: string; description: string | null; estimatedMinutes: number | null }[];
   } | null>
@@ -260,6 +261,9 @@ export async function getPublicBookingInfo(rawInput: unknown): Promise<
       garageId: garage.id,
       garageName: garage.name,
       garagePhone: garage.phone,
+      garageAddress: garage.address ?? null,
+      garageBrandColor: garage.brandColor ?? null,
+      garageLogoUrl: garage.logoUrl ?? null,
       branches: branchRows.map((b) => ({ id: b.id, name: b.name, bayCount: bayByBranch.get(b.id) ?? 0 })),
       services: tplRows.map((t) => ({ id: t.id, name: t.name, description: t.description, estimatedMinutes: t.estimatedMinutes })),
     },
