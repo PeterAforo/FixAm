@@ -20,6 +20,7 @@ async function DriverShell({ children }: { children: ReactNode }) {
         { label: "Get it fixed", href: "/portal/requests", icon: "wrench" },
         { label: "Buy parts", href: "/portal/parts", icon: "bag", exact: true },
         { label: "My orders", href: "/portal/parts/orders", icon: "package" },
+        { label: "Price check", href: "/portal/price-check", icon: "scale" },
         { label: "Renewals", href: "/portal/renewals", icon: "shield" },
         { label: "Profile", href: "/portal/settings", icon: "user" },
       ]}

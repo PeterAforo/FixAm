@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill } from "@/components/brand/status-pill"
 import { Check, X } from "lucide-react"
 import { respondToEstimate } from "@/lib/estimates/actions"
+import { FairQuoteBadge } from "@/components/fair-quote/fair-quote-badge"
+import type { FairQuoteCheck } from "@/lib/fair-quote/core"
 
 const ghs = (p: number) => `GH₵ ${(p / 100).toLocaleString("en-GH", { minimumFractionDigits: 2 })}`
 
@@ -25,6 +27,7 @@ type Estimate = {
     buyOption?: { productId: string; vendorName: string; name: string; price: number; deliveryFee: number; total: number; etaHours: number | null } | null
   }[]
   fittingFee?: number
+  fairQuote?: Record<string, FairQuoteCheck>
 }
 
 /** Spec estimate_approval: urgent pre-selected, severity chips, sticky summary. */
@@ -135,6 +138,7 @@ export function ApprovalPanel({ token, estimate }: { token: string; estimate: Es
                       )}
                     </div>
                     <p className="mt-0.5 text-xs text-muted-foreground">{i.type} ×{i.quantity}</p>
+                    {estimate.fairQuote?.[i.id] && <div className="mt-1"><FairQuoteBadge check={estimate.fairQuote[i.id]} /></div>}
                   </div>
                   <span className="text-sm font-bold tabular-nums">{ghs(lineTotal(i))}</span>
                 </div>

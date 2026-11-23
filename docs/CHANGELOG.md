@@ -2,6 +2,23 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-09 Fair-quote check ✅
+- Every issued invoice now feeds anonymised **price observations**
+  (`price_observations`): part unit prices by standard part type, and labour
+  per hour, grouped by car class (saloon, SUV/pickup, premium, commercial,
+  motorbike) and the garage's city. Customer-supplied parts are skipped;
+  voiding an invoice removes its prices; a nightly job backfills misses.
+- A price is compared with the middle half of recent prices (last 18 months).
+  A range is shown **only with at least 5 prices from 3 or more garages**, and
+  a garage's own prices never count in its own check. Falls back from city to
+  all of Ghana when a city has too few.
+- "Fair price / Above typical / Below typical" badges on the customer's
+  estimate approval page and on the garage job card, with the range and the
+  number of prices behind it. No garage is ever named.
+- Driver app → **Price check** (`/portal/price-check`): check any quote
+  ("is GH₵450 for brake pads on a Corolla in Kumasi fair?").
+- Migration `0024_fair-quote`.
+
 ### P8-08 Voice job notes → structured job card ✅
 - "Talk through the job" on the mechanic's job screen and the job card
   Findings tab: speak in Twi/Ga/Ewe/Hausa/English (or type) → AI (`job_notes`

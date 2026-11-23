@@ -891,7 +891,8 @@
           "acceptance_criteria": [
             "Customer sees 'within typical range / above typical range' with sample size",
             "No garage-identifying data exposed"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-10",

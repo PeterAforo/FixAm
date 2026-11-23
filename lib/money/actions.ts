@@ -286,6 +286,14 @@ export async function issueInvoice(rawInput: unknown): Promise<ActionResult<{ in
     }
   }
 
+  // P8-09: feed the fair-quote price data (best-effort; nightly backfill catches misses).
+  try {
+    const { recordInvoiceObservations } = await import("@/lib/fair-quote/service")
+    await recordInvoiceObservations(inv.id)
+  } catch {
+    // never block issuing
+  }
+
   // job → delivered requires invoice issued (P2-05 delivery gate); mark invoice linkage on job items implicitly via sourceId
   await writeAuditLog({
     garageId: d.garageId, actorUserId: userId, action: "invoice.issue",
@@ -328,6 +336,12 @@ export async function voidInvoice(rawInput: unknown): Promise<ActionResult<{ inv
     garageId: d.garageId, actorUserId: userId, action: "invoice.void",
     entityType: "invoice", entityId: inv.id, before: { status: inv.status }, after: { status: "void", reason: d.reason },
   })
+  try {
+    const { removeInvoiceObservations } = await import("@/lib/fair-quote/service")
+    await removeInvoiceObservations(inv.id)
+  } catch {
+    // best-effort
+  }
   return { ok: true, data: { invoiceId: inv.id } }
 }
 

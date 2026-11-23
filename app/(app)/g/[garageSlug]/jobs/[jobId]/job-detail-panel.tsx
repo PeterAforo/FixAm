@@ -23,6 +23,8 @@ import {
 import { createInvoiceFromJob } from "@/lib/money/actions"
 import type { JobStatus } from "@/lib/jobs/transitions"
 import { PartOffersPanel } from "@/components/part-offers/part-offers-panel"
+import { FairQuoteBadge } from "@/components/fair-quote/fair-quote-badge"
+import type { FairQuoteCheck } from "@/lib/fair-quote/core"
 import { setPartTypeOnJob } from "@/lib/part-offers/actions"
 import type { JobRepairRequest } from "@/lib/repair-requests/service"
 import { MediaStrip, TriageCard } from "@/components/repair-requests/triage-card"
@@ -86,6 +88,8 @@ export function JobDetailPanel(props: {
   partTypes: { id: string; name: string }[]
   canOrderParts: boolean
   repairRequest?: JobRepairRequest | null
+  /** P8-09: fair-quote checks per job item id. */
+  fairQuote?: Record<string, FairQuoteCheck>
   tasks: { id: string; title: string; isDone: boolean; required: boolean; checklistItem: boolean; assignedTo: string | null }[]
   media: { id: string; kind: string; stage: string | null; caption: string | null; storagePath: string; customerVisible: boolean; createdAt: string }[]
   events: { id: string; fromStatus: JobStatus | null; toStatus: JobStatus; note: string | null; customerVisible: boolean; actorName: string | null; createdAt: string }[]
@@ -639,7 +643,10 @@ export function JobDetailPanel(props: {
                       </td>
                       <td className="text-muted-foreground">{i.type.replace(/_/g, " ")}</td>
                       <td className="text-right">{i.quantity}</td>
-                      <td className="text-right">{ghs(i.unitPrice)}</td>
+                      <td className="text-right">
+                        {ghs(i.unitPrice)}
+                        {props.fairQuote?.[i.id] && <div className="mt-1 text-left"><FairQuoteBadge check={props.fairQuote[i.id]} audience="garage" /></div>}
+                      </td>
                       <td className="text-right font-semibold">{ghs(i.unitPrice * i.quantity)}</td>
                       <td><StatusPill status={i.approvalStatus ?? "pending"} /></td>
                     </tr>

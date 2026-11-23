@@ -169,6 +169,13 @@
       "when": 1795425281011,
       "tag": "0023_old-part-proof",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1795427297606,
+      "tag": "0024_fair-quote",
+      "breakpoints": true
     }
   ]
 }

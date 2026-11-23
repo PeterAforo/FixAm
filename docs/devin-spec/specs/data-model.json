@@ -1954,16 +1954,22 @@
       ]
     },
     "price_observations": {
-      "status": "planned (P8)",
+      "status": "built (P8-09)",
       "tenant": false,
+      "note": "Anonymised prices from issued invoices for the fair-quote check. Never exposed per garage; reads aggregate only with >=5 rows from >=3 garages.",
       "columns": {
         "id": "uuid pk",
-        "job_type": "text",
-        "part_type_id": "uuid fk:part_types",
-        "car_class": "text",
-        "city": "text",
-        "amount": "money req",
-        "observed_at": "date req"
+        "kind": "text req (part|labour_rate)",
+        "part_type_id": "uuid fk part_types",
+        "car_class": "text req (economy|premium|suv|commercial|motorbike)",
+        "city": "text (normalised lowercase)",
+        "amount": "bigint pesewas (per unit, or per hour for labour)",
+        "quantity": "numeric(10,2)",
+        "observed_on": "date req",
+        "source_garage_id": "uuid req fk",
+        "source_invoice_id": "uuid req",
+        "source_invoice_line_id": "uuid req unique",
+        "created_at": "timestamptz"
       }
     },
     "vehicle_passports": {

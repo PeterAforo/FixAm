@@ -1,4 +1,6 @@
 "use server"
+import { checkQuote } from "@/lib/fair-quote/service"
+import type { FairQuoteCheck } from "@/lib/fair-quote/core"
 import { createHash, randomBytes } from "crypto"
 import { z } from "zod"
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm"
@@ -295,6 +297,8 @@ export async function getPublicEstimate(rawInput: unknown): Promise<
     customerName: string | null
     items: { id: string; type: string; description: string; quantity: number; unitPrice: number; discountAmount: number; approvalStatus: string | null; severity: string | null; supplyMode: string; buyOption: BuyOption | null }[]
     fittingFee: number
+    /** P8-09: fair-quote checks per item id (only items with enough price data). */
+    fairQuote: Record<string, FairQuoteCheck>
   } | null>
 > {
   const parsed = z.object({ token: z.string().min(16).max(128) }).safeParse(rawInput)
@@ -329,6 +333,19 @@ export async function getPublicEstimate(rawInput: unknown): Promise<
   const awaiting = ["sent", "partially_approved"].includes(est.status)
   const buyable = awaiting ? items.filter((i) => i.type === "part" && i.partTypeId && i.approvalStatus === "pending" && i.supplyMode === "garage") : []
   const v = vehicle[0]
+  const fairQuote = await checkQuote({
+    garageId: est.garageId,
+    vehicle: v ? { make: v.make, bodyType: v.bodyType } : null,
+    lines: items.map((i) => ({
+      id: i.id,
+      type: i.type,
+      partTypeId: i.partTypeId,
+      unitPrice: Number(i.unitPrice) - (Number(i.quantity) > 0 ? Number(i.discountAmount ?? 0) / Number(i.quantity) : 0),
+      quantity: Number(i.quantity),
+      labourHours: i.labourHours != null ? Number(i.labourHours) : null,
+      supplyMode: i.supplyMode,
+    })),
+  }).catch(() => ({}))
   const { options, fittingFee } = await buyOptionsFor(est.garageId, v ? { make: v.make, model: v.model, year: v.year } : null, buyable.map((i) => i.partTypeId!))
 
   return {
@@ -359,6 +376,7 @@ export async function getPublicEstimate(rawInput: unknown): Promise<
         buyOption: buyable.some((b) => b.id === i.id) && i.partTypeId ? options.get(i.partTypeId) ?? null : null,
       })),
       fittingFee,
+      fairQuote,
     },
   }
 }
