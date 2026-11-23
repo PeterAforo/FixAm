@@ -232,6 +232,13 @@
       "when": 1795450840120,
       "tag": "0032_insurance-claims",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1795455370686,
+      "tag": "0033_riders",
+      "breakpoints": true
     }
   ]
 }

@@ -397,8 +397,8 @@ export async function fulfilVendorOrder(rawInput: unknown): Promise<ActionResult
     orderId: z.string().uuid(),
     action: z.enum(["accept", "reject", "packed", "out_for_delivery", "delivered", "cancel"]),
     note: z.string().max(300).optional(),
-    // out_for_delivery: own rider or partner courier
-    courier: z.enum(["vendor", "partner"]).optional(),
+    // out_for_delivery: own rider, FixAm rider or partner courier
+    courier: z.enum(["vendor", "partner", "fixam_rider"]).optional(),
     riderName: z.string().trim().max(80).optional(),
     riderPhone: z.string().trim().max(20).optional(),
   }).safeParse(rawInput)
@@ -444,10 +444,24 @@ export async function fulfilVendorOrder(rawInput: unknown): Promise<ActionResult
           : { name: "Customer", phone: order.buyerPhone, address: order.deliveryAddress, city: order.deliveryCity },
       })
       courierPatch = { courier: "partner", courierReference: booking.reference, riderName: booking.riderName ?? null, riderPhone: booking.riderPhone ?? null }
+    } else if (d.courier === "fixam_rider") {
+      // P8-18: offer the run to approved FixAm riders, nearest first.
+      const { dispatchFixamRider } = await import("@/lib/riders/actions")
+      const [g] = order.garageId ? await db().select({ name: garages.name, phone: garages.phone, address: garages.address, city: garages.city }).from(garages).where(eq(garages.id, order.garageId)).limit(1) : [null]
+      const res = await dispatchFixamRider({
+        vendorOrderId: order.id,
+        vendorUserId: userId,
+        pickup: { name: ctx.vendor.businessName, phone: ctx.vendor.phone, address: ctx.vendor.address, city: ctx.vendor.city },
+        dropoff: g
+          ? { name: g.name, phone: g.phone, address: g.address, city: g.city }
+          : { name: "Customer", phone: order.buyerPhone, address: order.deliveryAddress, city: order.deliveryCity },
+      })
+      if (!res.ok) return { ok: false, error: { code: "VALIDATION", message: res.error } }
+      courierPatch = { courier: "fixam_rider", courierReference: res.number }
     } else if (d.riderName || d.riderPhone) {
       courierPatch = { courier: "vendor", riderName: d.riderName || null, riderPhone: d.riderPhone || null }
     } else if (order.buyerUserId) {
-      return { ok: false, error: { code: "VALIDATION", message: "Add the rider's name and phone, or book a partner courier" } }
+      return { ok: false, error: { code: "VALIDATION", message: "Add the rider's name and phone, book a FixAm rider, or book a partner courier" } }
     }
   }
 

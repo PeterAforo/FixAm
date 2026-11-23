@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { AdminVendorsSection } from "./admin-vendors-section"
 import { AdminBrokersSection } from "./admin-brokers-section"
+import { AdminRidersSection } from "./admin-riders-section"
 import { AdminPartsSection } from "./admin-parts-section"
 import { AdminAiUsageSection } from "./admin-ai-usage-section"
 import { AdminEscrowSection } from "./admin-escrow-section"
@@ -32,6 +33,9 @@ export default function AdminPage() {
       </Suspense>
       <Suspense fallback={null}>
         <AdminBrokersSection />
+      </Suspense>
+      <Suspense fallback={null}>
+        <AdminRidersSection />
       </Suspense>
       <Suspense fallback={null}>
         <AdminPartsSection />

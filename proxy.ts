@@ -3,8 +3,8 @@ import { updateSession } from "@/lib/auth/supabase/middleware"
 import { NEXT_COOKIE, safeNextPath } from "@/lib/auth/next-cookie"
 
 /** Pages that need a signed-in user (guests go to /login, and come back after). */
-const PROTECTED = ["/g", "/portal", "/vendor", "/broker", "/tow", "/account", "/admin"]
-const ROLE_SLUGS = new Set(["garage", "driver", "parts-seller", "insurance-broker", "dvla-agent", "tow-operator"])
+const PROTECTED = ["/g", "/portal", "/vendor", "/broker", "/tow", "/rider", "/account", "/admin"]
+const ROLE_SLUGS = new Set(["garage", "driver", "parts-seller", "insurance-broker", "dvla-agent", "tow-operator", "rider"])
 
 const isUnder = (path: string, base: string) => path === base || path.startsWith(`${base}/`)
 

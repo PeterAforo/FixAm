@@ -1007,7 +1007,8 @@
             "Vendor order can be dispatched to a FixAm rider",
             "Rider completes pickup/drop-off with PIN + photo",
             "Rider earnings paid out to MoMo after delivery confirmation"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-19",

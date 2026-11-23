@@ -11,12 +11,13 @@ import {
   portalProfiles,
   towOperatorMembers,
   towOperators,
+  riders,
   users,
   vendorMembers,
   vendors,
 } from "@/lib/db/schema"
 
-export type WorkspaceType = "admin" | "driver" | "garage" | "vendor" | "broker" | "tow"
+export type WorkspaceType = "admin" | "driver" | "garage" | "vendor" | "broker" | "tow" | "rider"
 
 export type Workspace = {
   key: string // e.g. garage:pitstop-motors
@@ -35,6 +36,7 @@ export const WORKSPACE_LABEL: Record<WorkspaceType, string> = {
   vendor: "Parts shop",
   broker: "Broker",
   tow: "Towing",
+  rider: "Rider",
 }
 
 const PLATFORM_SLUG = "fixam-platform"
@@ -47,7 +49,7 @@ export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
     .where(eq(users.id, userId))
     .limit(1)
 
-  const [garageRows, vendorRows, brokerRows, driverProfile, driverCustomer, towRows] = await Promise.all([
+  const [garageRows, vendorRows, brokerRows, driverProfile, driverCustomer, towRows, riderRows] = await Promise.all([
     db()
       .select({ slug: garages.slug, name: garages.name, city: garages.city, role: memberships.role })
       .from(memberships)
@@ -83,6 +85,10 @@ export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
       .from(towOperatorMembers)
       .innerJoin(towOperators, eq(towOperatorMembers.operatorId, towOperators.id))
       .where(and(eq(towOperatorMembers.userId, userId), isNull(towOperators.deletedAt))),
+    db()
+      .select({ id: riders.id, name: riders.fullName, status: riders.status })
+      .from(riders)
+      .where(and(eq(riders.userId, userId), isNull(riders.deletedAt))),
   ])
 
   const out: Workspace[] = []
@@ -127,6 +133,15 @@ export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
   }
   for (const t of towRows) {
     out.push({ key: `tow:${t.id}`, type: "tow", name: t.name, subtitle: `Towing${t.city ? ` · ${t.city}` : ""}`, href: "/tow" })
+  }
+  for (const r of riderRows) {
+    out.push({
+      key: `rider:${r.id}`,
+      type: "rider",
+      name: r.name ?? "Rider",
+      subtitle: `Deliveries${r.status === "pending" ? " · awaiting approval" : r.status === "suspended" ? " · suspended" : ""}`,
+      href: "/rider",
+    })
   }
   if ((driverProfile as unknown[]).length || (driverCustomer as unknown[]).length) {
     out.push({

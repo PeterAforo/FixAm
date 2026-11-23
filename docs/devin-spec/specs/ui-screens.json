@@ -224,6 +224,17 @@
         "Parts & stock",
         "POS",
         "Marketplace"
+      ],
+      "rider": [
+        "Deliveries",
+        "Earnings"
+      ],
+      "tow_operator_owner": [
+        "Jobs",
+        "Settings"
+      ],
+      "tow_operator_driver": [
+        "Jobs"
       ]
     },
     "global": [
@@ -239,12 +250,12 @@
       "routes": {
         "/login": "Sign in only (phone code or e-mail). 'New to FixAm? Create an account' → /signup",
         "/signup": "Public role picker → /signup/<role>",
-        "/signup/<role>": "Create account = step 1 of that role (garage|driver|parts-seller|insurance-broker|dvla-agent). On success → /onboarding/<role>",
+        "/signup/<role>": "Create account = step 1 of that role (garage|driver|parts-seller|insurance-broker|dvla-agent|tow-operator|rider). On success → /onboarding/<role>",
         "/onboarding": "Signed-in role picker (first setup or 'Add a workspace')",
         "/onboarding/<role>": "Setup wizard for that role",
         "/account": "Workspace hub: open any workspace, add another, sign out"
       },
-      "proxy": "Guests on /g, /portal, /vendor, /broker, /account, /admin → /login (+ fixam_next cookie). Guests on /onboarding/<role> → /signup/<role>. Signed-in users on /signup* → /onboarding*. Legacy ?next=/?role= links are rewritten to clean URLs."
+      "proxy": "Guests on /g, /portal, /vendor, /broker, /tow, /rider, /account, /admin → /login (+ fixam_next cookie). Guests on /onboarding/<role> → /signup/<role>. Signed-in users on /signup* → /onboarding*. Legacy ?next=/?role= links are rewritten to clean URLs."
     }
   },
   "screens": [
@@ -675,7 +686,8 @@
         "garage → GarageWizard (4 steps)",
         "driver → DriverSetup (verify phone if missing, profile, first car)",
         "parts-seller → VendorSetup (shop, categories, delivery zones, payouts)",
-        "insurance-broker | dvla-agent → BrokerSetup (business, licences, insurers, fee)"
+        "insurance-broker | dvla-agent → BrokerSetup (business, licences, insurers, fee)",
+        "tow-operator → TowSetup, rider → RiderSetup (Ghana Card, bike + licence photos, MoMo payout)"
       ]
     },
     {
@@ -742,6 +754,39 @@
       "content": [
         "Request a quote: insurance|DVLA, service type, vehicle, current expiry, choose broker",
         "Request cards: accept/decline quote, call/WhatsApp broker, status"
+      ]
+    },
+    {
+      "id": "rider_dashboard",
+      "route": "/rider",
+      "audience": "rider",
+      "task": "P8-18",
+      "content": [
+        "Go online/offline toggle (only when admin-approved + Ghana Card verified)",
+        "Jobs near you with accept/pass, active deliveries, recent history",
+        "Lifetime earnings tile; live location shares while online or on a job"
+      ]
+    },
+    {
+      "id": "rider_job",
+      "route": "/rider/jobs/[jobId]",
+      "audience": "rider",
+      "task": "P8-18",
+      "content": [
+        "Pickup + drop-off cards with directions links",
+        "Pickup: enter the sender's 4-digit PIN to mark collected",
+        "Drop-off: photo of handover + receiver's 4-digit PIN to finish",
+        "Live location shared during assigned/picked_up"
+      ]
+    },
+    {
+      "id": "rider_earnings",
+      "route": "/rider/earnings",
+      "audience": "rider",
+      "task": "P8-18",
+      "content": [
+        "Total earned, deliveries count, last-24h tile",
+        "Per-delivery earning history with status"
       ]
     }
   ]

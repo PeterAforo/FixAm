@@ -351,6 +351,33 @@
           "body": "Claim {{number}} is now {{status}}."
         }
       }
+    },
+    {
+      "key": "rider_job_offer",
+      "category": "transactional",
+      "channels": {
+        "sms": {
+          "body": "FixAm rider job {{number}}: collect {{pickup}} → drop {{dropoff}} · earn {{fee}}. Accept in the app: {{link}}"
+        }
+      }
+    },
+    {
+      "key": "delivery_update",
+      "category": "transactional",
+      "channels": {
+        "sms": {
+          "body": "FixAm delivery {{number}}: {{status}}. Track: {{link}}"
+        }
+      }
+    },
+    {
+      "key": "delivery_dropoff_pin",
+      "category": "transactional",
+      "channels": {
+        "sms": {
+          "body": "FixAm delivery {{number}}: your drop-off PIN is {{pin}}. Show it to the rider at handover. {{link}}"
+        }
+      }
     }
   ],
   "inbound_whatsapp_sms": {

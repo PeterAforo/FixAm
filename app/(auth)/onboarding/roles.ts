@@ -1,8 +1,8 @@
-import { BadgeCheck, Car, ShieldCheck, Store, Truck, Wrench, type LucideIcon } from "lucide-react"
+import { BadgeCheck, Bike, Car, ShieldCheck, Store, Truck, Wrench, type LucideIcon } from "lucide-react"
 import type { WorkspaceType } from "@/lib/accounts/workspaces"
 import { photos, type Photo } from "@/lib/images"
 
-export type RoleSlug = "driver" | "garage" | "parts-seller" | "insurance-broker" | "dvla-agent" | "tow-operator"
+export type RoleSlug = "driver" | "garage" | "parts-seller" | "insurance-broker" | "dvla-agent" | "tow-operator" | "rider"
 
 export type RoleOption = {
   slug: RoleSlug
@@ -130,6 +130,22 @@ export const ROLE_OPTIONS: RoleOption[] = [
     steps: [
       { label: "Your business", hint: "Name, phone and base" },
       { label: "Services & rates", hint: "What you do, fees and MoMo" },
+    ],
+  }),
+  role({
+    slug: "rider",
+    noun: "a rider",
+    type: "rider",
+    title: "I deliver on a motorbike",
+    text: "Deliver parts to garages and homes, documents to brokers — get paid per drop.",
+    icon: Bike,
+    badge: "Earn per delivery",
+    pitch: "Deliveries near you, paid to your MoMo.",
+    intro: "Go online when you're free — nearby jobs come to your phone. Pickup and drop-off PINs keep every handover safe. Earnings pay out after each confirmed delivery.",
+    photo: photos.accraStreet,
+    steps: [
+      { label: "About you", hint: "Name, Ghana Card, bike" },
+      { label: "Payouts", hint: "MoMo number" },
     ],
   }),
 ]

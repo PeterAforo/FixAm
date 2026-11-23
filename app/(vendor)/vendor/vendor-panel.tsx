@@ -17,6 +17,7 @@ import {
   vendorSignup,
 } from "@/lib/vendors/actions"
 import { parseVendorProductsCsv, type VendorCsvIssue, type VendorCsvRow } from "@/lib/vendors/csv"
+import { getVendorDeliveryPin } from "@/lib/riders/actions"
 import type { PartTypeView } from "@/lib/parts-catalog/actions"
 import type { VendorPayoutsView } from "@/lib/escrow/actions"
 import { VendorPayouts } from "./vendor-payouts"
@@ -53,7 +54,32 @@ const NEXT_ACTION: Record<string, { label: string; action: string } | null> = {
   accepted: { label: "Mark packed", action: "packed" },
   packed: { label: "Out for delivery", action: "out_for_delivery" },
   out_for_delivery: { label: "Mark delivered", action: "delivered" },
-  delivered: null, received: null, cancelled: null, rejected: null,
+  cancelled: null,
+  delivered: null,
+  received: null,
+  rejected: null,
+}
+
+/** Shows the pickup PIN the FixAm rider must quote to collect the parcel. */
+function PickupPin({ orderId }: { orderId: string }) {
+  const [pin, setPin] = useState<string | null | undefined>(undefined)
+  const [busy, start] = useTransition()
+  if (pin != null) {
+    return pin ? (
+      <div className="text-xs font-semibold text-foreground">Pickup PIN: <span className="font-mono tracking-[0.3em]">{pin}</span> — give it to the rider</div>
+    ) : (
+      <div className="text-xs text-muted-foreground">No active rider yet — PIN appears once one accepts.</div>
+    )
+  }
+  return (
+    <button type="button" disabled={busy} className="text-xs font-semibold text-primary underline-offset-2 hover:underline"
+      onClick={() => start(async () => {
+        const res = await getVendorDeliveryPin({ orderId })
+        setPin(res.ok ? res.pin : null)
+      })}>
+      Show pickup PIN
+    </button>
+  )
 }
 
 export function VendorPanel(props: { dashboard: Dash | null; products: Product[]; partTypes?: PartTypeView[]; payouts?: VendorPayoutsView | null }) {
@@ -175,7 +201,7 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
 
   const [dispatch, setDispatch] = useState<{ orderId: string; riderName: string; riderPhone: string } | null>(null)
 
-  function fulfil(orderId: string, action: string, extra?: { courier?: "vendor" | "partner"; riderName?: string; riderPhone?: string }) {
+  function fulfil(orderId: string, action: string, extra?: { courier?: "vendor" | "partner" | "fixam_rider"; riderName?: string; riderPhone?: string }) {
     startTransition(async () => {
       const res = await fulfilVendorOrder({ orderId, action: action as never, ...extra })
       if (!res.ok) { setMsg(res.error.message); return }
@@ -327,8 +353,9 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
                           {o.buyerPhone ? ` · ${o.buyerPhone}` : ""}
                         </div>
                         {(o.riderName || o.courierReference) && (
-                          <div className="text-xs text-muted-foreground">{o.courier === "partner" ? "Partner courier" : "Rider"}: {o.riderName ?? o.courierReference}{o.riderPhone ? ` · ${o.riderPhone}` : ""}</div>
+                          <div className="text-xs text-muted-foreground">{o.courier === "partner" ? "Partner courier" : o.courier === "fixam_rider" ? "FixAm rider" : "Rider"}: {o.riderName ?? o.courierReference}{o.riderPhone ? ` · ${o.riderPhone}` : ""}</div>
                         )}
+                        {o.courier === "fixam_rider" && (o.status === "out_for_delivery") && <PickupPin orderId={o.id} />}
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums">{formatGHS(o.total)}</td>
                       <td className="px-4 py-3 text-xs">{o.expectedDeliveryAt?.slice(0, 10) ?? "—"}</td>
@@ -358,6 +385,8 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
                             </label>
                             <Button className="!min-h-9 px-3 text-xs" disabled={pending || !dispatch.riderName.trim() || !dispatch.riderPhone.trim()}
                               onClick={() => fulfil(o.id, "out_for_delivery", { courier: "vendor", riderName: dispatch.riderName, riderPhone: dispatch.riderPhone })}>Send with my rider</Button>
+                            <Button variant="secondary" className="!min-h-9 px-3 text-xs" disabled={pending}
+                              onClick={() => fulfil(o.id, "out_for_delivery", { courier: "fixam_rider" })}>Send with a FixAm rider</Button>
                             <Button variant="secondary" className="!min-h-9 px-3 text-xs" disabled={pending}
                               onClick={() => fulfil(o.id, "out_for_delivery", { courier: "partner" })}>No rider free — book FixAm courier</Button>
                             <Button variant="ghost" className="!min-h-9 px-2 text-xs" onClick={() => setDispatch(null)}>Cancel</Button>

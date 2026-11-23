@@ -1,7 +1,7 @@
 import "server-only"
 import { and, eq, inArray, isNotNull, lte, or, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { escrowHolds, garages, ledgerEntries, payments, payouts, sosRequests, towOperators, vendorOrderEvents, vendorOrders, vendors } from "@/lib/db/schema"
+import { escrowHolds, garages, ledgerEntries, payments, payouts, riders, sosRequests, towOperators, vendorOrderEvents, vendorOrders, vendors } from "@/lib/db/schema"
 import { paymentProvider, payoutProvider } from "@/lib/integrations/payments"
 import { messagingProvider } from "@/lib/integrations"
 import { writeAuditLog } from "@/lib/actions"
@@ -243,13 +243,15 @@ type PayoutTarget =
   | { method: "momo"; phone: string; network: "mtn" | "telecel" | "airteltigo"; accountName: string | null }
   | { method: "bank"; bankCode: string; accountNumber: string; accountName: string | null }
 
-async function accountFor(type: "vendor" | "garage" | "tow_operator", id: string): Promise<PayoutTarget | null> {
+async function accountFor(type: "vendor" | "garage" | "tow_operator" | "rider", id: string): Promise<PayoutTarget | null> {
   const [row] =
     type === "vendor"
       ? await db().select({ details: vendors.payoutDetailsEncrypted }).from(vendors).where(eq(vendors.id, id)).limit(1)
       : type === "tow_operator"
         ? await db().select({ details: towOperators.payoutDetailsEncrypted }).from(towOperators).where(eq(towOperators.id, id)).limit(1)
-        : await db().select({ details: garages.payoutDetailsEncrypted }).from(garages).where(eq(garages.id, id)).limit(1)
+        : type === "rider"
+          ? await db().select({ details: riders.payoutDetailsEncrypted }).from(riders).where(eq(riders.id, id)).limit(1)
+          : await db().select({ details: garages.payoutDetailsEncrypted }).from(garages).where(eq(garages.id, id)).limit(1)
   const acct = decryptPayoutAccount(row?.details)
   if (!acct) return null
   return acct.method === "momo"
@@ -334,6 +336,14 @@ export async function queueTowSettlement(input: { operatorId: string; amount: bi
   await insertPayout({ key: input.key, purpose: "tow_settlement", recipientType: "tow_operator", recipientId: input.operatorId, acct, amount: input.amount })
 }
 
+/** P8-18: a confirmed delivery pays the FixAm rider's earning to their MoMo. Funded by FixAm's float. */
+export async function queueRiderSettlement(input: { riderId: string; amount: bigint; key: string; memo: string }) {
+  if (input.amount <= 0n) return
+  await ledger({ debit: "fixam_float", credit: "rider_payable", amount: input.amount, key: `${input.key}:collected`, memo: input.memo, meta: { riderId: input.riderId } })
+  const acct = await accountFor("rider", input.riderId)
+  await insertPayout({ key: input.key, purpose: "rider_earning", recipientType: "rider", recipientId: input.riderId, acct, amount: input.amount })
+}
+
 export async function queueGarageSettlement(input: { garageId: string; amount: bigint; key: string; memo: string }) {
   if (input.amount <= 0n) return
   await ledger({ debit: "customer_funds", credit: "garage_payable", amount: input.amount, key: `${input.key}:collected`, memo: input.memo, meta: { garageId: input.garageId } })
@@ -408,7 +418,7 @@ async function finishPayout(p: Payout, providerReference?: string) {
     .update(payouts)
     .set({ status: "succeeded", completedAt: new Date(), providerReference: providerReference ?? p.providerReference, lastError: null, updatedAt: new Date() })
     .where(eq(payouts.id, p.id))
-  const from = p.purpose === "refund" ? "refund" : p.recipientType === "vendor" ? "vendor_payable" : p.recipientType === "tow_operator" ? "tow_payable" : "garage_payable" // fitting fees + invoice settlements
+  const from = p.purpose === "refund" ? "refund" : p.recipientType === "vendor" ? "vendor_payable" : p.recipientType === "tow_operator" ? "tow_payable" : p.recipientType === "rider" ? "rider_payable" : "garage_payable" // fitting fees + invoice settlements
   await ledger({ holdId: p.escrowHoldId, payoutId: p.id, debit: from, credit: "payout_clearing", amount: p.amount, key: `payout:${p.id}:sent`, memo: `${p.method} ${p.transactionId}` })
   await audit("payout.succeeded", "payout", p.id, { amount: Number(p.amount), transactionId: p.transactionId })
   return "succeeded" as const

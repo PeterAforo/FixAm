@@ -3,7 +3,7 @@ import { getTemplate, renderBody, renderTemplate, templateKeys } from "./templat
 
 describe("message templates", () => {
   it("loads all 53 spec templates", () => {
-    expect(templateKeys()).toHaveLength(53)
+    expect(templateKeys()).toHaveLength(56)
     expect(templateKeys()).toContain("otp")
     expect(templateKeys()).toContain("oil_due")
   })

@@ -2,6 +2,32 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-18 FixAm rider network ✅
+- **New workspace & role `rider`** — `/onboarding/rider` setup (Ghana Card,
+  motorbike + licence photos, MoMo payout) → `/rider` with Deliveries and
+  Earnings tabs. Riders must be **admin-approved and Ghana-Card-verified**
+  before they can go online; the admin queue lives on `/admin` ("FixAm
+  riders" — approve, suspend, verify the card against the physical one).
+- **Privacy**: the Ghana Card number is AES-256-GCM encrypted with
+  `PAYOUT_ENCRYPTION_KEY` (same helper family as payout accounts); only the
+  last 4 digits are stored in the clear and the full number is never logged
+  or shown. MoMo payout details reuse the encrypted `PayoutAccount` JSON.
+- **Dispatch**: on a vendor order the vendor picks own rider, **FixAm rider**
+  or partner courier. A FixAm-rider job (`deliveries`, `courier=fixam_rider`)
+  fans out to the nearest online approved riders (5 km → +5 km per sweep up
+  to 25 km, 10 riders per round, 30-min TTL) — an Inngest sweep every 2 min
+  widens unanswered offers and fails expired ones.
+- **Delivery flow**: accept/pass → collect with the **pickup PIN** the vendor
+  sees in `/vendor` → live location (~15 s) → drop-off with **photo +
+  receiver PIN** (the buyer gets the PIN by SMS when the rider collects).
+  Delivered confirms the vendor order, releases the escrow hold like a
+  normal delivery, and queues the rider's MoMo payout via escrow
+  (`rider_payable` ledger account, `rider_earning` payout purpose) funded by
+  FixAm's float.
+- **Earnings**: `/rider/earnings` shows lifetime total, deliveries and a
+  per-job history; each confirmed delivery increments `completed_jobs`.
+- Migration `0033_riders` (`riders`, `deliveries`, `delivery_offers`).
+
 ### P8-17 Accident & insurance claims ✅
 - **Driver claim wizard** (`/portal/claims/new`, drafts autosave and can be
   resumed at `/portal/claims/[id]/edit`): when/where (GPS pin button), up to 6
