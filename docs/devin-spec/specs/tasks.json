@@ -968,7 +968,8 @@
             "SOS reaches tow operators within the radius in < 10 s",
             "Driver sees the assigned operator, ETA and price",
             "Tow completion creates a repair request at the destination garage"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-16",

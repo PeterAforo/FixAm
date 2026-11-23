@@ -9,12 +9,14 @@ import {
   garages,
   memberships,
   portalProfiles,
+  towOperatorMembers,
+  towOperators,
   users,
   vendorMembers,
   vendors,
 } from "@/lib/db/schema"
 
-export type WorkspaceType = "admin" | "driver" | "garage" | "vendor" | "broker"
+export type WorkspaceType = "admin" | "driver" | "garage" | "vendor" | "broker" | "tow"
 
 export type Workspace = {
   key: string // e.g. garage:pitstop-motors
@@ -32,6 +34,7 @@ export const WORKSPACE_LABEL: Record<WorkspaceType, string> = {
   garage: "Garage",
   vendor: "Parts shop",
   broker: "Broker",
+  tow: "Towing",
 }
 
 const PLATFORM_SLUG = "fixam-platform"
@@ -44,7 +47,7 @@ export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
     .where(eq(users.id, userId))
     .limit(1)
 
-  const [garageRows, vendorRows, brokerRows, driverProfile, driverCustomer] = await Promise.all([
+  const [garageRows, vendorRows, brokerRows, driverProfile, driverCustomer, towRows] = await Promise.all([
     db()
       .select({ slug: garages.slug, name: garages.name, city: garages.city, role: memberships.role })
       .from(memberships)
@@ -75,6 +78,11 @@ export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
     me?.phone
       ? db().select({ id: customers.id }).from(customers).where(eq(customers.phone, me.phone)).limit(1)
       : Promise.resolve([]),
+    db()
+      .select({ id: towOperators.id, name: towOperators.businessName, city: towOperators.city })
+      .from(towOperatorMembers)
+      .innerJoin(towOperators, eq(towOperatorMembers.operatorId, towOperators.id))
+      .where(and(eq(towOperatorMembers.userId, userId), isNull(towOperators.deletedAt))),
   ])
 
   const out: Workspace[] = []
@@ -116,6 +124,9 @@ export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
       subtitle: `${kind}${b.city ? ` · ${b.city}` : ""}`,
       href: "/broker",
     })
+  }
+  for (const t of towRows) {
+    out.push({ key: `tow:${t.id}`, type: "tow", name: t.name, subtitle: `Towing${t.city ? ` · ${t.city}` : ""}`, href: "/tow" })
   }
   if ((driverProfile as unknown[]).length || (driverCustomer as unknown[]).length) {
     out.push({

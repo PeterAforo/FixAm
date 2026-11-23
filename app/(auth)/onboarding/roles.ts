@@ -1,8 +1,8 @@
-import { BadgeCheck, Car, ShieldCheck, Store, Wrench, type LucideIcon } from "lucide-react"
+import { BadgeCheck, Car, ShieldCheck, Store, Truck, Wrench, type LucideIcon } from "lucide-react"
 import type { WorkspaceType } from "@/lib/accounts/workspaces"
 import { photos, type Photo } from "@/lib/images"
 
-export type RoleSlug = "driver" | "garage" | "parts-seller" | "insurance-broker" | "dvla-agent"
+export type RoleSlug = "driver" | "garage" | "parts-seller" | "insurance-broker" | "dvla-agent" | "tow-operator"
 
 export type RoleOption = {
   slug: RoleSlug
@@ -114,6 +114,22 @@ export const ROLE_OPTIONS: RoleOption[] = [
     steps: [
       { label: "Your business", hint: "Name and location" },
       { label: "Services & fees", hint: "Agent number and fee" },
+    ],
+  }),
+  role({
+    slug: "tow-operator",
+    noun: "a tow operator",
+    type: "tow",
+    title: "I run a tow truck",
+    text: "Get breakdown calls from drivers near you, quote, tow and get paid.",
+    icon: Truck,
+    badge: "For towing & roadside help",
+    pitch: "Breakdown calls, straight to your phone.",
+    intro: "Drivers press SOS and the nearest available tow trucks get the job by SMS. First to accept gets it. You set the price; MoMo payments are held safely until the job is done.",
+    photo: photos.accraStreet,
+    steps: [
+      { label: "Your business", hint: "Name, phone and base" },
+      { label: "Services & rates", hint: "What you do, fees and MoMo" },
     ],
   }),
 ]

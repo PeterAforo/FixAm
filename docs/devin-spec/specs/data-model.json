@@ -2081,52 +2081,62 @@
       }
     },
     "tow_operators": {
-      "status": "planned (P8)",
+      "status": "built (P8-15)",
       "tenant": false,
       "columns": {
         "id": "uuid pk",
-        "business_name": "text req",
-        "phone": "text req",
-        "truck_types": "text[]",
-        "base_fee": "money",
-        "per_km_fee": "money",
+        "business_name": "text",
+        "phone": "text",
+        "city": "text",
+        "region": "text",
+        "base_lat/base_lng": "numeric(9,6)",
         "service_radius_km": "int",
-        "lat": "numeric",
-        "lng": "numeric",
-        "is_available": "bool default:false",
-        "is_verified": "bool default:false",
-        "status": "text default:'active'",
-        "created_at": "timestamptz req default:now()"
+        "services": "text[]",
+        "base_fee": "bigint",
+        "per_km_fee": "bigint",
+        "is_available": "bool",
+        "last_lat/last_lng/last_location_at": "live location",
+        "payout_details_encrypted": "text",
+        "status": "text",
+        "is_verified": "bool",
+        "completed_jobs": "int"
       }
     },
     "tow_operator_members": {
-      "status": "planned (P8)",
+      "status": "built (P8-15)",
       "tenant": false,
       "columns": {
-        "id": "uuid pk",
-        "tow_operator_id": "uuid req",
-        "user_id": "uuid req",
-        "role": "text (owner|driver)"
+        "operator_id": "uuid fk",
+        "user_id": "uuid fk",
+        "role": "owner|driver"
       }
     },
     "sos_requests": {
-      "status": "planned (P8)",
+      "status": "built (P8-15)",
       "tenant": false,
+      "note": "status searching→assigned→en_route→arrived→towing→completed | cancelled | expired",
       "columns": {
         "id": "uuid pk",
-        "user_id": "uuid req",
-        "phone": "text req",
-        "lat": "numeric req",
-        "lng": "numeric req",
-        "problem": "text (wont_start|accident|flat_tyre|overheating|other)",
-        "photos": "jsonb",
-        "destination_garage_id": "uuid",
-        "tow_operator_id": "uuid",
-        "quote": "money",
-        "status": "text (open|accepted|en_route|towing|delivered|cancelled)",
-        "escrow_hold_id": "uuid",
-        "created_at": "timestamptz req default:now()",
-        "updated_at": "timestamptz req default:now()"
+        "number": "SOS-…",
+        "requester_user_id": "uuid",
+        "requester_phone": "text",
+        "vehicle_*": "text",
+        "problem": "text",
+        "notes": "text",
+        "photo_paths": "jsonb",
+        "lat/lng": "numeric",
+        "landmark": "text",
+        "radius_km": "int",
+        "destination_garage_id": "uuid fk",
+        "operator_id": "uuid fk",
+        "quote_amount": "bigint",
+        "eta_minutes": "int",
+        "operator_lat/lng/location_at": "live",
+        "payment_method": "momo|cash",
+        "payment_reference": "text",
+        "payment_status": "unpaid|pending|paid|failed|cash",
+        "repair_request_id": "uuid",
+        "expires_at": "timestamptz"
       }
     },
     "vehicle_handovers": {
@@ -2418,6 +2428,28 @@
           "sequence"
         ]
       ]
+    },
+    "sos_recipients": {
+      "status": "built (P8-15)",
+      "tenant": false,
+      "columns": {
+        "sos_id": "uuid fk",
+        "operator_id": "uuid fk",
+        "distance_km": "numeric",
+        "notified_at": "timestamptz",
+        "declined_at": "timestamptz"
+      }
+    },
+    "sos_events": {
+      "status": "built (P8-15)",
+      "tenant": false,
+      "columns": {
+        "sos_id": "uuid fk",
+        "status": "text",
+        "note": "text",
+        "actor_user_id": "uuid",
+        "created_at": "timestamptz"
+      }
     }
   },
   "domain_rules": {

@@ -211,6 +211,13 @@
       "when": 1795446918380,
       "tag": "0029_pay-later",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1795447933825,
+      "tag": "0030_towing-sos",
+      "breakpoints": true
     }
   ]
 }

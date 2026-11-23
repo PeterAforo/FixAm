@@ -2,6 +2,33 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-15 Breakdown & towing (SOS) ✅
+- **New workspace: tow operators** — `/signup/tow-operator` →
+  `/onboarding/tow-operator` → `/tow` (in the workspace switcher). Setup:
+  business, SOS phone, base location, services (flatbed, wheel-lift,
+  motorbike, jump start, tyre), call-out + per-km rates, radius, MoMo payout.
+- **Driver SOS** (driver app → Breakdown SOS, `/portal/sos`): GPS, problem
+  type, landmark, notes, up to 3 photos, car, optional destination garage.
+  The nearest **available** operators within both radii get an **SMS sent in
+  the same request** (parallel, no queue) and see it in `/tow` within ~5 s.
+  After 5 min with no taker the search widens by 15 km once; after 30 min it
+  expires and the driver is told. Garages within 10 km get an in-app notice.
+- **First to accept is assigned** (conditional update), with a price
+  (pre-filled from their rates and the distance) and an ETA. The driver's
+  name and phone are shared only with that operator.
+- **Live tracking**: the operator's phone shares GPS every ~15 s while
+  available or on a job; the driver's page shows operator, distance, live
+  ETA, price and a map link, refreshing every 4 s.
+- **Payment**: MoMo via theTeller — held by FixAm and paid out to the
+  operator (`tow_settlement` payout) when the job is completed — or cash
+  (operator confirms). A job can't be finished until payment is settled.
+- **Completion** at the destination garage creates a **repair request** in
+  that garage's Leads (with triage) and texts the garage.
+- Operator steps: on the way → arrived → towing (needs a garage) → done, or
+  "fixed on the spot". Each step texts the driver. Drivers can cancel before
+  arrival (not after paying).
+- Migration `0030_towing-sos`.
+
 ### P8-14 Fix now, pay later ✅
 - `FinancingProvider` adapter (`lib/integrations/financing.ts`) for a partner
   lender — **mock lender first** (`FINANCING_PROVIDER=mock`): decides at

@@ -17,6 +17,7 @@ async function DriverShell({ children }: { children: ReactNode }) {
       cta={{ label: "Report a car problem", href: "/portal/requests?new=1" }}
       nav={[
         { label: "My cars", href: "/portal", icon: "car", exact: true },
+        { label: "Breakdown SOS", href: "/portal/sos", icon: "siren" },
         { label: "Get it fixed", href: "/portal/requests", icon: "wrench" },
         { label: "Buy parts", href: "/portal/parts", icon: "bag", exact: true },
         { label: "My orders", href: "/portal/parts/orders", icon: "package" },

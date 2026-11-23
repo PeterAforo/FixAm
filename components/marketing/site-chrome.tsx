@@ -60,7 +60,7 @@ export function SiteHeader({ tone = "light", active }: { tone?: "light" | "dark"
 const FOOTER_COLS = [
   { title: "Product", links: [["/#product", "Workshop"], ["/#payments", "Payments"], ["/#reminders", "Reminders"], ["/pricing", "Pricing"]] },
   { title: "Drivers", links: [["/garages", "Find a garage"], ["/portal", "My cars"], ["/portal/renewals", "Renew insurance & DVLA"], ["/support#drivers", "Driver help"]] },
-  { title: "Partners", links: [["/signup/parts-seller", "Sell parts on FixAm"], ["/signup/insurance-broker", "For insurance brokers"], ["/signup/dvla-agent", "For DVLA agents"]] },
+  { title: "Partners", links: [["/signup/parts-seller", "Sell parts on FixAm"], ["/signup/insurance-broker", "For insurance brokers"], ["/signup/dvla-agent", "For DVLA agents"], ["/signup/tow-operator", "For tow operators"]] },
   { title: "Company", links: [["/about", "About us"], ["/contact", "Contact"], ["/support", "Help centre"]] },
   { title: "Legal", links: [["/privacy", "Privacy policy"], ["/terms", "Terms of service"]] },
 ] as const

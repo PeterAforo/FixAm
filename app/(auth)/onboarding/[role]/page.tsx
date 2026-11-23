@@ -10,6 +10,7 @@ import { GarageWizard } from "../garage-wizard"
 import { DriverSetup } from "../driver-setup"
 import { VendorSetup } from "../vendor-setup"
 import { BrokerSetup } from "../broker-setup"
+import { TowSetup } from "../tow-setup"
 
 type Params = Promise<{ role: string }>
 
@@ -39,6 +40,9 @@ async function Wizard({ slug }: { slug: RoleSlug }) {
     case "dvla-agent":
       if (has("broker")) redirect("/broker")
       return <BrokerSetup defaultKind={slug === "dvla-agent" ? "dvla" : "insurance"} defaultPhone={ctx.phone} defaultEmail={ctx.email} />
+    case "tow-operator":
+      if (has("tow")) redirect("/tow")
+      return <TowSetup defaultPhone={ctx.phone} />
   }
 }
 

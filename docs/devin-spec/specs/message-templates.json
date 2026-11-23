@@ -28,7 +28,17 @@
     "monthly": "Monthly repayment amount",
     "months": "Number of monthly repayments",
     "first_due": "First repayment date",
-    "pay_link": "Where to pay a repayment"
+    "pay_link": "Where to pay a repayment",
+    "number": "SOS reference",
+    "operator": "Tow operator business name",
+    "operator_phone": "Tow operator phone",
+    "eta": "Minutes until arrival",
+    "price": "Agreed price",
+    "job_link": "Link for the tow operator",
+    "link": "Link to follow the job",
+    "status": "Status sentence",
+    "problem": "Breakdown problem",
+    "distance": "Distance to the driver"
   },
   "templates": [
     { "key": "otp", "category": "otp", "channels": {
@@ -248,6 +258,58 @@
         "push": {
           "title": "Repayment overdue",
           "body": "Hi {{customer_first_name}}, your pay-later repayment of {{amount}} ({{reference}}) was due on {{due_date}}. Please pay t"
+        }
+      }
+    },
+    {
+      "key": "sos_new_job",
+      "category": "transactional",
+      "channels": {
+        "sms": {
+          "body": "FixAm SOS {{number}}: {{problem}} — {{vehicle}}, {{distance}} from you. First to accept gets the job: {{job_link}}"
+        },
+        "push": {
+          "title": "New breakdown job",
+          "body": "FixAm SOS {{number}}: {{problem}} — {{vehicle}}, {{distance}} from you. First to accept gets the job: {{job_link}}"
+        }
+      }
+    },
+    {
+      "key": "sos_assigned",
+      "category": "transactional",
+      "channels": {
+        "sms": {
+          "body": "FixAm SOS {{number}}: {{operator}} is coming, about {{eta}} min. Price {{price}}. Call {{operator_phone}}. Track: {{link}}"
+        },
+        "push": {
+          "title": "Tow truck assigned",
+          "body": "FixAm SOS {{number}}: {{operator}} is coming, about {{eta}} min. Price {{price}}. Call {{operator_phone}}. Track: {{link"
+        }
+      }
+    },
+    {
+      "key": "sos_status",
+      "category": "transactional",
+      "channels": {
+        "sms": {
+          "body": "FixAm SOS {{number}}: {{status}} {{link}}"
+        },
+        "push": {
+          "title": "Breakdown update",
+          "body": "FixAm SOS {{number}}: {{status}} {{link}}"
+        }
+      }
+    },
+    {
+      "key": "sos_garage_incoming",
+      "category": "transactional",
+      "channels": {
+        "sms": {
+          "body": "FixAm: {{vehicle}} {{plate}} has been towed to your garage ({{number}}). See the request in Leads: {{link}}"
+        },
+        "push": {
+          "title": "Towed car arrived",
+          "body": "FixAm: {{vehicle}} {{plate}} has been towed to your garage ({{number}}). See the request in Leads: {{link}}"
         }
       }
     }

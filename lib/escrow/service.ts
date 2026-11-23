@@ -1,7 +1,7 @@
 import "server-only"
 import { and, eq, inArray, isNotNull, lte, or, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { escrowHolds, garages, ledgerEntries, payments, payouts, vendorOrderEvents, vendorOrders, vendors } from "@/lib/db/schema"
+import { escrowHolds, garages, ledgerEntries, payments, payouts, sosRequests, towOperators, vendorOrderEvents, vendorOrders, vendors } from "@/lib/db/schema"
 import { paymentProvider, payoutProvider } from "@/lib/integrations/payments"
 import { messagingProvider } from "@/lib/integrations"
 import { writeAuditLog } from "@/lib/actions"
@@ -243,11 +243,13 @@ type PayoutTarget =
   | { method: "momo"; phone: string; network: "mtn" | "telecel" | "airteltigo"; accountName: string | null }
   | { method: "bank"; bankCode: string; accountNumber: string; accountName: string | null }
 
-async function accountFor(type: "vendor" | "garage", id: string): Promise<PayoutTarget | null> {
+async function accountFor(type: "vendor" | "garage" | "tow_operator", id: string): Promise<PayoutTarget | null> {
   const [row] =
     type === "vendor"
       ? await db().select({ details: vendors.payoutDetailsEncrypted }).from(vendors).where(eq(vendors.id, id)).limit(1)
-      : await db().select({ details: garages.payoutDetailsEncrypted }).from(garages).where(eq(garages.id, id)).limit(1)
+      : type === "tow_operator"
+        ? await db().select({ details: towOperators.payoutDetailsEncrypted }).from(towOperators).where(eq(towOperators.id, id)).limit(1)
+        : await db().select({ details: garages.payoutDetailsEncrypted }).from(garages).where(eq(garages.id, id)).limit(1)
   const acct = decryptPayoutAccount(row?.details)
   if (!acct) return null
   return acct.method === "momo"
@@ -324,6 +326,14 @@ async function insertPayout(input: {
  * theTeller has no split payments). Books it to garage_payable and queues a
  * payout to the garage. Idempotent per key.
  */
+/** P8-15: a tow paid by MoMo (held by FixAm) is paid out to the operator once the job is done. */
+export async function queueTowSettlement(input: { operatorId: string; amount: bigint; key: string; memo: string }) {
+  if (input.amount <= 0n) return
+  await ledger({ debit: "customer_funds", credit: "tow_payable", amount: input.amount, key: `${input.key}:collected`, memo: input.memo, meta: { operatorId: input.operatorId } })
+  const acct = await accountFor("tow_operator", input.operatorId)
+  await insertPayout({ key: input.key, purpose: "tow_settlement", recipientType: "tow_operator", recipientId: input.operatorId, acct, amount: input.amount })
+}
+
 export async function queueGarageSettlement(input: { garageId: string; amount: bigint; key: string; memo: string }) {
   if (input.amount <= 0n) return
   await ledger({ debit: "customer_funds", credit: "garage_payable", amount: input.amount, key: `${input.key}:collected`, memo: input.memo, meta: { garageId: input.garageId } })
@@ -398,7 +408,7 @@ async function finishPayout(p: Payout, providerReference?: string) {
     .update(payouts)
     .set({ status: "succeeded", completedAt: new Date(), providerReference: providerReference ?? p.providerReference, lastError: null, updatedAt: new Date() })
     .where(eq(payouts.id, p.id))
-  const from = p.purpose === "refund" ? "refund" : p.recipientType === "vendor" ? "vendor_payable" : "garage_payable" // fitting fees + invoice settlements
+  const from = p.purpose === "refund" ? "refund" : p.recipientType === "vendor" ? "vendor_payable" : p.recipientType === "tow_operator" ? "tow_payable" : "garage_payable" // fitting fees + invoice settlements
   await ledger({ holdId: p.escrowHoldId, payoutId: p.id, debit: from, credit: "payout_clearing", amount: p.amount, key: `payout:${p.id}:sent`, memo: `${p.method} ${p.transactionId}` })
   await audit("payout.succeeded", "payout", p.id, { amount: Number(p.amount), transactionId: p.transactionId })
   return "succeeded" as const
@@ -449,7 +459,7 @@ export async function retryPayout(payoutId: string, adminId: string): Promise<{ 
     if (p.escrowHoldId) {
       const [hold] = await db().select().from(escrowHolds).where(eq(escrowHolds.id, p.escrowHoldId)).limit(1)
       acct = hold ? await recipientAccount(hold, p.purpose) : null
-    } else if (p.recipientId && (p.recipientType === "garage" || p.recipientType === "vendor")) {
+    } else if (p.recipientId && (p.recipientType === "garage" || p.recipientType === "vendor" || p.recipientType === "tow_operator")) {
       acct = await accountFor(p.recipientType, p.recipientId)
     }
     if (!acct) return { ok: false, message: `The ${p.recipientType} still has no valid payout account` }
@@ -493,7 +503,18 @@ export async function reconcileReference(reference: string): Promise<ReconcileSt
     return v.status
   }
 
-  // 2. Vendor orders (one reference may cover several vendors' orders).
+  // 2. SOS tow payments (P8-15).
+  const [sos] = await db().select({ id: sosRequests.id, paymentStatus: sosRequests.paymentStatus }).from(sosRequests).where(eq(sosRequests.paymentReference, reference)).limit(1)
+  if (sos) {
+    if (sos.paymentStatus === "paid") return "success"
+    const v = await paymentProvider().verify(reference)
+    if (v.status === "pending") return "pending"
+    const { markSosPayment } = await import("@/lib/towing/service")
+    await markSosPayment(sos.id, v.status === "success", v.amountPesewas)
+    return v.status
+  }
+
+  // 3. Vendor orders (one reference may cover several vendors' orders).
   const orders = await db().select().from(vendorOrders).where(eq(vendorOrders.paystackReference, reference))
   if (orders.length === 0) return "unknown"
   if (orders.every((o) => o.paymentStatus === "paid")) return "success"
@@ -558,7 +579,7 @@ export async function reconcileReference(reference: string): Promise<ReconcileSt
 export async function pendingReferences(limit = 100): Promise<string[]> {
   const olderThan = new Date(Date.now() - 2 * 60_000)
   const newerThan = new Date(Date.now() - 48 * 3600_000)
-  const [pay, orders] = await Promise.all([
+  const [pay, orders, sos] = await Promise.all([
     db()
       .selectDistinct({ ref: payments.paystackReference })
       .from(payments)
@@ -569,6 +590,11 @@ export async function pendingReferences(limit = 100): Promise<string[]> {
       .from(vendorOrders)
       .where(and(eq(vendorOrders.paymentStatus, "pending"), isNotNull(vendorOrders.paystackReference), lte(vendorOrders.updatedAt, olderThan), sql`${vendorOrders.createdAt} > ${newerThan.toISOString()}`))
       .limit(limit),
+    db()
+      .selectDistinct({ ref: sosRequests.paymentReference })
+      .from(sosRequests)
+      .where(and(eq(sosRequests.paymentStatus, "pending"), isNotNull(sosRequests.paymentReference), lte(sosRequests.updatedAt, olderThan), sql`${sosRequests.createdAt} > ${newerThan.toISOString()}`))
+      .limit(limit),
   ])
-  return [...new Set([...pay, ...orders].map((r) => r.ref).filter((r): r is string => Boolean(r)))]
+  return [...new Set([...pay, ...orders, ...sos].map((r) => r.ref).filter((r): r is string => Boolean(r)))]
 }
