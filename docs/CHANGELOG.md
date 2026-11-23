@@ -2,6 +2,33 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-19 Garage WhatsApp AI assistant ✅
+- **Webhook**: `GET/POST /api/webhooks/whatsapp` — Meta verification
+  challenge (`WHATSAPP_VERIFY_TOKEN`) and `X-Hub-Signature-256` verification
+  via `verifyWhatsAppSignature` (`WHATSAPP_APP_SECRET`). Inbound messages are
+  idempotent on the provider message id (`webhook_events`); media ids are
+  stored for later fetch.
+- **Routing**: one shared FixAm number by default; a garage can set its own
+  `whatsapp_number` / `whatsapp_phone_number_id` in Settings → WhatsApp.
+  The sender's phone is matched to a customer (respecting
+  `customers.whatsapp_opt_in`); if they belong to several garages the AI
+  asks which one (`pending_garage` state).
+- **AI assistant**: `runPrompt` with tools that only call existing services —
+  job status/tracker lookup, garage hours/directions, bookings, estimate /
+  approval / payment links, repair requests — never direct DB writes. Voice
+  notes are transcribed through `SpeechProvider` (tw/gaa/ee/ha/en). When the
+  model is unsure it sends a **human-handoff** message instead of guessing.
+- **Garage inbox** (`/g/[slug]/inbox`): conversation list + thread with mode
+  badge, unread count and AI tool-call trace. **Take over** pauses the AI for
+  that conversation; **hand back to AI** resumes it. Staff replies go out over
+  WhatsApp; outside the 24 h customer-service window they go as the approved
+  `fixam_assistant_reply` template (SMS fallback if the template isn't
+  approved yet).
+- **Settings**: `whatsapp_ai_enabled` toggle + number fields on
+  `garage_settings`; `whatsapp.inbox` permission for owner/manager/service
+  advisor. Per-garage opt-in defaults off.
+- Migration `0034_whatsapp` (`whatsapp_conversations`, `whatsapp_messages`).
+
 ### P8-18 FixAm rider network ✅
 - **New workspace & role `rider`** — `/onboarding/rider` setup (Ghana Card,
   motorbike + licence photos, MoMo payout) → `/rider` with Deliveries and

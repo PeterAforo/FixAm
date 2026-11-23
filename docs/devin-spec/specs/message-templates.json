@@ -378,6 +378,21 @@
           "body": "FixAm delivery {{number}}: your drop-off PIN is {{pin}}. Show it to the rider at handover. {{link}}"
         }
       }
+    },
+    {
+      "key": "fixam_assistant_reply",
+      "category": "transactional",
+      "channels": {
+        "whatsapp": {
+          "template_name": "fixam_assistant_reply",
+          "category": "UTILITY",
+          "whatsapp_params": ["message"],
+          "body": "{{message}}"
+        },
+        "sms": {
+          "body": "FixAm: {{message}}"
+        }
+      }
     }
   ],
   "inbound_whatsapp_sms": {

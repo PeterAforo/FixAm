@@ -100,6 +100,12 @@ export const garageSettings = pgTable("garage_settings", {
   pickupFee: bigint("pickup_fee", { mode: "bigint" }).notNull().default(sql`0`),
   pickupRadiusKm: integer("pickup_radius_km").notNull().default(10),
   specialties: text("specialties").array().notNull().default(sql`'{}'::text[]`),
+  /** P8-19: dedicated WhatsApp Business number for this garage (E.164 digits). Null = shared FixAm number. */
+  whatsappNumber: text("whatsapp_number"),
+  /** Meta phone_number_id the webhook delivers to for this garage's dedicated number. */
+  whatsappPhoneNumberId: text("whatsapp_phone_number_id"),
+  /** P8-19: AI assistant answers inbound WhatsApp for this garage. */
+  whatsappAiEnabled: boolean("whatsapp_ai_enabled").notNull().default(false),
   currency: text("currency").notNull().default("GHS"),
   ...timestamps,
 })

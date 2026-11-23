@@ -13,6 +13,7 @@ import {
   Car,
   Gauge,
   KanbanSquare,
+  MessageCircle,
   Package,
   ScanBarcode,
   Settings,
@@ -28,6 +29,7 @@ import {
 const ICONS: Record<string, LucideIcon> = {
   gauge: Gauge,
   "kanban-square": KanbanSquare,
+  "message-circle": MessageCircle,
   wrench: Wrench,
   calendar: Calendar,
   car: Car,

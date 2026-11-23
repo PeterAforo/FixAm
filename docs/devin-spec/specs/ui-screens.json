@@ -75,6 +75,16 @@
         ]
       },
       {
+        "label": "Inbox",
+        "icon": "message-circle",
+        "route": "/g/[garageSlug]/inbox",
+        "roles": [
+          "owner",
+          "manager",
+          "service_advisor"
+        ]
+      },
+      {
         "label": "Vehicles",
         "icon": "car",
         "route": "/g/[garageSlug]/vehicles",

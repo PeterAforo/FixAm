@@ -239,6 +239,13 @@
       "when": 1795455370686,
       "tag": "0033_riders",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1795457112549,
+      "tag": "0034_whatsapp",
+      "breakpoints": true
     }
   ]
 }

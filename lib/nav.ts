@@ -46,6 +46,7 @@ export function navLabelKey(label: string): string | undefined {
     Bookings: "bookings",
     Leads: "leads",
     Claims: "claims",
+    Inbox: "inbox",
     Vehicles: "vehicles",
     Customers: "customers",
     "Parts & stock": "partsStock",

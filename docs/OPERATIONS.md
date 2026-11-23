@@ -15,6 +15,16 @@ pg_dump "$DATABASE_URL" --format=custom --file="fixam-$(date +%F).dump"
 
 Store dumps off-site (encrypted object storage, e.g. S3/GCS).
 
+## Environment variables (production)
+
+Core integrations must be set in Vercel (and `.env.local` for dev). Values live in `.env.example`.
+
+- **Payments**: `PAYMENT_PROVIDER=theteller`, `THETELLER_ENV`, `THETELLER_MERCHANT_ID`, `THETELLER_API_USER`, `THETELLER_API_KEY`, `THETELLER_PASS_CODE`, `THETELLER_API_BASE`, `THETELLER_CHECKOUT_URL`.
+- **Payouts / secrets**: `PAYOUT_ENCRYPTION_KEY` (encrypts payout accounts and Ghana Card numbers), `LINK_SIGNING_SECRET` (public link signing), `ADMIN_ALERT_PHONE`.
+- **AI / speech**: `AI_PROVIDER`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, `ANTHROPIC_*_USD_PER_MTOK`, `SPEECH_PROVIDER`, `KHAYA_API_KEY`, `KHAYA_BASE_URL`, `KHAYA_ASR_PATH`, `KHAYA_TRANSLATE_PATH`.
+- **WhatsApp (P8-19)**: `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_APP_SECRET` (webhook signature), `WHATSAPP_VERIFY_TOKEN` (GET challenge). Webhook: `https://<domain>/api/webhooks/whatsapp`. Approve the `fixam_assistant_reply` template in Meta for replies outside the 24 h window; without it the service falls back to SMS.
+- **Messaging**: `MESSAGING_SMS_PROVIDER`, `DELIVERY_PROVIDER`, `DELIVERY_OPS_PHONE`.
+
 ## Restore drill
 
 Run quarterly and after any major migration.

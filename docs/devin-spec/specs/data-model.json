@@ -2277,8 +2277,7 @@
       },
       "notes": "Unique (delivery_id, rider_id) — dedupe for nearest-first fan-out."
     },
-    "whatsapp_conversations": {
-      "status": "planned (P8)",
+    "whatsapp_conversations": { "status": "built (P8-19)",
       "tenant": "garage",
       "columns": {
         "id": "uuid pk",
@@ -2290,8 +2289,7 @@
         "window_expires_at": "timestamptz"
       }
     },
-    "whatsapp_messages": {
-      "status": "planned (P8)",
+    "whatsapp_messages": { "status": "built (P8-19)",
       "tenant": "garage",
       "columns": {
         "id": "uuid pk",

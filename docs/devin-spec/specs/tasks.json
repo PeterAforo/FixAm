@@ -1021,7 +1021,8 @@
             "Customer asks job status on WhatsApp and gets the live status",
             "Booking via WhatsApp appears in the garage's bookings",
             "Staff can take over any conversation"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-20",

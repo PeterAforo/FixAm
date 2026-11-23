@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { rulesTriage, SPECIALTY_IDS } from "@/lib/repair-requests/core"
 import { rulesJobNotes } from "@/lib/jobs/voice-notes-core"
+import { WA_ACTIONS } from "@/lib/whatsapp/core"
 import { rulesDtcExplanation } from "@/lib/obd/explain-core"
 
 /**
@@ -245,4 +246,58 @@ export const explainDtcsPrompt = definePrompt({
   },
   mock: (i) => rulesDtcExplanation(i.codes.map((c) => c.code)),
   maxTokens: 1500,
+})
+
+const waIntentOut = z.object({
+  action: z.enum(WA_ACTIONS),
+  params: z.record(z.string(), z.unknown()).default({}),
+  confidence: z.number().min(0).max(1),
+})
+
+/** P8-19: WhatsApp assistant — pick the ONE action the customer's message needs. */
+export const whatsappIntentPrompt = definePrompt({
+  key: "whatsapp_intent",
+  version: 1,
+  system:
+    "You are the intent router for FixAm, a Ghana vehicle-repair app answering WhatsApp messages for ONE garage. " +
+    "Read the customer's latest message (English or translated) and choose exactly one action:\n" +
+    "- job_status: they ask if their car/vehicle/job is ready or its status. params.plate = the plate they mention, or \"mine\" if none.\n" +
+    "- opening_hours: opening hours, location, directions, phone number, address.\n" +
+    "- book: they want to book/reschedule a service visit. params = { service (short description), date (YYYY-MM-DD if mentioned), time (HH:MM 24h if mentioned), plate? }.\n" +
+    "- repair_request: they describe a car problem and want a garage to look at it. params = { complaint (their words, concise), plate? }.\n" +
+    "- send_links: they ask for their estimate, approval link, payment link or tracker.\n" +
+    "- reply: general question or anything else — params.text = a short friendly answer you compose yourself (max 300 chars, plain text, no markdown).\n" +
+    "- handoff: they ask for a human, are angry, the request is unclear after one try, or involves money disputes/accidents. params.text = short holding message.\n" +
+    "Never invent prices or job details. If unsure between actions, prefer handoff. Messages may be informal Ghanaian English.",
+  render: (i: { message: string; customerName: string | null; vehicles: string[]; activeJobs: { plate: string | null; status: string }[]; garageName: string }) =>
+    `Garage: ${i.garageName}\nCustomer: ${i.customerName ?? "unknown"}\nTheir vehicles: ${i.vehicles.join(", ") || "unknown"}\nActive jobs: ${i.activeJobs.map((j) => `${j.plate ?? "?"} (${j.status})`).join(", ") || "none"}\n\nLatest message: ${i.message}`,
+  output: waIntentOut,
+  jsonSchema: {
+    type: "object",
+    properties: {
+      action: { type: "string", enum: [...WA_ACTIONS] },
+      params: { type: "object" },
+      confidence: { type: "number", minimum: 0, maximum: 1 },
+    },
+    required: ["action", "params", "confidence"],
+  },
+  mock: () => ({ action: "reply" as const, params: { text: "Thanks for messaging! A member of the team will reply shortly." }, confidence: 0.4 }),
+  maxTokens: 300,
+})
+
+/** P8-19: compose the final WhatsApp reply from the tool result — short, warm, plain text. */
+export const whatsappReplyPrompt = definePrompt({
+  key: "whatsapp_reply",
+  version: 1,
+  system:
+    "You write short WhatsApp replies for FixAm, a Ghana vehicle-repair garage assistant. " +
+    "Rules: max 600 characters, plain text (no markdown, * is ok for emphasis sparingly), friendly Ghanaian tone, " +
+    "answer ONLY from the facts given — never invent prices, dates or statuses. If facts are missing, say a team member will confirm. " +
+    "End with one clear next step when useful. Output just the message text.",
+  render: (i: { facts: string; customerMessage: string }) =>
+    `Customer said: ${i.customerMessage}\n\nFacts from the garage system:\n${i.facts}`,
+  output: z.object({ reply: z.string().min(1).max(1200) }),
+  jsonSchema: { type: "object", properties: { reply: { type: "string" } }, required: ["reply"] },
+  mock: (i) => ({ reply: i.facts.slice(0, 300) || "Thanks — the team will get back to you." }),
+  maxTokens: 300,
 })

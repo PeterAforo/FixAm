@@ -18,6 +18,7 @@ import { SpecialtiesPanel } from "./specialties-panel"
 import { WorkshopRulesPanel } from "./workshop-rules-panel"
 import { SeasonalPanel } from "./seasonal-panel"
 import { PickupPanel } from "./pickup-panel"
+import { WhatsAppPanel } from "./whatsapp-panel"
 import { getPickupSettings } from "@/lib/pickups/actions"
 import { getSeasonalOverview } from "@/lib/seasonal/actions"
 import { garageSettings } from "@/lib/db/schema"
@@ -52,7 +53,7 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
   ])
   const pickup = canManageSettings ? await getPickupSettings(garage.id).catch(() => null) : null
   const [settingsRow] = canManageSettings
-    ? await db().select({ specialties: garageSettings.specialties, requireOldPartProof: garageSettings.requireOldPartProof }).from(garageSettings).where(eq(garageSettings.garageId, garage.id)).limit(1)
+    ? await db().select({ specialties: garageSettings.specialties, requireOldPartProof: garageSettings.requireOldPartProof, whatsappNumber: garageSettings.whatsappNumber, whatsappPhoneNumberId: garageSettings.whatsappPhoneNumberId, whatsappAiEnabled: garageSettings.whatsappAiEnabled }).from(garageSettings).where(eq(garageSettings.garageId, garage.id)).limit(1)
     : []
   const reviews = canManageSettings
     ? await db()
@@ -114,6 +115,19 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
         <section>
           <h2 className="text-[15px] font-semibold">Pickup &amp; drop-off</h2>
           <PickupPanel garageId={garage.id} initial={pickup} />
+        </section>
+      )}
+
+      {canManageSettings && (
+        <section>
+          <h2 className="text-[15px] font-semibold">WhatsApp</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Customers message you on WhatsApp. The AI assistant answers first; staff take over in the inbox.</p>
+          <WhatsAppPanel
+            garageId={garage.id}
+            whatsappNumber={settingsRow?.whatsappNumber ?? null}
+            phoneNumberId={settingsRow?.whatsappPhoneNumberId ?? null}
+            aiEnabled={settingsRow?.whatsappAiEnabled ?? false}
+          />
         </section>
       )}
 
