@@ -90,6 +90,8 @@ export const garageSettings = pgTable("garage_settings", {
   acceptsCustomerParts: boolean("accepts_customer_parts").notNull().default(true),
   /** Flat fee for fitting a part the driver bought, shown before they pay. */
   customerPartFittingFee: moneyCol("customer_part_fitting_fee").notNull().default(sql`0`),
+  /** Specialties for repair-request matching (P8-06); empty = general garage. */
+  specialties: text("specialties").array().notNull().default(sql`'{}'::text[]`),
   currency: text("currency").notNull().default("GHS"),
   ...timestamps,
 })

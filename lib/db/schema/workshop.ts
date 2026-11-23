@@ -110,6 +110,8 @@ export const jobs = pgTable(
     status: jobStatusEnum("status").notNull().default("checked_in"),
     priority: jobPriorityEnum("priority").default("normal"),
     complaint: text("complaint"),
+    /** P8-06: the driver's complaint-first request this job came from. */
+    repairRequestId: uuid("repair_request_id"),
     checkInOdometerKm: integer("check_in_odometer_km"),
     oilGrade: text("oil_grade"), // mineral|semi_synthetic|fully_synthetic|diesel_commercial
     oilBrand: text("oil_brand"),

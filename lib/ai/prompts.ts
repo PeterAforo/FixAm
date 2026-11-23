@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { rulesTriage, SPECIALTY_IDS } from "@/lib/repair-requests/core"
 
 /**
  * Prompt registry. Every AI feature registers a prompt here with a version,
@@ -64,4 +65,44 @@ export const mapPartTypePrompt = definePrompt({
   },
   mock: (i) => ({ partTypeId: i.candidates[0]?.id ?? null, confidence: i.candidates[0] ? 0.5 : 0 }),
   maxTokens: 200,
+})
+
+/** Complaint-first triage (P8-06). */
+export const triagePrompt = definePrompt({
+  key: "triage",
+  version: 1,
+  system:
+    "You are an experienced Ghanaian auto mechanic triaging a driver's complaint before they visit a garage. " +
+    "Be practical and honest; never claim certainty. Give likely causes, how urgent it is (stop_driving when continuing is unsafe " +
+    "or will cause serious damage), a realistic Ghana repair cost range in GHS (parts + labour, Accra prices), the garage specialty " +
+    "needed, likely replacement parts using common names, and up to 3 short follow-up questions. Use simple English a driver understands.",
+  render: (i: { complaint: string; vehicle: string | null; warningLights: string[]; photoCount: number }) =>
+    `Vehicle: ${i.vehicle ?? "unknown"}\nWarning lights on: ${i.warningLights.length ? i.warningLights.join(", ") : "none reported"}\n` +
+    `Photos attached: ${i.photoCount}\n\nComplaint: ${i.complaint}`,
+  output: z.object({
+    summary: z.string().min(1).max(400),
+    likelyCauses: z.array(z.object({ cause: z.string().min(1).max(200), likelihood: z.enum(["high", "medium", "low"]) })).min(1).max(5),
+    urgency: z.enum(["stop_driving", "soon", "can_wait"]),
+    safetyNote: z.string().max(300).nullable(),
+    costRangeGhs: z.object({ min: z.number().min(0), max: z.number().min(0) }),
+    specialty: z.enum(SPECIALTY_IDS),
+    likelyParts: z.array(z.string().min(1).max(80)).max(6),
+    followUps: z.array(z.string().min(1).max(160)).max(3),
+  }),
+  jsonSchema: {
+    type: "object",
+    properties: {
+      summary: { type: "string" },
+      likelyCauses: { type: "array", items: { type: "object", properties: { cause: { type: "string" }, likelihood: { type: "string", enum: ["high", "medium", "low"] } }, required: ["cause", "likelihood"] } },
+      urgency: { type: "string", enum: ["stop_driving", "soon", "can_wait"] },
+      safetyNote: { type: ["string", "null"] },
+      costRangeGhs: { type: "object", properties: { min: { type: "number" }, max: { type: "number" } }, required: ["min", "max"] },
+      specialty: { type: "string", enum: [...SPECIALTY_IDS] },
+      likelyParts: { type: "array", items: { type: "string" } },
+      followUps: { type: "array", items: { type: "string" } },
+    },
+    required: ["summary", "likelyCauses", "urgency", "safetyNote", "costRangeGhs", "specialty", "likelyParts", "followUps"],
+  },
+  mock: (i) => rulesTriage(i.complaint, i.warningLights),
+  maxTokens: 900,
 })

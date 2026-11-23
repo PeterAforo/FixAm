@@ -25,6 +25,7 @@ import { can, type StaffRole } from "@/lib/auth/permissions"
 import { JobDetailPanel } from "./job-detail-panel"
 import { nextStatuses } from "@/lib/jobs/transitions"
 import { listPartTypes } from "@/lib/parts-catalog/actions"
+import { getJobRepairRequest } from "@/lib/repair-requests/service"
 
 async function JobLoader({
   params,
@@ -120,9 +121,10 @@ async function JobLoader({
   const v = vehicle[0]
   const c = customer[0]
   const orderIds = itemRows.map((i) => i.vendorOrderId).filter((x): x is string => Boolean(x))
-  const [allPartTypes, orderRows] = await Promise.all([
+  const [allPartTypes, orderRows, repairRequest] = await Promise.all([
     listPartTypes(),
     orderIds.length ? db().select({ id: vendorOrders.id, number: vendorOrders.number, status: vendorOrders.status }).from(vendorOrders).where(inArray(vendorOrders.id, orderIds)) : Promise.resolve([]),
+    job.repairRequestId ? getJobRepairRequest(job.repairRequestId, garage.id) : Promise.resolve(null),
   ])
   const partTypeName = new Map(allPartTypes.map((p) => [p.id, p.name]))
   const orderById = new Map(orderRows.map((o) => [o.id, o]))
@@ -190,6 +192,7 @@ async function JobLoader({
       }))}
       partTypes={allPartTypes.map((p) => ({ id: p.id, name: p.name }))}
       canOrderParts={can(principal, "purchase_orders.create")}
+      repairRequest={repairRequest}
       tasks={taskRows.map((t) => ({
         id: t.id,
         title: t.title,

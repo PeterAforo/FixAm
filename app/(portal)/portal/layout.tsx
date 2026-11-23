@@ -14,9 +14,10 @@ async function DriverShell({ children }: { children: ReactNode }) {
       workspaces={ctx.workspaces}
       currentKey="driver"
       user={ctx.user}
-      cta={{ label: "Renew insurance or roadworthy", href: "/portal/renewals?new=1" }}
+      cta={{ label: "Report a car problem", href: "/portal/requests?new=1" }}
       nav={[
         { label: "My cars", href: "/portal", icon: "car", exact: true },
+        { label: "Get it fixed", href: "/portal/requests", icon: "wrench" },
         { label: "Buy parts", href: "/portal/parts", icon: "bag", exact: true },
         { label: "My orders", href: "/portal/parts/orders", icon: "package" },
         { label: "Renewals", href: "/portal/renewals", icon: "shield" },

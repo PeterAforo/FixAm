@@ -199,6 +199,9 @@ export async function checkInJob(rawInput: unknown): Promise<ActionResult<{ jobI
       .update(bookings)
       .set({ status: "checked_in", jobId, updatedAt: new Date() })
       .where(and(eq(bookings.id, d.bookingId), eq(bookings.garageId, d.garageId)))
+    // P8-06: a booking that came from a driver's repair request carries the complaint, media and triage onto the job card.
+    const { attachRepairRequestToJob } = await import("@/lib/repair-requests/service")
+    await attachRepairRequestToJob({ bookingId: d.bookingId, jobId, garageId: d.garageId }).catch(() => undefined)
   }
 
   // status event (creation → checked_in)

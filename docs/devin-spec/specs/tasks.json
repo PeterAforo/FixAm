@@ -854,7 +854,8 @@
             "Driver submits a voice complaint in Twi and sees triage in under 10 s",
             "Broadcast reaches only matching garages within the radius",
             "The job card shows the original complaint, media and triage"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-07",

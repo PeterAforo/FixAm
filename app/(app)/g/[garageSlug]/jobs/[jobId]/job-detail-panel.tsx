@@ -23,6 +23,8 @@ import { createInvoiceFromJob } from "@/lib/money/actions"
 import type { JobStatus } from "@/lib/jobs/transitions"
 import { PartOffersPanel } from "@/components/part-offers/part-offers-panel"
 import { setPartTypeOnJob } from "@/lib/part-offers/actions"
+import type { JobRepairRequest } from "@/lib/repair-requests/service"
+import { MediaStrip, TriageCard } from "@/components/repair-requests/triage-card"
 
 const inputCls =
   "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
@@ -81,6 +83,7 @@ export function JobDetailPanel(props: {
   items: { id: string; type: string; description: string; quantity: number; unitPrice: number; labourHours: number | null; approvalStatus: string | null; partTypeId: string | null; partTypeName: string | null; supplyMode: string; vendorOrderNumber: string | null; vendorOrderStatus: string | null; partId: string | null }[]
   partTypes: { id: string; name: string }[]
   canOrderParts: boolean
+  repairRequest?: JobRepairRequest | null
   tasks: { id: string; title: string; isDone: boolean; required: boolean; checklistItem: boolean; assignedTo: string | null }[]
   media: { id: string; kind: string; stage: string | null; caption: string | null; storagePath: string; customerVisible: boolean; createdAt: string }[]
   events: { id: string; fromStatus: JobStatus | null; toStatus: JobStatus; note: string | null; customerVisible: boolean; actorName: string | null; createdAt: string }[]
@@ -367,6 +370,25 @@ export function JobDetailPanel(props: {
 
       {tab === "overview" && (
         <div className="grid gap-6 lg:grid-cols-2">
+          {props.repairRequest && (
+            <Card>
+              <CardContent className="space-y-3 p-5">
+                <h2 className="text-[15px] font-semibold">Driver&apos;s request {props.repairRequest.number}</h2>
+                <p className="text-sm">{props.repairRequest.complaint}</p>
+                {props.repairRequest.complaintOriginal && props.repairRequest.complaintLanguage !== "en" && (
+                  <p className="text-xs text-muted-foreground">In their words ({props.repairRequest.complaintLanguage}): “{props.repairRequest.complaintOriginal}”</p>
+                )}
+                {props.repairRequest.warningLights.length > 0 && <p className="text-xs text-muted-foreground">Warning lights: {props.repairRequest.warningLights.join(", ").replace(/_/g, " ")}</p>}
+                <MediaStrip media={props.repairRequest.media} />
+                {props.repairRequest.triage && <TriageCard triage={props.repairRequest.triage} compact />}
+                {props.repairRequest.offer && (
+                  <p className="text-xs text-muted-foreground">
+                    Your offer: {props.repairRequest.offer.priceMin != null ? ghs(props.repairRequest.offer.priceMin) : "after inspection"}{props.repairRequest.offer.priceMax != null && props.repairRequest.offer.priceMax !== props.repairRequest.offer.priceMin ? ` – ${ghs(props.repairRequest.offer.priceMax)}` : ""}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardContent className="space-y-3 p-5">
               <h2 className="text-[15px] font-semibold">Complaint</h2>

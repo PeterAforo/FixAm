@@ -2,6 +2,26 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-06 Complaint-first repair requests + AI triage ✅
+- Driver app → **Get it fixed** (also `/request`, a shareable link): type the
+  problem or say it in Twi/Ga/Ewe/Hausa (voice note → English), pick the car,
+  tap warning lights, add photos or a short video, then send to **my garage**
+  or **garages near me** (GPS or area, 5–50 km).
+- AI triage in seconds (`triage` prompt, photos included; keyword rules when AI
+  is off): likely causes, urgency (stop driving / fix soon / can wait) with a
+  safety note, Ghana cost range, specialty, likely parts (linked to Buy parts),
+  follow-up questions.
+- Broadcast matching (`matchGarages`): radius (or same city/region without
+  GPS), garage specialties (Settings → Repair leads; none = general) and make
+  coverage. Matching garages get an SMS.
+- Garage **Leads** inbox (new nav item): complaint, original words, media,
+  triage, distance; "Send offer" (price range, inspection fee, earliest time,
+  message) or "Not for us". Driver compares offers (price, distance, rating)
+  and taps **Book this** → a confirmed booking at that garage.
+- Check-in from that booking links the request to the job; the job card shows
+  the driver's request, media and triage.
+- Migration `0022_repair-requests`.
+
 ### P8-04 Diagnosis → instant part offers ✅
 - Findings get a recommendation (replace / repair / monitor). A "replace"
   finding or a part line is mapped to a standard part: instant rules match

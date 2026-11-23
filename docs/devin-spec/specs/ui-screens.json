@@ -44,6 +44,16 @@
         ]
       },
       {
+        "label": "Leads",
+        "icon": "inbox",
+        "route": "/g/[garageSlug]/leads",
+        "roles": [
+          "owner",
+          "manager",
+          "service_advisor"
+        ]
+      },
+      {
         "label": "Vehicles",
         "icon": "car",
         "route": "/g/[garageSlug]/vehicles",
@@ -205,7 +215,7 @@
       "routes": {
         "/login": "Sign in only (phone code or e-mail). 'New to FixAm? Create an account' → /signup",
         "/signup": "Public role picker → /signup/<role>",
-        "/signup/<role>": "Create account = step 1 of that role (garage|driver|parts-seller|insurance-broker|dvla-agent). On success → /onboarding/<role> Planned extra roles: tow-operator, rider.",
+        "/signup/<role>": "Create account = step 1 of that role (garage|driver|parts-seller|insurance-broker|dvla-agent). On success → /onboarding/<role>",
         "/onboarding": "Signed-in role picker (first setup or 'Add a workspace')",
         "/onboarding/<role>": "Setup wizard for that role",
         "/account": "Workspace hub: open any workspace, add another, sign out"
@@ -708,235 +718,6 @@
       "content": [
         "Request a quote: insurance|DVLA, service type, vehicle, current expiry, choose broker",
         "Request cards: accept/decline quote, call/WhatsApp broker, status"
-      ]
-    },
-    {
-      "id": "repair_request_new",
-      "route": "/portal/requests/new (+ public /fix)",
-      "audience": "customer",
-      "task": "P8-06",
-      "status": "planned",
-      "content": [
-        "Text / voice / photos / video / warning light",
-        "Language picker (en, tw, gaa, ee, ha)",
-        "AI triage card: causes, urgency, cost range, specialty",
-        "Send to my garage or find garages near me"
-      ]
-    },
-    {
-      "id": "repair_request_detail",
-      "route": "/portal/requests/[id]",
-      "audience": "customer",
-      "task": "P8-06",
-      "status": "planned",
-      "content": [
-        "Triage",
-        "Garage offers (slot, from-price) → accept to book"
-      ]
-    },
-    {
-      "id": "garage_leads",
-      "route": "/g/[garageSlug]/leads",
-      "audience": "owner,manager,service_advisor",
-      "task": "P8-06",
-      "status": "planned",
-      "content": [
-        "Incoming repair requests with media + triage",
-        "Reply with slot and from-price"
-      ]
-    },
-    {
-      "id": "part_offers_panel",
-      "route": "/g/[garageSlug]/jobs/[jobId] (inline)",
-      "audience": "owner,manager,service_advisor,mechanic",
-      "task": "P8-04",
-      "status": "planned",
-      "content": [
-        "Own stock first, then vendor offers with condition badges",
-        "Add to estimate / order to garage"
-      ]
-    },
-    {
-      "id": "portal_parts",
-      "route": "/portal/parts",
-      "audience": "customer",
-      "task": "P8-03",
-      "status": "planned",
-      "content": [
-        "Compatible parts for the selected car",
-        "Delivery: my garage / home / pickup",
-        "theTeller checkout"
-      ]
-    },
-    {
-      "id": "garage_incoming_parts",
-      "route": "/g/[garageSlug]/parts/incoming",
-      "audience": "owner,manager,storekeeper",
-      "task": "P8-03",
-      "status": "planned",
-      "content": [
-        "Parts on the way, linked to jobs",
-        "Confirm receipt with photo (releases payment)"
-      ]
-    },
-    {
-      "id": "vendor_payouts",
-      "route": "/vendor (Payouts tab)",
-      "audience": "vendor",
-      "task": "P8-02",
-      "status": "planned",
-      "content": [
-        "Held / released / paid out",
-        "Payout account (MoMo or bank)"
-      ]
-    },
-    {
-      "id": "admin_escrow",
-      "route": "/admin (Escrow & disputes)",
-      "audience": "platform_admin",
-      "task": "P8-02",
-      "status": "planned",
-      "content": [
-        "Holds, disputes, manual release/refund, failed payouts"
-      ]
-    },
-    {
-      "id": "vehicle_passport",
-      "route": "/v/[token]",
-      "audience": "public",
-      "task": "P8-10",
-      "status": "planned",
-      "content": [
-        "Owner-shared service history"
-      ]
-    },
-    {
-      "id": "part_photo_scan",
-      "route": "camera sheet (portal + job)",
-      "audience": "customer, staff",
-      "task": "P8-12",
-      "status": "planned",
-      "content": [
-        "Snap a part → part type, fitment, condition → offers"
-      ]
-    },
-    {
-      "id": "obd_scan",
-      "route": "/g/[garageSlug]/jobs/[jobId]/scan, /portal/scan",
-      "audience": "staff, customer",
-      "task": "P8-13",
-      "status": "planned",
-      "content": [
-        "Pair dongle (Web Bluetooth)",
-        "Codes with meaning, severity, likely parts",
-        "Live data gauges",
-        "Clear codes (staff)"
-      ]
-    },
-    {
-      "id": "financing_offer",
-      "route": "/t/[token] estimate + invoice pay",
-      "audience": "customer",
-      "task": "P8-14",
-      "status": "planned",
-      "content": [
-        "'Pay over 1–6 months' → application → decision"
-      ]
-    },
-    {
-      "id": "sos",
-      "route": "/portal/sos (big red button on portal home)",
-      "audience": "customer",
-      "task": "P8-15",
-      "status": "planned",
-      "content": [
-        "GPS, problem, photos",
-        "Live operator location, ETA, price, pay"
-      ]
-    },
-    {
-      "id": "tow_dashboard",
-      "route": "/tow",
-      "audience": "tow_operator",
-      "task": "P8-15",
-      "status": "planned",
-      "content": [
-        "Online/offline toggle",
-        "Incoming SOS with distance and quote",
-        "Active job map, earnings"
-      ]
-    },
-    {
-      "id": "handover_report",
-      "route": "/g/[garageSlug]/handovers/[id]",
-      "audience": "garage_driver",
-      "task": "P8-16",
-      "status": "planned",
-      "content": [
-        "Guided 6-photo walkaround, fuel, mileage, signature"
-      ]
-    },
-    {
-      "id": "claim_wizard",
-      "route": "/portal/claims/new",
-      "audience": "customer",
-      "task": "P8-17",
-      "status": "planned",
-      "content": [
-        "Photos, police report, other party, garage, broker"
-      ]
-    },
-    {
-      "id": "broker_claims",
-      "route": "/broker/claims",
-      "audience": "broker",
-      "task": "P8-17",
-      "status": "planned",
-      "content": [
-        "Claims list + detail with status actions and documents"
-      ]
-    },
-    {
-      "id": "rider_app",
-      "route": "/rider",
-      "audience": "rider",
-      "task": "P8-18",
-      "status": "planned",
-      "content": [
-        "Online toggle",
-        "Delivery offers by proximity",
-        "Pickup/drop-off PIN + photo",
-        "Earnings & payouts"
-      ]
-    },
-    {
-      "id": "whatsapp_inbox",
-      "route": "/g/[garageSlug]/whatsapp",
-      "audience": "owner,manager,service_advisor",
-      "task": "P8-19",
-      "status": "planned",
-      "content": [
-        "Conversations, AI/human mode, take over, templates"
-      ]
-    },
-    {
-      "id": "inspection_booking",
-      "route": "/inspections (public) + /portal/inspections",
-      "audience": "customer",
-      "task": "P8-20",
-      "status": "planned",
-      "content": [
-        "Pick garage/inspector, place, time, pay"
-      ]
-    },
-    {
-      "id": "inspection_report",
-      "route": "/i/report/[token] (public)",
-      "audience": "public",
-      "task": "P8-20",
-      "status": "planned",
-      "content": [
-        "Checklist, photos, OBD, AI summary, repair estimate, PDF"
       ]
     }
   ]

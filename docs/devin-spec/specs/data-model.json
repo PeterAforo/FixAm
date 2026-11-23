@@ -386,7 +386,8 @@
         "late_fee_rule": "jsonb",
         "currency": "text req default:'GHS'",
         "accepts_customer_parts": "bool req default:true",
-        "customer_part_fitting_fee": "money req default:0"
+        "customer_part_fitting_fee": "money req default:0",
+        "specialties": "text[] req default:{} (repair-lead matching)"
       },
       "planned_columns": {
         "accepts_customer_parts": "bool req default:true",
@@ -728,7 +729,8 @@
         "renewal_request_id": "uuid fk:renewal_requests",
         "vendor_order_id": "uuid fk:vendor_orders",
         "tracker_token_hash": "text",
-        "internal_notes": "text"
+        "internal_notes": "text",
+        "repair_request_id": "uuid (P8-06)"
       },
       "unique": [
         [
@@ -1821,46 +1823,60 @@
       ]
     },
     "repair_requests": {
-      "status": "planned (P8)",
+      "status": "built (P8-06)",
       "tenant": false,
       "columns": {
         "id": "uuid pk",
-        "number": "text req uniq",
-        "user_id": "uuid req fk:users",
-        "phone": "text req",
-        "portal_vehicle_id": "uuid",
-        "vehicle_label": "text",
-        "description": "text",
-        "language": "text (en|tw|gaa|ee|ha)",
-        "transcript": "text",
-        "translation_en": "text",
-        "media": "jsonb (photos, video, voice, warning_light)",
-        "triage": "jsonb {causes[], urgency, cost_min, cost_max, specialty, likely_part_type_ids[], follow_ups[], model}",
-        "target": "text (garage|broadcast)",
-        "garage_id": "uuid fk:garages",
+        "number": "text req uniq (RR-…)",
+        "requester_user_id": "uuid fk:users",
+        "requester_phone": "text req",
+        "requester_name": "text",
+        "vehicle_make": "text",
+        "vehicle_model": "text",
+        "vehicle_year": "int",
+        "vehicle_plate": "text",
+        "complaint": "text req (English)",
+        "complaint_original": "text",
+        "complaint_language": "text req (en|tw|gaa|ee|ha)",
+        "warning_lights": "text[]",
+        "gps_lat": "numeric",
+        "gps_lng": "numeric",
+        "region": "text",
+        "city": "text",
+        "mode": "text req (preferred|broadcast)",
+        "preferred_garage_id": "uuid fk:garages",
         "radius_km": "int",
-        "lat": "numeric",
-        "lng": "numeric",
-        "status": "text (open|offered|booked|closed|cancelled)",
+        "triage": "jsonb (TriageResult)",
+        "urgency": "text",
+        "specialty": "text",
+        "status": "text (open|offered|booked|cancelled)",
+        "accepted_offer_id": "uuid",
         "booking_id": "uuid",
         "job_id": "uuid",
-        "created_at": "timestamptz req default:now()",
-        "updated_at": "timestamptz req default:now()"
+        "expires_at": "timestamptz (72 h)"
       }
     },
     "repair_request_offers": {
-      "status": "planned (P8)",
-      "tenant": "garage",
+      "status": "built (P8-06)",
+      "tenant": false,
       "columns": {
         "id": "uuid pk",
-        "request_id": "uuid req fk:repair_requests",
-        "garage_id": "uuid req fk:garages",
-        "earliest_slot": "timestamptz",
-        "price_from": "money",
+        "request_id": "uuid req fk",
+        "garage_id": "uuid req fk",
+        "price_min": "money",
+        "price_max": "money",
+        "inspection_fee": "money req",
+        "earliest_at": "timestamptz req",
         "message": "text",
-        "status": "text (sent|accepted|declined|expired)",
-        "created_at": "timestamptz req default:now()"
-      }
+        "status": "text (sent|accepted|declined|withdrawn)",
+        "created_by": "uuid"
+      },
+      "unique": [
+        [
+          "request_id",
+          "garage_id"
+        ]
+      ]
     },
     "escrow_holds": {
       "status": "built (P8-02)",
@@ -2233,6 +2249,35 @@
         "created_at": "timestamptz"
       },
       "notes": "Append-only (trigger blocks UPDATE/DELETE). Accounts: customer_funds, escrow, vendor_payable, garage_payable, fixam_commission, payout_clearing, refund."
+    },
+    "repair_request_media": {
+      "status": "built (P8-06)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "request_id": "uuid req fk",
+        "kind": "text (photo|video|voice)",
+        "storage_path": "text req",
+        "mime_type": "text"
+      }
+    },
+    "repair_request_recipients": {
+      "status": "built (P8-06)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "request_id": "uuid req fk",
+        "garage_id": "uuid req fk",
+        "distance_km": "numeric",
+        "viewed_at": "timestamptz",
+        "declined_at": "timestamptz"
+      },
+      "unique": [
+        [
+          "request_id",
+          "garage_id"
+        ]
+      ]
     }
   },
   "domain_rules": {
