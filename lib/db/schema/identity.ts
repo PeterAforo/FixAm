@@ -93,6 +93,8 @@ export const garageSettings = pgTable("garage_settings", {
   /** Specialties for repair-request matching (P8-06); empty = general garage. */
   /** P8-07: part lines need old-part proof before an invoice can be issued. */
   requireOldPartProof: boolean("require_old_part_proof").notNull().default(true),
+  /** P8-11: send harmattan and rainy-season car-care reminders. */
+  seasonalCampaigns: boolean("seasonal_campaigns").notNull().default(true),
   specialties: text("specialties").array().notNull().default(sql`'{}'::text[]`),
   currency: text("currency").notNull().default("GHS"),
   ...timestamps,

@@ -133,6 +133,8 @@ export async function updatePortalPreferences(rawInput: unknown): Promise<Action
     whatsappOptIn: z.boolean(),
     preferredChannels: z.array(z.enum(["whatsapp", "sms", "push", "email"])).min(1),
     marketingOptIn: z.boolean(),
+    /** P8-11: harmattan / rainy-season tips (stored as an opt-out). */
+    seasonalTips: z.boolean().optional(),
   }).safeParse(rawInput)
   if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Invalid input" } }
 
@@ -140,6 +142,7 @@ export async function updatePortalPreferences(rawInput: unknown): Promise<Action
     whatsappOptIn: parsed.data.whatsappOptIn,
     preferredChannels: parsed.data.preferredChannels as never,
     marketingOptIn: parsed.data.marketingOptIn,
+    ...(parsed.data.seasonalTips !== undefined ? { seasonalOptOut: !parsed.data.seasonalTips } : {}),
     updatedAt: new Date(),
   }).where(eq(customers.phone, phone))
   return { ok: true, data: { ok: true as const } }

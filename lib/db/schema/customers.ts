@@ -59,6 +59,8 @@ export const customers = pgTable(
     email: text("email"),
     whatsappOptIn: boolean("whatsapp_opt_in").default(true),
     marketingOptIn: boolean("marketing_opt_in").default(false),
+    /** P8-11: customer said stop to harmattan / rainy-season tips. */
+    seasonalOptOut: boolean("seasonal_opt_out").notNull().default(false),
     preferredChannels: contactChannelEnum("preferred_channels").array().default(sql`'{whatsapp,sms}'`),
     nationalIdNumber: text("national_id_number"), // encrypted at rest via pgcrypto
     address: text("address"),

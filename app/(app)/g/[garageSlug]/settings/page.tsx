@@ -16,6 +16,8 @@ import { ReviewsPanel } from "./reviews-panel"
 import { CustomerPartsPanel } from "./customer-parts-panel"
 import { SpecialtiesPanel } from "./specialties-panel"
 import { WorkshopRulesPanel } from "./workshop-rules-panel"
+import { SeasonalPanel } from "./seasonal-panel"
+import { getSeasonalOverview } from "@/lib/seasonal/actions"
 import { garageSettings } from "@/lib/db/schema"
 import { getCustomerPartsSettings } from "@/lib/parts-shop/garage-actions"
 
@@ -34,7 +36,7 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
   const canManageSettings = can(principal, "garage.settings.manage")
   if (!canManageSettings && !can(principal, "garage.subscription.manage")) notFound()
 
-  const [billing, coverageRows, catalogue, partsSettings] = await Promise.all([
+  const [billing, coverageRows, catalogue, partsSettings, seasonal] = await Promise.all([
     getGarageBilling({ garageId: garage.id }),
     canManageSettings
       ? db()
@@ -44,6 +46,7 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
       : Promise.resolve([]),
     canManageSettings ? listCatalogueGrouped() : Promise.resolve([]),
     canManageSettings ? getCustomerPartsSettings(garage.id) : Promise.resolve(null),
+    canManageSettings ? getSeasonalOverview(garage.id).catch(() => null) : Promise.resolve(null),
   ])
   const [settingsRow] = canManageSettings
     ? await db().select({ specialties: garageSettings.specialties, requireOldPartProof: garageSettings.requireOldPartProof }).from(garageSettings).where(eq(garageSettings.garageId, garage.id)).limit(1)
@@ -101,6 +104,13 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
         <section>
           <h2 className="text-[15px] font-semibold">Workshop rules</h2>
           <WorkshopRulesPanel garageId={garage.id} requireOldPartProof={settingsRow?.requireOldPartProof ?? true} />
+        </section>
+      )}
+
+      {seasonal && (
+        <section>
+          <h2 className="text-[15px] font-semibold">Seasonal reminders</h2>
+          <SeasonalPanel garageId={garage.id} overview={seasonal} />
         </section>
       )}
 

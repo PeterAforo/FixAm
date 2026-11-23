@@ -62,7 +62,7 @@ let dbDepsPromise: Promise<SendDeps> | null = null
 function categoryFor(templateKey: string): "transactional" | "reminder" | "otp" | "marketing" | "staff" {
   if (templateKey === "otp") return "otp"
   if (templateKey === "staff_invite") return "staff"
-  if (/due|remind|nudge|confirm|oil|insurance|roadworthy|registration|licence|instalment|credit|booking/.test(templateKey)) return "reminder"
+  if (/due|remind|nudge|confirm|oil|insurance|roadworthy|registration|licence|instalment|credit|booking|seasonal/.test(templateKey)) return "reminder"
   if (/promo|offer|marketing/.test(templateKey)) return "marketing"
   return "transactional"
 }

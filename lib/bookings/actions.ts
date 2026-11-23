@@ -397,6 +397,14 @@ export async function requestPublicBooking(rawInput: unknown): Promise<ActionRes
     otpExpiresAt: new Date(Date.now() + 15 * 60_000),
   })
 
+  // P8-11: count bookings that follow a seasonal reminder (best-effort).
+  try {
+    const { attributeSeasonalBooking } = await import("@/lib/seasonal/service")
+    await attributeSeasonalBooking(d.garageId, d.guestPhone, bookingId)
+  } catch {
+    // never block a booking
+  }
+
   const [gr] = await db().select({ name: garages.name }).from(garages).where(eq(garages.id, d.garageId)).limit(1)
   try {
     await sendMessage({

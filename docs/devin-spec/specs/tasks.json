@@ -912,7 +912,8 @@
           "description": "reminder-rules: harmattan (filters) and rainy-season (wipers, tyres, brakes) campaigns per region.",
           "acceptance_criteria": [
             "Campaigns respect opt-outs and quiet hours"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-12",

@@ -388,7 +388,8 @@
         "accepts_customer_parts": "bool req default:true",
         "customer_part_fitting_fee": "money req default:0",
         "specialties": "text[] req default:{} (repair-lead matching)",
-        "require_old_part_proof": "bool req default:true"
+        "require_old_part_proof": "bool req default:true",
+        "seasonal_campaigns": "bool default true (P8-11)"
       },
       "planned_columns": {
         "accepts_customer_parts": "bool req default:true",
@@ -496,7 +497,8 @@
         "address": "text",
         "notes": "text",
         "tags": "text[]",
-        "source": "text"
+        "source": "text",
+        "seasonal_opt_out": "bool default false (P8-11)"
       },
       "unique": [
         [
@@ -2293,6 +2295,60 @@
         [
           "request_id",
           "garage_id"
+        ]
+      ]
+    },
+    "seasonal_campaigns": {
+      "status": "built (P8-11)",
+      "tenant": true,
+      "note": "One per garage per season per send day; created 7 days ahead (48h review if late).",
+      "columns": {
+        "id": "uuid pk",
+        "garage_id": "uuid req fk",
+        "season": "text (harmattan|rainy_major|rainy_minor)",
+        "send_on": "date",
+        "zone": "text (north|middle|coast)",
+        "status": "text (scheduled|sending|sent|skipped|expired)",
+        "offer_text": "text <=80",
+        "recipients_count": "int",
+        "sent_count": "int",
+        "skipped_count": "int",
+        "failed_count": "int",
+        "bookings_count": "int",
+        "started_at": "timestamptz",
+        "finished_at": "timestamptz",
+        "created_at": "timestamptz",
+        "updated_at": "timestamptz"
+      },
+      "unique": [
+        [
+          "garage_id",
+          "season",
+          "send_on"
+        ]
+      ]
+    },
+    "seasonal_campaign_sends": {
+      "status": "built (P8-11)",
+      "tenant": true,
+      "columns": {
+        "id": "uuid pk",
+        "garage_id": "uuid req fk",
+        "campaign_id": "uuid req fk",
+        "customer_id": "uuid req fk",
+        "vehicle_id": "uuid fk",
+        "channel": "text",
+        "status": "text (pending|sent|failed|skipped)",
+        "reason": "text",
+        "provider_message_id": "text",
+        "attempts": "int",
+        "sent_at": "timestamptz",
+        "created_at": "timestamptz"
+      },
+      "unique": [
+        [
+          "campaign_id",
+          "customer_id"
         ]
       ]
     }

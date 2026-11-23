@@ -17,7 +17,7 @@ const fmtDate = (iso: string | null | undefined) => (iso ? new Date(iso).toLocal
 type Ring = { status: "ok" | "soon" | "overdue" | "unknown"; nextDue?: string }
 
 export type PortalData = {
-  customers: { id: string; garageId: string; fullName: string; garageName: string; preferredChannels: string[] | null; whatsappOptIn: boolean | null; marketingOptIn: boolean | null }[]
+  customers: { id: string; garageId: string; fullName: string; garageName: string; preferredChannels: string[] | null; whatsappOptIn: boolean | null; marketingOptIn: boolean | null; seasonalOptOut?: boolean | null }[]
   vehicles: { id: string; garageId: string; plateNumber: string; make: string; model: string; year: number | null; color: string | null; bodyType: string | null; fuelType: string | null; lastOdometerKm: number | null; lastOdometerAt: string | null; garageName: string; rings: { oil: Ring; insurance: Ring; dvla: Ring; issues: Ring }; fixamScore?: { score: number; tips: string[] } }[]
   dueItems: { id: string; type: string; title: string; effectiveDueDate: string; vehicleId: string; status: string; vehicleLabel: string }[]
   invoices: { id: string; number: string | null; garageId: string; garageName: string; status: string; total: number | null; balanceDue: number | null; issuedAt: string; payUrl: string | null }[]
@@ -50,15 +50,17 @@ export function PortalDashboard({ phone, data, fleets = [], claimedVehicles = []
     whatsappOptIn: first?.whatsappOptIn ?? true,
     preferredChannels: first?.preferredChannels ?? ["whatsapp", "sms"],
     marketingOptIn: first?.marketingOptIn ?? false,
+    seasonalTips: !(first?.seasonalOptOut ?? false),
   }
   const [channels, setChannels] = useState<string[]>(prefs.preferredChannels)
   const [waOptIn, setWaOptIn] = useState(prefs.whatsappOptIn)
   const [mktOptIn, setMktOptIn] = useState(prefs.marketingOptIn)
+  const [seasonalTips, setSeasonalTips] = useState(prefs.seasonalTips)
 
   function savePrefs() {
     setMsg(null)
     startTransition(async () => {
-      const res = await updatePortalPreferences({ whatsappOptIn: waOptIn, preferredChannels: channels, marketingOptIn: mktOptIn })
+      const res = await updatePortalPreferences({ whatsappOptIn: waOptIn, preferredChannels: channels, marketingOptIn: mktOptIn, seasonalTips })
       setMsg(res.ok ? "Preferences saved." : res.error.message)
     })
   }
@@ -303,6 +305,9 @@ export function PortalDashboard({ phone, data, fleets = [], claimedVehicles = []
           ))}
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={mktOptIn} onChange={(e) => setMktOptIn(e.target.checked)} /> Offers &amp; marketing
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={seasonalTips} onChange={(e) => setSeasonalTips(e.target.checked)} /> Harmattan &amp; rainy-season car-care tips
           </label>
           <Button size="sm" onClick={savePrefs} disabled={pending || channels.length === 0}>Save preferences</Button>
           <InstallPrompt />

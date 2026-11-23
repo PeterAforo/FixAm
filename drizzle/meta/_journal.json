@@ -183,6 +183,13 @@
       "when": 1795441868710,
       "tag": "0025_vehicle-passport",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1795444752739,
+      "tag": "0026_seasonal-campaigns",
+      "breakpoints": true
     }
   ]
 }

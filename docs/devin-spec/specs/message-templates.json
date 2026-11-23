@@ -19,7 +19,11 @@
     "items_list": "Comma-separated due items for combined messages",
     "otp_code": "One-time code",
     "renewal_status": "Human readable renewal status",
-    "staff_name": "Staff first name"
+    "staff_name": "Staff first name",
+    "checklist": "Short seasonal checklist",
+    "offer_line": "Optional garage offer, starts with a space",
+    "booking_link": "Garage booking page URL",
+    "stop_link": "One-tap opt-out URL for seasonal tips"
   },
   "templates": [
     { "key": "otp", "category": "otp", "channels": {
@@ -139,7 +143,57 @@
     { "key": "staff_invite", "category": "staff", "channels": { "sms": { "body": "{{staff_name}}, you've been invited to {{garage_name}} on FixAm. Join: {{action_link}}" }, "whatsapp": { "template_name": "staff_invite", "category": "UTILITY", "whatsapp_params": ["staff_name", "garage_name", "action_link"] }, "email": { "subject": "Join {{garage_name}} on FixAm", "body": "Hi {{staff_name}},\n\nYou've been invited to join {{garage_name}}. Accept your invite: {{action_link}}" } } },
 
     { "key": "allowance_warning", "category": "staff", "channels": { "email": { "subject": "You've used 80% of this month's messages", "body": "{{garage_name}} has used 80% of its monthly message allowance. Add a bundle or upgrade to keep reminders flowing: {{action_link}}" }, "push": { "title": "Messages 80% used", "body": "Top up to keep reminders flowing." } } },
-    { "key": "allowance_exhausted", "category": "staff", "channels": { "email": { "subject": "Message allowance used up", "body": "{{garage_name}} has used all SMS/WhatsApp messages for this month. Reminders now go by push and email only. Top up: {{action_link}}" }, "push": { "title": "Message allowance used up", "body": "Tap to top up." } } }
+    { "key": "allowance_exhausted", "category": "staff", "channels": { "email": { "subject": "Message allowance used up", "body": "{{garage_name}} has used all SMS/WhatsApp messages for this month. Reminders now go by push and email only. Top up: {{action_link}}" }, "push": { "title": "Message allowance used up", "body": "Tap to top up." } } },
+    {
+      "key": "seasonal_harmattan",
+      "category": "reminder",
+      "channels": {
+        "sms": {
+          "body": "{{garage_name}}: Harmattan is here. Get {{plate}} ready: {{checklist}}.{{offer_line}} Book: {{booking_link}} Stop tips: {{stop_link}}"
+        },
+        "whatsapp": {
+          "template_name": "seasonal_harmattan",
+          "category": "MARKETING",
+          "whatsapp_params": [
+            "customer_first_name",
+            "plate",
+            "checklist",
+            "booking_link",
+            "stop_link"
+          ],
+          "body": "Hi {{customer_first_name}} 👋 Harmattan dust is here. Let {{garage_name}} get {{plate}} ready: *{{checklist}}*.{{offer_line}}\nBook a check: {{booking_link}}\nDon't want these tips? {{stop_link}}"
+        },
+        "push": {
+          "title": "Harmattan car check",
+          "body": "Get {{plate}} ready: {{checklist}}."
+        }
+      }
+    },
+    {
+      "key": "seasonal_rainy",
+      "category": "reminder",
+      "channels": {
+        "sms": {
+          "body": "{{garage_name}}: The rains are coming. Is {{plate}} ready? Check {{checklist}}.{{offer_line}} Book: {{booking_link}} Stop tips: {{stop_link}}"
+        },
+        "whatsapp": {
+          "template_name": "seasonal_rainy",
+          "category": "MARKETING",
+          "whatsapp_params": [
+            "customer_first_name",
+            "plate",
+            "checklist",
+            "booking_link",
+            "stop_link"
+          ],
+          "body": "Hi {{customer_first_name}} 🌧️ The rains are coming. Let {{garage_name}} check {{plate}}: *{{checklist}}*.{{offer_line}}\nBook a check: {{booking_link}}\nDon't want these tips? {{stop_link}}"
+        },
+        "push": {
+          "title": "Rainy season car check",
+          "body": "Get {{plate}} ready: {{checklist}}."
+        }
+      }
+    }
   ],
   "inbound_whatsapp_sms": {
     "mileage_reply": "If an inbound message from a known customer phone is a number between 1 and 2,000,000 (allowing commas and 'km'), and that customer has a mileage_confirm or mileage_nudge sent in the last 14 days, record it as an odometer reading (source customer_update) for that vehicle and reply 'Thanks! Updated {{plate}} to {{km}} km ✅'. If the customer has several vehicles, reply with a numbered list to choose.",

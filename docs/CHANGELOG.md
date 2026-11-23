@@ -2,6 +2,32 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-11 Seasonal reminders (harmattan & rains) ✅
+- Garages' customers get a short car-care message when the season turns,
+  timed by the garage's region: **north** (harmattan mid-Nov, one rainy
+  season late Apr), **middle belt** (harmattan late Nov, rains mid-Mar and
+  Sep) and **coast** (harmattan early Dec, rains Apr and Sep). Each message
+  has a checklist (filters, wipers, lights, coolant / tyres, brakes), the
+  garage's optional offer, its booking link and a one-tap stop link.
+- Campaigns are created a week before the send day; owners and managers get
+  a notification and can add an offer (max 80 characters), preview the SMS
+  or skip it under **Settings → Seasonal reminders**, which also shows
+  sent / skipped / failed counts and bookings that followed. A campaign
+  created late waits 48 hours before sending.
+- Who gets it: customers serviced at that garage in the last 18 months who
+  haven't opted out, at most one seasonal message per 45 days. WhatsApp only
+  if the customer allows it, otherwise SMS. Sends hourly in the daytime,
+  never in the garage's quiet hours, and pause when the message allowance
+  runs out; unsent messages expire 14 days after the send day.
+- Opt-out: signed link `/u/<token>` (a button, so link previews don't opt
+  people out; undo offered) and a "Harmattan & rainy-season tips" switch in
+  the driver app's preferences. Service due-date reminders are unaffected.
+- New templates `seasonal_harmattan`, `seasonal_rainy` (WhatsApp templates
+  must be approved in Meta under these names). Optional env
+  `LINK_SIGNING_SECRET` for the stop links (falls back to
+  `PAYOUT_ENCRYPTION_KEY`).
+- Migration `0026_seasonal-campaigns`.
+
 ### P8-10 Vehicle passport ✅
 - One public history page per car (`/v/<token>`), built from every FixAm
   garage that has serviced that plate: completed visits (date, garage and

@@ -33,6 +33,7 @@ async function customerRows(phone: string) {
       companyName: customers.companyName, phone: customers.phone, type: customers.type,
       preferredChannels: customers.preferredChannels, whatsappOptIn: customers.whatsappOptIn,
       marketingOptIn: customers.marketingOptIn,
+      seasonalOptOut: customers.seasonalOptOut,
       garageName: garages.name, garageSlug: garages.slug,
     })
     .from(customers)
