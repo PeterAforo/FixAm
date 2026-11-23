@@ -3,15 +3,19 @@ import { Suspense } from "react"
 import { connection } from "next/server"
 import { getVendorDashboard, listVendorProducts } from "@/lib/vendors/actions"
 import { VendorPanel } from "./vendor-panel"
+import { listPartTypes } from "@/lib/parts-catalog/actions"
 
 async function Loader() {
   await connection()
   const dash = await getVendorDashboard()
   if (!dash.ok) redirect("/login")
   if (!dash.data) redirect("/onboarding/parts-seller")
-  const products = dash.data.canManage ? await listVendorProducts({}) : { ok: true as const, data: [] as never[] }
+  const [products, partTypes] = await Promise.all([
+    dash.data.canManage ? listVendorProducts({}) : Promise.resolve({ ok: true as const, data: [] as never[] }),
+    listPartTypes(),
+  ])
 
-  return <VendorPanel dashboard={dash.data} products={products.ok ? products.data : []} />
+  return <VendorPanel dashboard={dash.data} products={products.ok ? products.data : []} partTypes={partTypes} />
 }
 
 export default function VendorPage() {

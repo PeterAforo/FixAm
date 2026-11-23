@@ -1,5 +1,37 @@
 # Changelog
 
+## Unreleased — P8 Smart repair marketplace (in progress)
+
+### P8-05 AI + speech providers ✅
+- `AiProvider` (Claude Messages API, structured output via a forced tool call,
+  image input) and `SpeechProvider` (Khaya ASR + translation for Twi, Ga, Ewe,
+  Hausa), each with a mock. `AI_PROVIDER` / `SPEECH_PROVIDER` select; a missing
+  key falls back to the mock (`lib/integrations/ai.ts`).
+- Prompt registry (`lib/ai/prompts.ts`) with versions, zod-validated answers
+  and mock answers; `runPrompt` PII-minimises text (phones, e-mails, Ghana
+  Card, plates) before it leaves FixAm and never throws.
+- Voice notes: `transcribeVoiceNote` → transcript + English (Khaya, then Claude
+  fallback); `transcribeVoiceNoteAction` (rate-limited, 5 MB cap) and a
+  reusable `<VoiceNoteButton>` with language picker.
+- New `ai_calls` table (migration `0018_ai-calls`): provider, model, prompt
+  key/version, tokens, voice seconds, micro-USD cost, status, latency per
+  garage/user. Content is never stored. Admin → AI usage (30 days).
+
+### P8-01 Standard parts list & fitment ✅
+- New `part_types` table seeded with 153 common parts across 13 categories
+  (`lib/parts-catalog/seed.ts`, migration `0017_parts-catalog`).
+- `vendor_products` gain `part_type_id`, `condition` (genuine | aftermarket |
+  home_used), fitment (`fit_make`, `fit_model`, `fit_year_from/to`),
+  `oem_number`, `warranty_days`.
+- `lib/parts-catalog/actions.ts`: `listPartTypes`, `searchPartTypes`
+  (names + synonyms), `matchPartTypeText` (free text → part type, no AI),
+  `findFittingProducts` (approved vendors, fit-level ranking), admin upsert.
+- Vendor catalogue: part-type picker, condition, "fits" make/model/years, OEM
+  number, warranty; table flags products not linked to a part type. CSV import
+  accepts `part type`, `condition`, `fits make`, `fits model`, `year from`,
+  `year to`, `oem number`, `warranty days`.
+- Admin → Parts list: search, add parts, and add local-language names.
+
 ## Unreleased — Unified accounts, brokers & premium redesign (Nov 2026)
 
 ### Accounts & auth

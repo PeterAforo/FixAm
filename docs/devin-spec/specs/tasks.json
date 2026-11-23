@@ -783,7 +783,8 @@
             "Vendors list products against a part type with fitment and condition",
             "Search 'brake pads Corolla 2014' returns only fitting products",
             "Synonyms match (e.g. Twi street names) in search"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-02",
@@ -836,7 +837,8 @@
             "Mock providers used when keys are absent",
             "Voice note in Twi/Ga/Ewe/Hausa returns transcript + English text",
             "Each AI call logs model, tokens and cost per garage/user"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-06",

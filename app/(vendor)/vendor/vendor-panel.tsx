@@ -17,12 +17,31 @@ import {
   vendorSignup,
 } from "@/lib/vendors/actions"
 import { parseVendorProductsCsv, type VendorCsvIssue, type VendorCsvRow } from "@/lib/vendors/csv"
+import type { PartTypeView } from "@/lib/parts-catalog/actions"
 
 type Dash = NonNullable<Extract<Awaited<ReturnType<typeof getVendorDashboard>>, { ok: true; data: object }>["data"]>
 type Product = {
   id: string; sku: string; name: string; brand: string | null; category: string
   price: number; stockStatus: string | null; quantityAvailable: number | null
   minOrderQty: number | null; leadTimeHours: number | null; isActive: boolean | null
+  partTypeId?: string | null; condition?: string | null; fitMake?: string | null; fitModel?: string | null
+  fitYearFrom?: number | null; fitYearTo?: number | null; oemNumber?: string | null; warrantyDays?: number | null
+}
+
+const CONDITION_LABEL: Record<string, string> = { genuine: "Genuine", aftermarket: "Aftermarket", home_used: "Home-used" }
+const CONDITION_TINT: Record<string, string> = {
+  genuine: "bg-[#EEF8D6] text-[#4E6B07]",
+  aftermarket: "bg-[#E6F4FF] text-[#0B5CAD]",
+  home_used: "bg-[#FFF3E0] text-[#8A5300]",
+}
+const EMPTY_PRODUCT = {
+  productId: "", sku: "", name: "", brand: "", category: "", price: "", stockStatus: "in_stock", quantityAvailable: "", leadTimeHours: "",
+  partTypeId: "", condition: "aftermarket", fitMake: "", fitModel: "", fitYearFrom: "", fitYearTo: "", oemNumber: "", warrantyDays: "",
+}
+const fitLabel = (p: Product) => {
+  if (!p.fitMake) return "Fits most cars"
+  const years = p.fitYearFrom || p.fitYearTo ? ` ${p.fitYearFrom ?? "…"}–${p.fitYearTo ?? "…"}` : ""
+  return `${p.fitMake}${p.fitModel ? ` ${p.fitModel}` : ""}${years}`
 }
 
 const inputCls = "min-h-11 w-full rounded-xl border border-input bg-card px-3.5 text-sm outline-none transition-shadow placeholder:text-[#8C857B] focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
@@ -35,7 +54,7 @@ const NEXT_ACTION: Record<string, { label: string; action: string } | null> = {
   delivered: null, received: null, cancelled: null, rejected: null,
 }
 
-export function VendorPanel(props: { dashboard: Dash | null; products: Product[] }) {
+export function VendorPanel(props: { dashboard: Dash | null; products: Product[]; partTypes?: PartTypeView[] }) {
   const { dashboard, products } = props
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -50,7 +69,9 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
 
   // product form
   const [showProduct, setShowProduct] = useState(false)
-  const [pForm, setPForm] = useState({ productId: "", sku: "", name: "", brand: "", category: "", price: "", stockStatus: "in_stock", quantityAvailable: "", leadTimeHours: "" })
+  const [pForm, setPForm] = useState(EMPTY_PRODUCT)
+  const partTypes = props.partTypes ?? []
+  const typeById = new Map(partTypes.map((t) => [t.id, t]))
   const csvRef = useRef<HTMLInputElement>(null)
   const [csvRows, setCsvRows] = useState<VendorCsvRow[] | null>(null)
   const [csvIssues, setCsvIssues] = useState<VendorCsvIssue[]>([])
@@ -93,10 +114,18 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
         stockStatus: pForm.stockStatus as never,
         quantityAvailable: pForm.quantityAvailable ? parseInt(pForm.quantityAvailable, 10) : undefined,
         leadTimeHours: pForm.leadTimeHours ? parseInt(pForm.leadTimeHours, 10) : undefined,
+        partTypeId: pForm.partTypeId || null,
+        condition: (pForm.condition || null) as never,
+        fitMake: pForm.fitMake || null,
+        fitModel: pForm.fitModel || null,
+        fitYearFrom: pForm.fitYearFrom ? parseInt(pForm.fitYearFrom, 10) : null,
+        fitYearTo: pForm.fitYearTo ? parseInt(pForm.fitYearTo, 10) : null,
+        oemNumber: pForm.oemNumber || null,
+        warrantyDays: pForm.warrantyDays ? parseInt(pForm.warrantyDays, 10) : null,
       })
       if (!res.ok) { setMsg(res.error.message); return }
       setMsg(null); setShowProduct(false)
-      setPForm({ productId: "", sku: "", name: "", brand: "", category: "", price: "", stockStatus: "in_stock", quantityAvailable: "", leadTimeHours: "" })
+      setPForm(EMPTY_PRODUCT)
       router.refresh()
     })
   }
@@ -107,6 +136,11 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
       price: String(p.price), stockStatus: p.stockStatus ?? "in_stock",
       quantityAvailable: p.quantityAvailable != null ? String(p.quantityAvailable) : "",
       leadTimeHours: p.leadTimeHours != null ? String(p.leadTimeHours) : "",
+      partTypeId: p.partTypeId ?? "", condition: p.condition ?? "",
+      fitMake: p.fitMake ?? "", fitModel: p.fitModel ?? "",
+      fitYearFrom: p.fitYearFrom != null ? String(p.fitYearFrom) : "",
+      fitYearTo: p.fitYearTo != null ? String(p.fitYearTo) : "",
+      oemNumber: p.oemNumber ?? "", warrantyDays: p.warrantyDays != null ? String(p.warrantyDays) : "",
     })
     setShowProduct(true)
   }
@@ -319,6 +353,32 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
                 <form onSubmit={submitProduct} className="grid gap-3 sm:grid-cols-3">
                   <input value={pForm.sku} onChange={(e) => setPForm({ ...pForm, sku: e.target.value })} placeholder="SKU *" className={inputCls} required />
                   <input value={pForm.name} onChange={(e) => setPForm({ ...pForm, name: e.target.value })} placeholder="Name *" className={`${inputCls} sm:col-span-2`} required />
+                  <label className="space-y-1 sm:col-span-2">
+                    <span className="text-xs font-medium text-muted-foreground">Part type (FixAm standard list) — helps garages find you</span>
+                    <select
+                      value={pForm.partTypeId}
+                      onChange={(e) => {
+                        const t = typeById.get(e.target.value)
+                        setPForm({ ...pForm, partTypeId: e.target.value, category: pForm.category || t?.category || "" })
+                      }}
+                      className={inputCls}
+                    >
+                      <option value="">— Choose a part type —</option>
+                      {[...new Set(partTypes.map((t) => t.category))].map((cat) => (
+                        <optgroup key={cat} label={cat}>
+                          {partTypes.filter((t) => t.category === cat).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-xs font-medium text-muted-foreground">Condition</span>
+                    <select value={pForm.condition} onChange={(e) => setPForm({ ...pForm, condition: e.target.value })} className={inputCls}>
+                      <option value="genuine">Genuine (OEM)</option>
+                      <option value="aftermarket">Aftermarket (new)</option>
+                      <option value="home_used">Home-used</option>
+                    </select>
+                  </label>
                   <input value={pForm.brand} onChange={(e) => setPForm({ ...pForm, brand: e.target.value })} placeholder="Brand" className={inputCls} />
                   <input value={pForm.category} onChange={(e) => setPForm({ ...pForm, category: e.target.value })} placeholder="Category *" className={inputCls} required />
                   <input value={pForm.price} onChange={(e) => setPForm({ ...pForm, price: e.target.value })} placeholder="Price GH₵ *" inputMode="decimal" className={inputCls} required />
@@ -327,6 +387,17 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
                   </select>
                   <input value={pForm.quantityAvailable} onChange={(e) => setPForm({ ...pForm, quantityAvailable: e.target.value })} placeholder="Qty available" inputMode="numeric" className={inputCls} />
                   <input value={pForm.leadTimeHours} onChange={(e) => setPForm({ ...pForm, leadTimeHours: e.target.value })} placeholder="Lead time (hrs)" inputMode="numeric" className={inputCls} />
+                  <div className="space-y-1 sm:col-span-3">
+                    <span className="text-xs font-medium text-muted-foreground">Fits (leave blank if it fits most cars)</span>
+                    <div className="grid gap-3 sm:grid-cols-4">
+                      <input value={pForm.fitMake} onChange={(e) => setPForm({ ...pForm, fitMake: e.target.value })} placeholder="Make, e.g. Toyota" className={inputCls} />
+                      <input value={pForm.fitModel} onChange={(e) => setPForm({ ...pForm, fitModel: e.target.value })} placeholder="Model, e.g. Corolla" className={inputCls} />
+                      <input value={pForm.fitYearFrom} onChange={(e) => setPForm({ ...pForm, fitYearFrom: e.target.value.replace(/\D/g, "") })} placeholder="Year from" inputMode="numeric" maxLength={4} className={inputCls} />
+                      <input value={pForm.fitYearTo} onChange={(e) => setPForm({ ...pForm, fitYearTo: e.target.value.replace(/\D/g, "") })} placeholder="Year to" inputMode="numeric" maxLength={4} className={inputCls} />
+                    </div>
+                  </div>
+                  <input value={pForm.oemNumber} onChange={(e) => setPForm({ ...pForm, oemNumber: e.target.value })} placeholder="OEM / part number" className={inputCls} />
+                  <input value={pForm.warrantyDays} onChange={(e) => setPForm({ ...pForm, warrantyDays: e.target.value.replace(/\D/g, "") })} placeholder="Warranty (days)" inputMode="numeric" className={inputCls} />
                   <div className="flex gap-2 sm:col-span-3">
                     <Button type="submit" disabled={pending}>{pForm.productId ? "Save" : "Add"}</Button>
                     <Button type="button" variant="secondary" onClick={() => setShowProduct(false)}>Cancel</Button>
@@ -358,7 +429,7 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
                   <tr className="border-b text-left bg-surface-muted/50 text-xs font-medium text-muted-foreground">
                     <th className="px-4 py-3">Product</th>
                     <th className="px-4 py-3">SKU</th>
-                    <th className="px-4 py-3">Category</th>
+                    <th className="px-4 py-3">Part type</th>
                     <th className="px-4 py-3 text-right">Price</th>
                     <th className="px-4 py-3">Stock</th>
                     <th className="px-4 py-3"></th>
@@ -368,9 +439,23 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
                   {products.length === 0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">No products yet</td></tr>}
                   {products.map((p) => (
                     <tr key={p.id} className="border-b last:border-0">
-                      <td className="px-4 py-3"><p className="font-medium">{p.name}</p><p className="text-xs text-muted-foreground">{p.brand ?? ""}</p></td>
+                      <td className="px-4 py-3">
+                        <p className="flex flex-wrap items-center gap-1.5 font-medium">
+                          {p.name}
+                          {p.condition && (
+                            <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${CONDITION_TINT[p.condition] ?? "bg-muted"}`}>{CONDITION_LABEL[p.condition] ?? p.condition}</span>
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{[p.brand, fitLabel(p)].filter(Boolean).join(" · ")}</p>
+                      </td>
                       <td className="px-4 py-3 font-mono text-xs">{p.sku}</td>
-                      <td className="px-4 py-3">{p.category}</td>
+                      <td className="px-4 py-3">
+                        {p.partTypeId && typeById.get(p.partTypeId) ? (
+                          typeById.get(p.partTypeId)!.name
+                        ) : (
+                          <span className="text-xs font-medium text-[#B8390A]">Not linked — garages won&apos;t find it</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-right tabular-nums">{formatGHS(p.price)}</td>
                       <td className="px-4 py-3 text-xs capitalize">{p.stockStatus?.replace(/_/g, " ") ?? "—"}{p.quantityAvailable != null ? ` · ${p.quantityAvailable}` : ""}</td>
                       <td className="px-4 py-3 text-right"><Button variant="ghost" className="!min-h-8 px-2 text-xs" onClick={() => openProduct(p)}>Edit</Button></td>

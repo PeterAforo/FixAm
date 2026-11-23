@@ -7,6 +7,7 @@ import {
   vendors,
   vendorMembers,
   vendorProducts,
+  partTypes,
   vendorOrders,
   vendorOrderItems,
   vendorOrderEvents,
@@ -260,6 +261,14 @@ export async function upsertVendorProduct(rawInput: unknown): Promise<ActionResu
     minOrderQty: z.number().int().min(1).optional(),
     leadTimeHours: z.number().int().min(0).optional(),
     isActive: z.boolean().optional(),
+    partTypeId: z.string().uuid().nullable().optional(),
+    condition: z.enum(["genuine", "aftermarket", "home_used"]).nullable().optional(),
+    fitMake: z.string().max(60).nullable().optional(),
+    fitModel: z.string().max(60).nullable().optional(),
+    fitYearFrom: z.number().int().min(1950).max(2100).nullable().optional(),
+    fitYearTo: z.number().int().min(1950).max(2100).nullable().optional(),
+    oemNumber: z.string().max(60).nullable().optional(),
+    warrantyDays: z.number().int().min(0).max(3650).nullable().optional(),
   }).safeParse(rawInput)
   if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Invalid input" } }
   const d = parsed.data
@@ -273,7 +282,18 @@ export async function upsertVendorProduct(rawInput: unknown): Promise<ActionResu
     minOrderQty: d.minOrderQty ?? 1,
     leadTimeHours: d.leadTimeHours ?? null,
     isActive: d.isActive ?? true,
+    partTypeId: d.partTypeId ?? null,
+    condition: d.condition ?? null,
+    fitMake: d.fitMake?.trim() || null,
+    fitModel: d.fitModel?.trim() || null,
+    fitYearFrom: d.fitYearFrom ?? null,
+    fitYearTo: d.fitYearTo ?? null,
+    oemNumber: d.oemNumber?.trim() || null,
+    warrantyDays: d.warrantyDays ?? null,
     updatedAt: new Date(),
+  }
+  if (values.fitYearFrom && values.fitYearTo && values.fitYearFrom > values.fitYearTo) {
+    return { ok: false, error: { code: "VALIDATION", message: "'Year from' must be before 'year to'" } }
   }
 
   if (d.productId) {
@@ -308,6 +328,9 @@ export async function importVendorProductsCsv(rawInput: unknown): Promise<
   const existing = await db().select({ id: vendorProducts.id, sku: vendorProducts.sku }).from(vendorProducts)
     .where(eq(vendorProducts.vendorId, ctx.vendor.id))
   const bySku = new Map(existing.map((e) => [e.sku.toLowerCase(), e.id]))
+  const types = await db().select({ id: partTypes.id, slug: partTypes.slug, name: partTypes.name }).from(partTypes)
+  const typeByKey = new Map<string, string>()
+  for (const t of types) { typeByKey.set(t.slug.toLowerCase(), t.id); typeByKey.set(t.name.toLowerCase(), t.id) }
 
   let inserted = 0, updated = 0
   for (const r of rows) {
@@ -319,7 +342,18 @@ export async function importVendorProductsCsv(rawInput: unknown): Promise<
       quantityAvailable: r.quantityAvailable ?? null,
       minOrderQty: r.minOrderQty ?? 1,
       leadTimeHours: r.leadTimeHours ?? null,
+      ...(r.partType ? { partTypeId: typeByKey.get(r.partType.toLowerCase()) ?? null } : {}),
+      ...(r.condition ? { condition: r.condition } : {}),
+      ...(r.fitMake !== undefined ? { fitMake: r.fitMake || null } : {}),
+      ...(r.fitModel !== undefined ? { fitModel: r.fitModel || null } : {}),
+      ...(r.fitYearFrom !== undefined ? { fitYearFrom: r.fitYearFrom ?? null } : {}),
+      ...(r.fitYearTo !== undefined ? { fitYearTo: r.fitYearTo ?? null } : {}),
+      ...(r.oemNumber !== undefined ? { oemNumber: r.oemNumber || null } : {}),
+      ...(r.warrantyDays !== undefined ? { warrantyDays: r.warrantyDays ?? null } : {}),
       updatedAt: new Date(),
+    }
+    if (r.partType && !typeByKey.has(r.partType.toLowerCase())) {
+      issues.push({ row: r.row, sku: r.sku, message: `unknown part type "${r.partType}" — imported without one` })
     }
     if (existingId) {
       await db().update(vendorProducts).set(values).where(eq(vendorProducts.id, existingId))

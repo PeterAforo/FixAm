@@ -120,6 +120,20 @@
       "when": 1795352784421,
       "tag": "0016_unified-accounts-brokers",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795415580378,
+      "tag": "0017_parts-catalog",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1795416232820,
+      "tag": "0018_ai-calls",
+      "breakpoints": true
     }
   ]
 }

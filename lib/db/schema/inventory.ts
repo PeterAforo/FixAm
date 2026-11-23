@@ -22,6 +22,7 @@ import {
 import { branches, garages, users } from "./identity"
 import { customers, vehicles } from "./customers"
 import { invoices } from "./money"
+import { partTypes } from "./parts"
 
 const money = (name: string) => bigint(name, { mode: "bigint" })
 
@@ -195,11 +196,21 @@ export const vendorProducts = pgTable(
     leadTimeHours: integer("lead_time_hours"),
     photos: text("photos").array(),
     isActive: boolean("is_active").default(true),
+    // Standard parts list + fitment (P8-01)
+    partTypeId: uuid("part_type_id").references(() => partTypes.id),
+    condition: text("condition"), // genuine|aftermarket|home_used
+    fitMake: text("fit_make"),
+    fitModel: text("fit_model"),
+    fitYearFrom: integer("fit_year_from"),
+    fitYearTo: integer("fit_year_to"),
+    oemNumber: text("oem_number"),
+    warrantyDays: integer("warranty_days"),
     ...timestamps,
   },
   (t) => [
     uniqueIndex("vendor_products_vendor_sku_uniq").on(t.vendorId, t.sku),
     index("vendor_products_name_idx").on(t.name),
+    index("vendor_products_part_type_idx").on(t.partTypeId, t.fitMake, t.fitModel),
   ]
 )
 
