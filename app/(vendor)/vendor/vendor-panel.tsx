@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/brand/button"
 import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill, statusTone } from "@/components/brand/status-pill"
+import { StatTile } from "@/components/brand/stat-tile"
+import { Package, ShoppingBag, Star, Wallet } from "lucide-react"
 import { formatGHS } from "@/lib/money"
 import {
   fulfilVendorOrder,
@@ -23,7 +25,7 @@ type Product = {
   minOrderQty: number | null; leadTimeHours: number | null; isActive: boolean | null
 }
 
-const inputCls = "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+const inputCls = "min-h-11 w-full rounded-xl border border-input bg-card px-3.5 text-sm outline-none transition-shadow placeholder:text-[#8C857B] focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
 const NEXT_ACTION: Record<string, { label: string; action: string } | null> = {
   placed: { label: "Accept order", action: "accept" },
@@ -171,7 +173,7 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
       <div className="space-y-6">
         <h1 className="font-display text-3xl font-bold">Become a FixAm vendor</h1>
         <p className="text-muted-foreground">Sell parts to garages across Ghana. Applications are reviewed by the FixAm team.</p>
-        {msg && <p className="rounded-lg bg-info/10 px-3 py-2 text-sm">{msg}</p>}
+        {msg && <p className="rounded-xl border border-border bg-card px-4 py-3 text-sm">{msg}</p>}
         <Card className="max-w-xl">
           <CardContent className="p-5">
             <form onSubmit={submitSignup} className="space-y-3">
@@ -203,31 +205,34 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold">{v.businessName}</h1>
           <p className="text-sm text-muted-foreground">
-            {v.city ?? ""}{v.region ? `, ${v.region}` : ""} · ★ {v.ratingAvg ?? "—"} ({v.ratingCount ?? 0} reviews)
-            {pendingApproval && <StatusPill status={v.status} tone={statusTone(v.status)} className="ml-2">{v.status}</StatusPill>}
-            {v.isVerified && !pendingApproval && (
-              <span className="ml-2 rounded-pill border border-success/40 bg-success/10 px-2 py-0.5 text-xs font-bold text-success">Verified seller</span>
-            )}
+            {[v.city, v.region].filter(Boolean).join(", ") || "Parts shop"}
           </p>
-        </div>
-        <div className="flex gap-4 text-sm">
-          <div><p className="text-xs text-muted-foreground">Sales</p><p className="font-bold tabular-nums">{formatGHS(dashboard.salesTotal)}</p></div>
-          <div><p className="text-xs text-muted-foreground">Commission</p><p className="font-bold tabular-nums">{formatGHS(dashboard.commissionTotal)}</p></div>
-          <div><p className="text-xs text-muted-foreground">Products</p><p className="font-bold tabular-nums">{dashboard.productCount}</p></div>
-          <div><p className="text-xs text-muted-foreground">Orders</p><p className="font-bold tabular-nums">{dashboard.orders.length}</p></div>
+          <h1 className="mt-1 flex flex-wrap items-center gap-2 font-display text-[30px] font-bold leading-tight tracking-[-0.03em]">
+            {v.businessName}
+            {pendingApproval && <StatusPill status={v.status} tone={statusTone(v.status)}>{v.status === "pending" ? "Awaiting approval" : v.status}</StatusPill>}
+            {v.isVerified && !pendingApproval && (
+              <span className="rounded-full bg-[#EEF8D6] px-2.5 py-1 text-xs font-semibold text-[#4E6B07]">Verified seller</span>
+            )}
+          </h1>
         </div>
       </div>
 
-      {pendingApproval && (
-        <p className="rounded-lg bg-warning/10 px-3 py-2 text-sm">Your account is {v.status} — you won&rsquo;t appear in the marketplace until approved.</p>
-      )}
-      {msg && <p className="rounded-lg bg-info/10 px-3 py-2 text-sm">{msg}</p>}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatTile label="Sales" value={formatGHS(dashboard.salesTotal)} icon={<Wallet />} hint={`Commission ${formatGHS(dashboard.commissionTotal)}`} />
+        <StatTile label="Orders" value={dashboard.orders.length} icon={<ShoppingBag />} hint={`${dashboard.orders.filter((o) => o.status === "placed").length} waiting to accept`} />
+        <StatTile label="Active products" value={dashboard.productCount} icon={<Package />} hint="Visible in the marketplace" />
+        <StatTile label="Rating" value={v.ratingAvg != null ? v.ratingAvg.toFixed(1) : "—"} icon={<Star />} hint={`${v.ratingCount ?? 0} reviews`} />
+      </div>
 
-      <div className="flex gap-2">
+      {pendingApproval && (
+        <p className="rounded-[18px] border border-[#F3D9A4] bg-[#FFF7E6] px-5 py-4 text-sm text-[#6B5320] dark:border-[#FFB020]/30 dark:bg-[#FFB020]/10 dark:text-[#FFD27A]"><span className="font-semibold">Your shop is being reviewed.</span> Add your products now — they go live in the marketplace as soon as FixAm approves you (usually within a day).</p>
+      )}
+      {msg && <p className="rounded-xl border border-border bg-card px-4 py-3 text-sm">{msg}</p>}
+
+      <div className="flex flex-wrap gap-1.5">
         {(["orders", "products", "profile", ...(dashboard.canPayouts ? (["payouts"] as const) : [])] as const).map((t) => (
           <button key={t} onClick={() => {
             setTab(t)
@@ -244,7 +249,7 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
               })
             }
           }}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize ${tab === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+            className={`inline-flex h-9 items-center rounded-full border px-4 text-sm capitalize transition-colors ${tab === t ? "border-foreground bg-foreground font-medium text-background" : "border-border bg-card hover:border-border-strong"}`}>
             {t}
           </button>
         ))}
@@ -255,7 +260,7 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
           <CardContent className="p-0">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                <tr className="border-b text-left bg-surface-muted/50 text-xs font-medium text-muted-foreground">
                   <th className="px-4 py-3">Order</th>
                   <th className="px-4 py-3">Type</th>
                   <th className="px-4 py-3 text-right">Total</th>
@@ -272,7 +277,7 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
                   const next = NEXT_ACTION[o.status]
                   return (
                     <tr key={o.id} className="border-b last:border-0">
-                      <td className="px-4 py-3 font-mono text-xs font-bold">{o.number}</td>
+                      <td className="px-4 py-3 font-mono text-xs font-semibold">{o.number}</td>
                       <td className="px-4 py-3 capitalize">{o.origin.replace(/_/g, " ")}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{formatGHS(o.total)}</td>
                       <td className="px-4 py-3 text-xs">{o.expectedDeliveryAt?.slice(0, 10) ?? "—"}</td>
@@ -350,7 +355,7 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
             <CardContent className="overflow-x-auto p-0">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr className="border-b text-left bg-surface-muted/50 text-xs font-medium text-muted-foreground">
                     <th className="px-4 py-3">Product</th>
                     <th className="px-4 py-3">SKU</th>
                     <th className="px-4 py-3">Category</th>
@@ -395,7 +400,7 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
             </CardContent></Card>
             <Card><CardContent className="p-4">
               <p className="text-xs text-muted-foreground">Payout method</p>
-              <p className="font-bold capitalize">{v.payoutMethod ?? "Not set"}</p>
+              <p className="font-semibold capitalize">{v.payoutMethod ?? "Not set"}</p>
               <p className="mt-1 text-xs text-muted-foreground">Payouts are released after orders are marked received. Update details in Profile.</p>
             </CardContent></Card>
           </div>

@@ -1,21 +1,20 @@
 import { Suspense } from "react"
+import { redirect } from "next/navigation"
 import { connection } from "next/server"
 import { getPortalPhone } from "@/lib/portal/session"
 import { getPortalOverview } from "@/lib/portal/data"
 import { getFleetDashboard } from "@/lib/portal/fleet"
 import { getPortalProfile, listPortalVehicles } from "@/lib/portal/profile"
 import { listCatalogueGrouped } from "@/lib/catalogue"
-import { PortalLogin } from "./portal-login"
-import { PortalRegister } from "./portal-register"
 import { PortalDashboard } from "./portal-dashboard"
 
 async function PortalContent() {
   await connection()
   const phone = await getPortalPhone()
-  if (!phone) return <PortalLogin />
+  if (!phone) redirect("/onboarding/driver")
 
   const profile = await getPortalProfile(phone)
-  if (!profile) return <PortalRegister phone={phone} />
+  if (!profile) redirect("/onboarding/driver")
 
   const [data, fleets, claimedVehicles, catalogue] = await Promise.all([
     getPortalOverview(phone),
@@ -42,7 +41,7 @@ async function PortalContent() {
 
 export default function PortalPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-background" />}>
+    <Suspense fallback={<div className="mx-auto h-96 max-w-5xl animate-pulse rounded-2xl bg-muted" />}>
       <PortalContent />
     </Suspense>
   )

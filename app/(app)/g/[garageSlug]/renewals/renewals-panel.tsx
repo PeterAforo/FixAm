@@ -12,6 +12,15 @@ import {
   sendRenewalQuote,
   startRenewalProcessing,
 } from "@/lib/renewals/actions"
+import {
+  garageRespondToQuote,
+  garageSendRenewalToBroker,
+  listBrokersFor,
+  type BrokerRequestView,
+  type BrokerView,
+} from "@/lib/brokers/actions"
+import { REQUEST_STATUS } from "@/lib/brokers/catalog"
+import { BadgeCheck, ShieldCheck } from "lucide-react"
 
 const inputCls = "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 
@@ -44,10 +53,13 @@ const COLUMNS: { key: string; label: string; statuses: string[] }[] = [
 const fmt = (p: number | null) => (p != null ? `GH₵ ${(p / 100).toLocaleString("en-GH", { minimumFractionDigits: 2 })}` : "—")
 const kindLabel = (r: Renewal) => r.kind === "insurance" ? "Insurance" : (r.dvlaRecordType ?? "DVLA").replace(/_/g, " ")
 
-export function RenewalsPanel({ garageId, renewals, canProcess }: {
+type BrokerJob = BrokerRequestView & { brokerName: string; brokerPhone: string }
+
+export function RenewalsPanel({ garageId, renewals, brokerJobs = [], canProcess }: {
   garageId: string
   garageSlug: string
   renewals: Renewal[]
+  brokerJobs?: BrokerJob[]
   canProcess: boolean
 }) {
   const router = useRouter()
@@ -57,6 +69,22 @@ export function RenewalsPanel({ garageId, renewals, canProcess }: {
   const [quoteForm, setQuoteForm] = useState({ officialFee: "", serviceFee: "", notes: "" })
   const [completeFor, setCompleteFor] = useState<string | null>(null)
   const [completeForm, setCompleteForm] = useState({ referenceNumber: "", insurerName: "", dvlaExpiryDate: "", preInspectionJobId: "" })
+  const [handoffFor, setHandoffFor] = useState<string | null>(null)
+  const [handoffBrokers, setHandoffBrokers] = useState<BrokerView[] | null>(null)
+  const [handoffBroker, setHandoffBroker] = useState("")
+  const [handoffNote, setHandoffNote] = useState("")
+
+  const jobFor = (renewalId: string) => brokerJobs.find((j) => j.renewalRequestId === renewalId)
+
+  function openHandoff(r: Renewal) {
+    if (handoffFor === r.id) return setHandoffFor(null)
+    setHandoffFor(r.id); setQuoteFor(null); setCompleteFor(null)
+    setHandoffBrokers(null); setHandoffBroker(""); setHandoffNote("")
+    listBrokersFor({ kind: r.kind }).then((list) => {
+      setHandoffBrokers(list)
+      setHandoffBroker(list[0]?.id ?? "")
+    })
+  }
 
   function act(fn: () => Promise<{ ok: boolean; error?: { message: string } }>, okText: string) {
     setMsg(null)
@@ -64,7 +92,7 @@ export function RenewalsPanel({ garageId, renewals, canProcess }: {
       const res = await fn()
       if (!res.ok) { setMsg(res.error?.message ?? "Failed"); return }
       setMsg(okText)
-      setQuoteFor(null); setCompleteFor(null)
+      setQuoteFor(null); setCompleteFor(null); setHandoffFor(null)
       router.refresh()
     })
   }
@@ -122,6 +150,28 @@ export function RenewalsPanel({ garageId, renewals, canProcess }: {
                       <p className="mt-1 text-[11px] text-muted-foreground">Docs: {r.requiredDocuments.join(", ").replace(/_/g, " ")}</p>
                     ) : null}
 
+                    {(() => {
+                      const job = jobFor(r.id)
+                      if (!job) return null
+                      const st = REQUEST_STATUS[job.status]
+                      return (
+                        <div className="mt-2 rounded-lg border border-[#DCD2FF] bg-[#F6F3FF] p-2 text-xs dark:border-[#5B3CC4]/40 dark:bg-[#5B3CC4]/15">
+                          <p className="flex items-center gap-1 font-semibold text-[#5B3CC4] dark:text-[#B9A5FF]">
+                            <ShieldCheck className="size-3.5" /> {job.brokerName}
+                          </p>
+                          <p className="mt-0.5 text-muted-foreground">
+                            {st?.label ?? job.status}{job.total != null ? ` · ${fmt(job.total)}` : ""}{job.completionRef ? ` · ref ${job.completionRef}` : ""}
+                          </p>
+                          {job.status === "quoted" && canProcess && (
+                            <div className="mt-1.5 flex gap-1">
+                              <Button size="sm" disabled={pending} onClick={() => act(() => garageRespondToQuote({ garageId, requestId: job.id, action: "accept" }), "Broker quote accepted")}>Accept</Button>
+                              <Button size="sm" variant="ghost" disabled={pending} onClick={() => act(() => garageRespondToQuote({ garageId, requestId: job.id, action: "cancel" }), "Broker quote declined")}>Decline</Button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })()}
+
                     {canProcess && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {r.status === "requested" && (
@@ -133,6 +183,11 @@ export function RenewalsPanel({ garageId, renewals, canProcess }: {
                         {["requested", "documents_pending", "quote_pending"].includes(r.status) && (
                           <Button size="sm" disabled={pending} onClick={() => { setQuoteFor(quoteFor === r.id ? null : r.id); setCompleteFor(null) }}>
                             Quote
+                          </Button>
+                        )}
+                        {["requested", "documents_pending", "quote_pending"].includes(r.status) && !(() => { const j = jobFor(r.id); return j && ["requested", "quoted", "accepted", "in_progress"].includes(j.status) })() && (
+                          <Button size="sm" variant="secondary" disabled={pending} onClick={() => openHandoff(r)}>
+                            Send to broker
                           </Button>
                         )}
                         {["quote_sent", "awaiting_payment"].includes(r.status) && (
@@ -164,6 +219,27 @@ export function RenewalsPanel({ garageId, renewals, canProcess }: {
                         <input className={inputCls} type="number" min={0} step="0.01" placeholder="Service fee GH₵" value={quoteForm.serviceFee} onChange={(e) => setQuoteForm({ ...quoteForm, serviceFee: e.target.value })} />
                         <input className={inputCls} placeholder="Notes" value={quoteForm.notes} onChange={(e) => setQuoteForm({ ...quoteForm, notes: e.target.value })} />
                         <Button size="sm" disabled={pending || !quoteForm.officialFee} onClick={() => submitQuote(r.id)}>Send quote</Button>
+                      </div>
+                    )}
+
+                    {handoffFor === r.id && (
+                      <div className="mt-2 space-y-1.5 rounded-lg border border-border p-2">
+                        <p className="text-[11px] text-muted-foreground">A licensed {r.kind === "dvla" ? "DVLA agent" : "insurance broker"} quotes and processes it; you approve the quote here.</p>
+                        {handoffBrokers === null ? (
+                          <div className="h-10 animate-pulse rounded-lg bg-muted" />
+                        ) : handoffBrokers.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">No {r.kind === "dvla" ? "DVLA agents" : "brokers"} on FixAm yet.</p>
+                        ) : (
+                          <select className={inputCls} value={handoffBroker} onChange={(e) => setHandoffBroker(e.target.value)}>
+                            {handoffBrokers.map((b) => (
+                              <option key={b.id} value={b.id}>{b.businessName}{b.isVerified ? " ✓" : ""}{b.city ? ` · ${b.city}` : ""}</option>
+                            ))}
+                          </select>
+                        )}
+                        <input className={inputCls} placeholder="Note for the broker (optional)" value={handoffNote} onChange={(e) => setHandoffNote(e.target.value)} />
+                        <Button size="sm" disabled={pending || !handoffBroker} onClick={() => act(() => garageSendRenewalToBroker({ garageId, renewalId: r.id, brokerId: handoffBroker, notes: handoffNote }), "Sent to broker — they've been notified by SMS")}>
+                          <BadgeCheck className="size-4" /> Send
+                        </Button>
                       </div>
                     )}
 

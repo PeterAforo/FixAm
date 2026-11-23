@@ -1,6 +1,6 @@
 {
   "$schema_version": "1.0",
-  "model": "Users are global. A user gets roles through memberships (user × garage × role × optional branch). Customers and vendors are separate principal types. Implement can(principal, permission, context) in lib/auth/permissions.ts using this file as the single source (import it as JSON). RLS policies enforce tenant isolation; this matrix enforces what a role may do inside a tenant.",
+  "model": "Users are global. A user gets roles through memberships (user × garage × role × optional branch). Customers and vendors are separate principal types. Implement can(principal, permission, context) in lib/auth/permissions.ts using this file as the single source (import it as JSON). RLS policies enforce tenant isolation; this matrix enforces what a role may do inside a tenant. Unified accounts (Nov 2026): every human has ONE account; garage staff, drivers, vendor members and broker members are all users. Which dashboards they can open is derived from their memberships (lib/accounts/workspaces.ts) and they switch with the workspace switcher.",
   "scopes": {
     "platform": "Across all garages (Platform Admin only)",
     "garage": "All branches of one garage",
@@ -8,124 +8,504 @@
     "own": "Only records assigned to or owned by the principal"
   },
   "roles": {
-    "platform_admin": { "label": "Platform Admin", "principal": "staff", "scope": "platform" },
-    "owner": { "label": "Garage Owner", "principal": "staff", "scope": "garage" },
-    "manager": { "label": "Branch Manager", "principal": "staff", "scope": "branch" },
-    "service_advisor": { "label": "Service Advisor", "principal": "staff", "scope": "branch" },
-    "mechanic": { "label": "Mechanic", "principal": "staff", "scope": "branch" },
-    "storekeeper": { "label": "Storekeeper", "principal": "staff", "scope": "branch" },
-    "accountant": { "label": "Accountant", "principal": "staff", "scope": "garage" },
-    "customer": { "label": "Customer", "principal": "customer", "scope": "own" },
-    "fleet_manager": { "label": "Fleet Manager", "principal": "customer", "scope": "own", "note": "Customer of type business/fleet with access to all vehicles under that customer account" },
-    "vendor_owner": { "label": "Vendor Owner", "principal": "vendor", "scope": "own" },
-    "vendor_staff": { "label": "Vendor Staff", "principal": "vendor", "scope": "own" }
+    "platform_admin": {
+      "label": "Platform Admin",
+      "principal": "staff",
+      "scope": "platform"
+    },
+    "owner": {
+      "label": "Garage Owner",
+      "principal": "staff",
+      "scope": "garage"
+    },
+    "manager": {
+      "label": "Branch Manager",
+      "principal": "staff",
+      "scope": "branch"
+    },
+    "service_advisor": {
+      "label": "Service Advisor",
+      "principal": "staff",
+      "scope": "branch"
+    },
+    "mechanic": {
+      "label": "Mechanic",
+      "principal": "staff",
+      "scope": "branch"
+    },
+    "storekeeper": {
+      "label": "Storekeeper",
+      "principal": "staff",
+      "scope": "branch"
+    },
+    "accountant": {
+      "label": "Accountant",
+      "principal": "staff",
+      "scope": "garage"
+    },
+    "customer": {
+      "label": "Customer",
+      "principal": "customer",
+      "scope": "own"
+    },
+    "fleet_manager": {
+      "label": "Fleet Manager",
+      "principal": "customer",
+      "scope": "own",
+      "note": "Customer of type business/fleet with access to all vehicles under that customer account"
+    },
+    "vendor_owner": {
+      "label": "Vendor Owner",
+      "principal": "vendor",
+      "scope": "own"
+    },
+    "vendor_staff": {
+      "label": "Vendor Staff",
+      "principal": "vendor",
+      "scope": "own"
+    },
+    "broker_owner": {
+      "label": "Broker Owner",
+      "principal": "broker",
+      "scope": "own"
+    },
+    "broker_agent": {
+      "label": "Broker Agent",
+      "principal": "broker",
+      "scope": "own"
+    }
   },
   "permissions": {
-    "garage.settings.manage": ["owner"],
-    "garage.branches.manage": ["owner"],
-    "garage.staff.manage": ["owner", "manager"],
-    "garage.subscription.manage": ["owner"],
-    "garage.templates.manage": ["owner", "manager"],
-
-    "customers.view": ["owner", "manager", "service_advisor", "accountant", "storekeeper"],
-    "customers.create": ["owner", "manager", "service_advisor", "storekeeper"],
-    "customers.update": ["owner", "manager", "service_advisor"],
-    "customers.delete": ["owner"],
-    "customers.credit_limit.set": ["owner", "accountant"],
-
-    "vehicles.view": ["owner", "manager", "service_advisor", "mechanic", "accountant", "storekeeper"],
-    "vehicles.create": ["owner", "manager", "service_advisor"],
-    "vehicles.update": ["owner", "manager", "service_advisor"],
-    "vehicles.odometer.record": ["owner", "manager", "service_advisor", "mechanic"],
-    "vehicles.odometer.override": ["owner", "manager"],
-
-    "bookings.manage": ["owner", "manager", "service_advisor"],
-
-    "jobs.view": ["owner", "manager", "service_advisor", "accountant"],
-    "jobs.view_assigned": ["mechanic"],
-    "jobs.create": ["owner", "manager", "service_advisor"],
-    "jobs.update": ["owner", "manager", "service_advisor"],
-    "jobs.assign": ["owner", "manager", "service_advisor"],
-    "jobs.status.update": ["owner", "manager", "service_advisor", "mechanic"],
-    "jobs.tasks.update_own": ["mechanic"],
-    "jobs.media.upload": ["owner", "manager", "service_advisor", "mechanic"],
-    "jobs.quality_check.sign_off": ["owner", "manager"],
-    "jobs.cancel": ["owner", "manager"],
-
-    "estimates.create": ["owner", "manager", "service_advisor"],
-    "estimates.send": ["owner", "manager", "service_advisor"],
-    "estimates.approve_on_behalf": ["owner", "manager", "service_advisor"],
-    "estimates.approve_own": ["customer", "fleet_manager"],
-
-    "pricing.discount.apply": { "owner": "unlimited", "manager": "max_percent:20", "service_advisor": "max_percent:garage_setting(advisor_discount_limit_percent)" },
-    "pricing.override_price": ["owner", "manager"],
-
-    "parts.view": ["owner", "manager", "service_advisor", "mechanic", "storekeeper", "accountant"],
-    "parts.manage": ["owner", "manager", "storekeeper"],
-    "parts.cost_price.view": ["owner", "manager", "storekeeper", "accountant"],
-    "stock.adjust": ["owner", "manager", "storekeeper"],
-    "stock.transfer": ["owner", "manager", "storekeeper"],
-    "stock.request_for_job": ["mechanic", "service_advisor"],
-    "stock.issue_to_job": ["owner", "manager", "storekeeper"],
-    "pos.sell": ["owner", "manager", "storekeeper", "service_advisor"],
-
-    "purchase_orders.view": ["owner", "manager", "storekeeper", "accountant"],
-    "purchase_orders.create": ["owner", "manager", "storekeeper"],
-    "purchase_orders.approve": ["owner", "manager"],
-    "purchase_orders.receive": ["owner", "manager", "storekeeper"],
-    "marketplace.auto_reorder.configure": ["owner"],
-    "marketplace.order_for_own_vehicle": ["customer", "fleet_manager"],
-
-    "renewals.view": ["owner", "manager", "service_advisor", "accountant"],
-    "renewals.process": ["owner", "manager", "service_advisor"],
-    "renewals.request_own": ["customer", "fleet_manager"],
-
-    "reminders.view": ["owner", "manager", "service_advisor"],
-    "reminders.manage": ["owner", "manager", "service_advisor"],
-    "reminders.send_manual": ["owner", "manager", "service_advisor"],
-
-    "invoices.view": ["owner", "manager", "service_advisor", "accountant"],
-    "invoices.create": ["owner", "manager", "service_advisor", "accountant"],
-    "invoices.issue": ["owner", "manager", "service_advisor", "accountant"],
-    "invoices.void": ["owner"],
-    "credit_notes.create": ["owner", "accountant"],
-    "payments.record": ["owner", "manager", "service_advisor", "accountant", "storekeeper"],
-    "payments.refund": ["owner", "accountant"],
-    "payment_plans.create": ["owner", "manager", "accountant"],
-    "credit_accounts.manage": ["owner", "accountant"],
-    "credit_accounts.exceed_limit": ["owner"],
-    "expenses.manage": ["owner", "manager", "accountant"],
-    "cash_up.perform": ["owner", "manager", "service_advisor", "accountant"],
-
-    "reports.view_all": ["owner", "accountant"],
-    "reports.view_branch": ["manager"],
-    "reports.view_daily": ["service_advisor"],
-    "reports.view_own_stats": ["mechanic"],
-    "reports.export": ["owner", "accountant", "manager"],
-
-    "audit_log.view": ["owner", "platform_admin"],
-
-    "portal.vehicles.view_own": ["customer", "fleet_manager"],
-    "portal.invoices.pay_own": ["customer", "fleet_manager"],
-    "portal.mileage.update_own": ["customer", "fleet_manager"],
-    "portal.preferences.manage_own": ["customer", "fleet_manager"],
-
-    "vendor.catalogue.manage": ["vendor_owner", "vendor_staff"],
-    "vendor.orders.fulfil": ["vendor_owner", "vendor_staff"],
-    "vendor.payouts.view": ["vendor_owner"],
-    "vendor.settings.manage": ["vendor_owner"],
-
-    "admin.garages.manage": ["platform_admin"],
-    "admin.impersonate": ["platform_admin"],
-    "admin.vendors.approve": ["platform_admin"],
-    "admin.plans.manage": ["platform_admin"],
-    "admin.global_settings.manage": ["platform_admin"],
-    "admin.analytics.view": ["platform_admin"]
+    "garage.settings.manage": [
+      "owner"
+    ],
+    "garage.branches.manage": [
+      "owner"
+    ],
+    "garage.staff.manage": [
+      "owner",
+      "manager"
+    ],
+    "garage.subscription.manage": [
+      "owner"
+    ],
+    "garage.templates.manage": [
+      "owner",
+      "manager"
+    ],
+    "customers.view": [
+      "owner",
+      "manager",
+      "service_advisor",
+      "accountant",
+      "storekeeper"
+    ],
+    "customers.create": [
+      "owner",
+      "manager",
+      "service_advisor",
+      "storekeeper"
+    ],
+    "customers.update": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "customers.delete": [
+      "owner"
+    ],
+    "customers.credit_limit.set": [
+      "owner",
+      "accountant"
+    ],
+    "vehicles.view": [
+      "owner",
+      "manager",
+      "service_advisor",
+      "mechanic",
+      "accountant",
+      "storekeeper"
+    ],
+    "vehicles.create": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "vehicles.update": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "vehicles.odometer.record": [
+      "owner",
+      "manager",
+      "service_advisor",
+      "mechanic"
+    ],
+    "vehicles.odometer.override": [
+      "owner",
+      "manager"
+    ],
+    "bookings.manage": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "jobs.view": [
+      "owner",
+      "manager",
+      "service_advisor",
+      "accountant"
+    ],
+    "jobs.view_assigned": [
+      "mechanic"
+    ],
+    "jobs.create": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "jobs.update": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "jobs.assign": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "jobs.status.update": [
+      "owner",
+      "manager",
+      "service_advisor",
+      "mechanic"
+    ],
+    "jobs.tasks.update_own": [
+      "mechanic"
+    ],
+    "jobs.media.upload": [
+      "owner",
+      "manager",
+      "service_advisor",
+      "mechanic"
+    ],
+    "jobs.quality_check.sign_off": [
+      "owner",
+      "manager"
+    ],
+    "jobs.cancel": [
+      "owner",
+      "manager"
+    ],
+    "estimates.create": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "estimates.send": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "estimates.approve_on_behalf": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "estimates.approve_own": [
+      "customer",
+      "fleet_manager"
+    ],
+    "pricing.discount.apply": {
+      "owner": "unlimited",
+      "manager": "max_percent:20",
+      "service_advisor": "max_percent:garage_setting(advisor_discount_limit_percent)"
+    },
+    "pricing.override_price": [
+      "owner",
+      "manager"
+    ],
+    "parts.view": [
+      "owner",
+      "manager",
+      "service_advisor",
+      "mechanic",
+      "storekeeper",
+      "accountant"
+    ],
+    "parts.manage": [
+      "owner",
+      "manager",
+      "storekeeper"
+    ],
+    "parts.cost_price.view": [
+      "owner",
+      "manager",
+      "storekeeper",
+      "accountant"
+    ],
+    "stock.adjust": [
+      "owner",
+      "manager",
+      "storekeeper"
+    ],
+    "stock.transfer": [
+      "owner",
+      "manager",
+      "storekeeper"
+    ],
+    "stock.request_for_job": [
+      "mechanic",
+      "service_advisor"
+    ],
+    "stock.issue_to_job": [
+      "owner",
+      "manager",
+      "storekeeper"
+    ],
+    "pos.sell": [
+      "owner",
+      "manager",
+      "storekeeper",
+      "service_advisor"
+    ],
+    "purchase_orders.view": [
+      "owner",
+      "manager",
+      "storekeeper",
+      "accountant"
+    ],
+    "purchase_orders.create": [
+      "owner",
+      "manager",
+      "storekeeper"
+    ],
+    "purchase_orders.approve": [
+      "owner",
+      "manager"
+    ],
+    "purchase_orders.receive": [
+      "owner",
+      "manager",
+      "storekeeper"
+    ],
+    "marketplace.auto_reorder.configure": [
+      "owner"
+    ],
+    "marketplace.order_for_own_vehicle": [
+      "customer",
+      "fleet_manager"
+    ],
+    "renewals.view": [
+      "owner",
+      "manager",
+      "service_advisor",
+      "accountant"
+    ],
+    "renewals.process": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "renewals.request_own": [
+      "customer",
+      "fleet_manager"
+    ],
+    "reminders.view": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "reminders.manage": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "reminders.send_manual": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "invoices.view": [
+      "owner",
+      "manager",
+      "service_advisor",
+      "accountant"
+    ],
+    "invoices.create": [
+      "owner",
+      "manager",
+      "service_advisor",
+      "accountant"
+    ],
+    "invoices.issue": [
+      "owner",
+      "manager",
+      "service_advisor",
+      "accountant"
+    ],
+    "invoices.void": [
+      "owner"
+    ],
+    "credit_notes.create": [
+      "owner",
+      "accountant"
+    ],
+    "payments.record": [
+      "owner",
+      "manager",
+      "service_advisor",
+      "accountant",
+      "storekeeper"
+    ],
+    "payments.refund": [
+      "owner",
+      "accountant"
+    ],
+    "payment_plans.create": [
+      "owner",
+      "manager",
+      "accountant"
+    ],
+    "credit_accounts.manage": [
+      "owner",
+      "accountant"
+    ],
+    "credit_accounts.exceed_limit": [
+      "owner"
+    ],
+    "expenses.manage": [
+      "owner",
+      "manager",
+      "accountant"
+    ],
+    "cash_up.perform": [
+      "owner",
+      "manager",
+      "service_advisor",
+      "accountant"
+    ],
+    "reports.view_all": [
+      "owner",
+      "accountant"
+    ],
+    "reports.view_branch": [
+      "manager"
+    ],
+    "reports.view_daily": [
+      "service_advisor"
+    ],
+    "reports.view_own_stats": [
+      "mechanic"
+    ],
+    "reports.export": [
+      "owner",
+      "accountant",
+      "manager"
+    ],
+    "audit_log.view": [
+      "owner",
+      "platform_admin"
+    ],
+    "portal.vehicles.view_own": [
+      "customer",
+      "fleet_manager"
+    ],
+    "portal.invoices.pay_own": [
+      "customer",
+      "fleet_manager"
+    ],
+    "portal.mileage.update_own": [
+      "customer",
+      "fleet_manager"
+    ],
+    "portal.preferences.manage_own": [
+      "customer",
+      "fleet_manager"
+    ],
+    "vendor.catalogue.manage": [
+      "vendor_owner",
+      "vendor_staff"
+    ],
+    "vendor.orders.fulfil": [
+      "vendor_owner",
+      "vendor_staff"
+    ],
+    "vendor.payouts.view": [
+      "vendor_owner"
+    ],
+    "vendor.settings.manage": [
+      "vendor_owner"
+    ],
+    "admin.garages.manage": [
+      "platform_admin"
+    ],
+    "admin.impersonate": [
+      "platform_admin"
+    ],
+    "admin.vendors.approve": [
+      "platform_admin"
+    ],
+    "admin.plans.manage": [
+      "platform_admin"
+    ],
+    "admin.global_settings.manage": [
+      "platform_admin"
+    ],
+    "admin.analytics.view": [
+      "platform_admin"
+    ],
+    "broker.requests.view": [
+      "broker_owner",
+      "broker_agent",
+      "platform_admin"
+    ],
+    "broker.requests.quote": [
+      "broker_owner",
+      "broker_agent"
+    ],
+    "broker.requests.process": [
+      "broker_owner",
+      "broker_agent"
+    ],
+    "broker.profile.manage": [
+      "broker_owner"
+    ],
+    "renewals.handoff_to_broker": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "broker_requests.create": [
+      "customer",
+      "fleet_manager"
+    ],
+    "admin.brokers.manage": [
+      "platform_admin"
+    ]
   },
   "field_level_rules": [
-    { "field": "parts.cost_price", "hidden_unless": "parts.cost_price.view" },
-    { "field": "customers.national_id_number", "hidden_unless": ["owner", "manager", "service_advisor"], "note": "Mask all but last 4 characters in lists" },
-    { "field": "reports.profit", "hidden_unless": ["owner", "accountant"] }
+    {
+      "field": "parts.cost_price",
+      "hidden_unless": "parts.cost_price.view"
+    },
+    {
+      "field": "customers.national_id_number",
+      "hidden_unless": [
+        "owner",
+        "manager",
+        "service_advisor"
+      ],
+      "note": "Mask all but last 4 characters in lists"
+    },
+    {
+      "field": "reports.profit",
+      "hidden_unless": [
+        "owner",
+        "accountant"
+      ]
+    }
   ],
   "plan_gates": "Some permissions also require a plan feature (see specs/plans.json features). Check both: can(principal, permission) && garageHasFeature(garage, feature)."
 }

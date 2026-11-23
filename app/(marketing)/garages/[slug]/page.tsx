@@ -312,7 +312,7 @@ async function ProfileContent({ params }: { params: Promise<{ slug: string }> })
       </div>
 
       <p className="mx-auto max-w-[1200px] px-6 pb-16 text-center text-[13px] text-muted-foreground md:px-8">
-        Own a garage? <Link href="/onboarding" className="font-semibold text-foreground underline-offset-4 hover:underline">List it on FixAm</Link>
+        Own a garage? <Link href="/signup/garage" className="font-semibold text-foreground underline-offset-4 hover:underline">List it on FixAm</Link>
       </p>
     </>
   )

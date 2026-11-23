@@ -103,3 +103,18 @@ against a deployed staging environment:
 - **Rate limiter**: Postgres fixed-window — correct for single-region
   deploys; revisit if running multi-region.
 - **Sentry**: inactive until `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` are set.
+
+## Unified accounts & brokers — staging checks (Nov 2026)
+
+- [ ] Run migration `0016_unified-accounts-brokers` (`pnpm db:migrate`).
+- [ ] Vercel env: `SUPABASE_SERVICE_ROLE_KEY`; `MESSAGING_SMS_PROVIDER=arkesel`
+      + `ARKESEL_API_KEY` (or `hubtel` + `HUBTEL_CLIENT_ID`/`HUBTEL_CLIENT_SECRET`);
+      approved `SMS_SENDER_ID`; `NEXT_PUBLIC_APP_URL` (used in SMS links).
+- [ ] Phone sign-in delivers a real SMS and lands on the right dashboard.
+- [ ] `/signup/garage` → code → `/onboarding/garage` → garage dashboard.
+- [ ] One person: driver + garage + parts seller via "Add a workspace"; switcher works.
+- [ ] Staff invite by phone → invitee signs in with that phone → lands in the garage.
+- [ ] Guest opens `/portal/renewals` → `/login` (clean URL) → returns there after sign-in.
+- [ ] Broker: sign up → driver requests quote → broker quotes (SMS) → driver accepts → complete.
+- [ ] Garage "Send to broker" on a renewal → accept broker quote in renewals panel.
+- [ ] Admin verifies a broker → Verified badge shows in pickers.

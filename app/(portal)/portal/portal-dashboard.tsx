@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill } from "@/components/brand/status-pill"
 import { VehicleHealthCard } from "@/components/brand/vehicle-health-card"
 import { Torq } from "@/components/brand/torq"
-import { portalLogout, portalApproveFleetEstimates, updatePortalPreferences } from "@/lib/portal/actions"
+import { portalApproveFleetEstimates, updatePortalPreferences } from "@/lib/portal/actions"
 import { requestDataExport, requestDataDeletion } from "@/lib/privacy/actions"
 import { PortalVehiclesCard } from "./portal-vehicles"
 
@@ -63,10 +63,6 @@ export function PortalDashboard({ phone, data, fleets = [], claimedVehicles = []
     })
   }
 
-  function logout() {
-    startTransition(async () => { await portalLogout(); window.location.reload() })
-  }
-
   const [selectedEstimates, setSelectedEstimates] = useState<string[]>([])
   const [approveMsg, setApproveMsg] = useState<string | null>(null)
 
@@ -83,7 +79,7 @@ export function PortalDashboard({ phone, data, fleets = [], claimedVehicles = []
   }
 
   return (
-    <main className="mx-auto max-w-5xl p-4 md:p-8">
+    <div className="mx-auto max-w-5xl p-4 md:p-8">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Torq pose="wave" className="size-14" />
@@ -93,9 +89,9 @@ export function PortalDashboard({ phone, data, fleets = [], claimedVehicles = []
           </div>
         </div>
         <div className="flex gap-2">
-          <Link href="/portal/settings" className="rounded-lg border-2 border-border bg-card px-3 py-1.5 text-sm font-semibold hover:bg-surface-muted">Profile</Link>
-          <Link href="/garages" className="rounded-lg border-2 border-border bg-card px-3 py-1.5 text-sm font-semibold hover:bg-surface-muted">Find garages</Link>
-          <Button variant="secondary" size="sm" onClick={logout} disabled={pending}>Sign out</Button>
+          <Link href="/portal/settings" className="rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium hover:bg-surface-muted">Profile</Link>
+          <Link href="/garages" className="rounded-full border border-border bg-card px-3.5 py-1.5 text-sm font-medium hover:bg-surface-muted">Find garages</Link>
+          <Link href="/portal/renewals?new=1" className="rounded-full bg-primary px-3.5 py-1.5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">Renew insurance / DVLA</Link>
         </div>
       </header>
       {msg && <p className="mt-3 text-sm font-semibold text-success">{msg}</p>}
@@ -117,7 +113,7 @@ export function PortalDashboard({ phone, data, fleets = [], claimedVehicles = []
           </div>
 
           {!f.featureEnabled && (
-            <p className="mt-3 rounded-xl border-2 border-border bg-card p-4 text-sm text-muted-foreground">
+            <p className="mt-3 rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
               Fleet management isn&apos;t enabled on this garage&apos;s plan — ask them to upgrade to Pro.
             </p>
           )}
@@ -338,7 +334,7 @@ export function PortalDashboard({ phone, data, fleets = [], claimedVehicles = []
           </div>
         </CardContent></Card>
       </section>
-    </main>
+    </div>
   )
 }
 

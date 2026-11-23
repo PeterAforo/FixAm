@@ -917,7 +917,7 @@ export async function listGarageStaff(rawInput: unknown): Promise<
       .filter((r): r is typeof r & { userId: string } => Boolean(r.userId))
       .map((r) => ({
         userId: r.userId,
-        name: r.fullName || r.email,
+        name: r.fullName || r.email || "Staff member",
         role: r.role,
         branchId: r.branchId,
       })),

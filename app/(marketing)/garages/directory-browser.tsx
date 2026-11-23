@@ -210,7 +210,7 @@ export function DirectoryBrowser({
             <button type="button" onClick={clearAll} className="inline-flex h-10 items-center rounded-full border border-border-strong bg-card px-4 text-sm font-medium hover:bg-surface-sunken">
               Show all garages
             </button>
-            <Link href="/onboarding" className="inline-flex h-10 items-center rounded-full bg-foreground px-4 text-sm font-semibold text-background hover:opacity-90">
+            <Link href="/signup/garage" className="inline-flex h-10 items-center rounded-full bg-foreground px-4 text-sm font-semibold text-background hover:opacity-90">
               List your garage
             </Link>
           </div>
@@ -303,7 +303,7 @@ export function DirectoryBrowser({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/onboarding" className="inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-glow-primary hover:bg-primary-hover">
+          <Link href="/signup/garage" className="inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-glow-primary hover:bg-primary-hover">
             List your garage
           </Link>
           <Link href="/pricing" className="inline-flex h-11 items-center rounded-full border border-border-strong bg-card px-5 text-sm font-medium hover:bg-surface-sunken">

@@ -29,7 +29,7 @@ const softDelete = {
 export const users = pgTable("users", {
   id: uuid("id").primaryKey(),
   fullName: text("full_name").notNull(),
-  email: text("email").notNull().unique(),
+  email: text("email").unique(), // null for phone-only accounts
   phone: text("phone").unique(), // E.164
   avatarUrl: text("avatar_url"),
   locale: text("locale").notNull().default("en-GH"),

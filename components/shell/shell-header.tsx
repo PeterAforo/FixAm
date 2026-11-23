@@ -7,7 +7,7 @@ import { Button } from "@/components/brand/button"
 import { ThemeToggle } from "@/components/brand/theme-toggle"
 import { Card } from "@/components/brand/card"
 import { NotificationsBell, type ShellNotification } from "./notifications-bell"
-import { ChevronDown, LogOut, Search } from "lucide-react"
+import { ChevronDown, LogOut, Search, Users } from "lucide-react"
 
 export function ShellHeader({
   garageName,
@@ -107,6 +107,11 @@ export function ShellHeader({
                 <p className="mt-1 text-xs capitalize text-muted-foreground">{role.replace(/_/g, " ")}</p>
               </div>
               <ul className="p-1.5">
+                <li>
+                  <a href="/account" className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-surface-muted">
+                    <Users className="size-4" /> Account &amp; workspaces
+                  </a>
+                </li>
                 <li>
                   <button
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-surface-muted"

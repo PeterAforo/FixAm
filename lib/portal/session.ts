@@ -1,7 +1,7 @@
 import "server-only"
 import { createHash, randomBytes, randomInt } from "crypto"
 import { cookies } from "next/headers"
-import { and, eq, gt } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { portalSessions } from "@/lib/db/schema"
 import { normalizeGhPhone } from "@/lib/phone"
@@ -38,16 +38,13 @@ export async function clearPortalSession() {
   jar.delete(PORTAL_COOKIE)
 }
 
-/** Phone for the current portal session, or null. */
+/**
+ * Phone for the signed-in driver, or null. Drivers now use the same FixAm
+ * account as everyone else, so this is the verified phone on that account.
+ */
 export async function getPortalPhone(): Promise<string | null> {
-  const jar = await cookies()
-  const token = jar.get(PORTAL_COOKIE)?.value
-  if (!token) return null
-  const [s] = await db().select({ phone: portalSessions.phone })
-    .from(portalSessions)
-    .where(and(eq(portalSessions.tokenHash, sha256(token)), gt(portalSessions.expiresAt, new Date())))
-    .limit(1)
-  return s?.phone ?? null
+  const { getSessionPhone } = await import("@/lib/auth/ensure-user")
+  return getSessionPhone()
 }
 
 export { randomInt }

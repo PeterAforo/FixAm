@@ -70,7 +70,7 @@ export default function MarketingHome() {
             system for Ghanaian workshops, and a live tracker their drivers love.
           </p>
           <div className="mt-9 flex flex-wrap justify-center gap-3">
-            <Link href="/onboarding" className={ctaPrimary}>
+            <Link href="/signup/garage" className={ctaPrimary}>
               Start free trial <ArrowRight className="size-4" />
             </Link>
             <Link href="/garages" className={ctaGlass}>
@@ -169,7 +169,7 @@ export default function MarketingHome() {
               <div className="rounded-2xl border border-white/[0.08] bg-[#121A2E] p-4"><div className="text-xs text-[#8A93AB]">Ready</div><div className="mt-1.5 font-display text-3xl font-bold text-[#D9F76F]">2</div></div>
               <div className="rounded-2xl border border-white/[0.08] bg-[#121A2E] p-4"><div className="text-xs text-[#8A93AB]">Collected today</div><div className="mt-2.5 font-display text-xl font-bold tabular-nums">GH₵ 4,860</div></div>
             </div>
-            <Link href="/onboarding" className="inline-flex items-center gap-2 text-[15px] font-semibold text-white">Open your garage <ArrowRight className="size-4" /></Link>
+            <Link href="/signup/garage" className="inline-flex items-center gap-2 text-[15px] font-semibold text-white">Open your garage <ArrowRight className="size-4" /></Link>
           </article>
 
           <article className="flex min-w-0 flex-[1_1_480px] flex-col gap-7 rounded-[28px] border border-border bg-card p-8 shadow-1 md:p-10">
@@ -325,7 +325,7 @@ export default function MarketingHome() {
             Start free for 14 days. We&apos;ll help you import your customers and parts.
           </p>
           <div className="relative mt-[34px] flex flex-wrap justify-center gap-3">
-            <Link href="/onboarding" className={ctaPrimary}>Start free trial</Link>
+            <Link href="/signup/garage" className={ctaPrimary}>Start free trial</Link>
             <Link href="/garages" className={ctaGlass}>Browse garages</Link>
           </div>
         </div>

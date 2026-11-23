@@ -39,7 +39,7 @@ export default function AboutPage() {
         subtitle="We're building the operating system for Ghanaian garages — and a calmer, more transparent experience for the drivers who trust them."
       >
         <div className="mt-9 flex flex-wrap justify-center gap-3">
-          <Link href="/onboarding" className={ctaPrimary}>Start free trial <ArrowRight className="size-4" /></Link>
+          <Link href="/signup/garage" className={ctaPrimary}>Start free trial <ArrowRight className="size-4" /></Link>
           <Link href="/contact" className={ctaGlass}>Talk to us</Link>
         </div>
       </PageHero>
@@ -134,7 +134,7 @@ export default function AboutPage() {
 
       <div className="pt-24">
         <CtaBand title="Made in Accra, for every garage in Ghana." subtitle="Join us — start free for 14 days, or get in touch to see FixAm in your workshop.">
-          <Link href="/onboarding" className={ctaPrimary}>Start free trial</Link>
+          <Link href="/signup/garage" className={ctaPrimary}>Start free trial</Link>
           <Link href="/contact" className={ctaGlass}>Contact us</Link>
         </CtaBand>
       </div>

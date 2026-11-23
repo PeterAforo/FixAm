@@ -43,7 +43,7 @@ export function SiteHeader({ tone = "light", active }: { tone?: "light" | "dark"
             Sign in
           </Link>
           <Link
-            href="/onboarding"
+            href="/signup/garage"
             className={cn(
               "rounded-full px-4 py-2.5 text-sm font-semibold transition-opacity hover:opacity-90",
               dark ? "bg-[#F4F2EE] text-[#0B0F1A]" : "bg-foreground text-background"
@@ -59,8 +59,9 @@ export function SiteHeader({ tone = "light", active }: { tone?: "light" | "dark"
 
 const FOOTER_COLS = [
   { title: "Product", links: [["/#product", "Workshop"], ["/#payments", "Payments"], ["/#reminders", "Reminders"], ["/pricing", "Pricing"]] },
-  { title: "Drivers", links: [["/garages", "Find a garage"], ["/portal", "Customer portal"], ["/support#drivers", "Driver help"]] },
-  { title: "Company", links: [["/about", "About us"], ["/contact", "Contact"], ["/support", "Help centre"], ["/vendor", "Sell parts on FixAm"]] },
+  { title: "Drivers", links: [["/garages", "Find a garage"], ["/portal", "My cars"], ["/portal/renewals", "Renew insurance & DVLA"], ["/support#drivers", "Driver help"]] },
+  { title: "Partners", links: [["/signup/parts-seller", "Sell parts on FixAm"], ["/signup/insurance-broker", "For insurance brokers"], ["/signup/dvla-agent", "For DVLA agents"]] },
+  { title: "Company", links: [["/about", "About us"], ["/contact", "Contact"], ["/support", "Help centre"]] },
   { title: "Legal", links: [["/privacy", "Privacy policy"], ["/terms", "Terms of service"]] },
 ] as const
 
@@ -74,13 +75,13 @@ export function SiteFooter() {
             The garage operating system for Ghana.
           </p>
           <Link
-            href="/onboarding"
+            href="/signup/garage"
             className="mt-5 inline-flex h-10 items-center rounded-full bg-foreground px-4 text-sm font-semibold text-background hover:opacity-90"
           >
             Start free trial
           </Link>
         </div>
-        <div className="grid flex-[2] grid-cols-2 gap-6 text-sm sm:grid-cols-4">
+        <div className="grid flex-[2] grid-cols-2 gap-6 text-sm sm:grid-cols-5">
           {FOOTER_COLS.map((c) => (
             <div key={c.title} className="flex flex-col gap-2.5">
               <span className="font-semibold">{c.title}</span>

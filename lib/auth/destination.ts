@@ -1,25 +1,29 @@
 "use server"
-import { eq } from "drizzle-orm"
-import { db } from "@/lib/db"
-import { garages, memberships } from "@/lib/db/schema"
+import { cookies } from "next/headers"
 import { ensureUser, getSessionUserId } from "@/lib/auth/ensure-user"
-import { and, desc } from "drizzle-orm"
+import { listMyWorkspaces, preferredWorkspace } from "@/lib/accounts/workspaces"
+import { NEXT_COOKIE, safeNextPath } from "@/lib/auth/next-cookie"
 
-/** Where to send a signed-in user: their garage, or onboarding. */
-export async function postLoginDestination(): Promise<string> {
+/**
+ * Where to send a signed-in user:
+ *   explicit `next` (sign-up for a role) → the page they were trying to open
+ *   (remembered in a cookie) → the workspace they last used → their only
+ *   workspace → the workspace picker (/account) → /onboarding.
+ */
+export async function postLoginDestination(next?: string | null): Promise<string> {
   const userId = await getSessionUserId()
   if (!userId) return "/login"
   await ensureUser() // syncs public.users + accepts pending staff invites
 
-  const rows = await db()
-    .select({ slug: garages.slug })
-    .from(memberships)
-    .innerJoin(garages, eq(memberships.garageId, garages.id))
-    .where(
-      and(eq(memberships.userId, userId), eq(memberships.status, "active"))
-    )
-    .orderBy(desc(memberships.createdAt))
-    .limit(1)
+  const explicit = safeNextPath(next)
+  if (explicit) return explicit
+  const remembered = safeNextPath((await cookies()).get(NEXT_COOKIE)?.value)
+  if (remembered) return remembered
 
-  return rows[0] ? `/g/${rows[0].slug}` : "/onboarding"
+  const list = await listMyWorkspaces(userId)
+  if (list.length === 0) return "/onboarding"
+  const preferred = await preferredWorkspace(list)
+  if (preferred) return preferred.href
+  if (list.length === 1) return list[0]!.href
+  return "/account"
 }

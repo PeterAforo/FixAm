@@ -1,6 +1,7 @@
 import "server-only"
 import type { MessagingProvider, MessageChannel } from "./types"
 import { createMockMessagingProvider } from "./messaging/mock"
+import { createArkeselProvider, createHubtelProvider } from "./messaging/ghana-sms"
 
 /**
  * Provider selection via env (specs/integrations.json):
@@ -26,6 +27,12 @@ export function messagingProvider(channel: MessageChannel): MessagingProvider {
   let provider: MessagingProvider
 
   switch (selected) {
+    case "arkesel":
+      provider = channel === "sms" ? createArkeselProvider() : createMockMessagingProvider(`mock-${channel}`)
+      break
+    case "hubtel":
+      provider = channel === "sms" ? createHubtelProvider() : createMockMessagingProvider(`mock-${channel}`)
+      break
     case "mock":
     default:
       // Until real adapters land, every channel resolves to the mock.

@@ -197,8 +197,21 @@
       "Notifications bell",
       "Branch switcher",
       "Theme toggle (light / workshop)",
-      "Quick action '+ Check in' FAB on mobile"
-    ]
+      "Quick action '+ Check in' FAB on mobile",
+      "Workspace switcher (sidebar top) — jump between garage / parts shop / broker / My cars, or 'Add a workspace' → /onboarding"
+    ],
+    "auth_routes": {
+      "rule": "Clean URLs only — never put ?next= or ?role= on auth/onboarding URLs. The post-login destination is a 30-minute httpOnly cookie 'fixam_next' set by proxy.ts.",
+      "routes": {
+        "/login": "Sign in only (phone code or e-mail). 'New to FixAm? Create an account' → /signup",
+        "/signup": "Public role picker → /signup/<role>",
+        "/signup/<role>": "Create account = step 1 of that role (garage|driver|parts-seller|insurance-broker|dvla-agent). On success → /onboarding/<role>",
+        "/onboarding": "Signed-in role picker (first setup or 'Add a workspace')",
+        "/onboarding/<role>": "Setup wizard for that role",
+        "/account": "Workspace hub: open any workspace, add another, sign out"
+      },
+      "proxy": "Guests on /g, /portal, /vendor, /broker, /account, /admin → /login (+ fixam_next cookie). Guests on /onboarding/<role> → /signup/<role>. Signed-in users on /signup* → /onboarding*. Legacy ?next=/?role= links are rewritten to clean URLs."
+    }
   },
   "screens": [
     {
@@ -383,7 +396,8 @@
       "task": "P4-06",
       "content": [
         "Kanban by renewal_status, insurance and DVLA filter",
-        "Renewal detail: documents checklist, quote form, payment status, staff tasks, upload new policy/certificate, customer-visible timeline"
+        "Renewal detail: documents checklist, quote form, payment status, staff tasks, upload new policy/certificate, customer-visible timeline",
+        "'Send to broker' hand-off on open renewals; broker status strip with Accept/Decline of broker quote"
       ]
     },
     {
@@ -526,6 +540,7 @@
       "audience": "customer",
       "task": "P4-07",
       "content": [
+        "Uses the shared FixAm account (no separate portal login); WorkspaceShell with My cars / Renewals / Profile",
         "Vehicle health cards carousel",
         "Things due soon",
         "Active jobs with tracker",
@@ -539,6 +554,7 @@
       "audience": "customer",
       "task": "P4-07",
       "content": [
+        "Uses the shared FixAm account (no separate portal login); WorkspaceShell with My cars / Renewals / Profile",
         "History timeline",
         "Documents",
         "Due items",
@@ -552,6 +568,7 @@
       "audience": "vendor",
       "task": "P3-04",
       "content": [
+        "Runs inside WorkspaceShell with the workspace switcher; sign-up via /signup/parts-seller",
         "Orders inbox with status actions",
         "Catalogue management + CSV import",
         "Sales chart",
@@ -573,6 +590,124 @@
         "Insurance partners",
         "Global templates and defaults",
         "Platform analytics: active garages, MRR, churn, messages, renewals"
+      ]
+    },
+    {
+      "id": "login",
+      "route": "/login",
+      "audience": "everyone",
+      "task": "ACC-01",
+      "content": [
+        "'Welcome back.' sign-in, phone code primary, e-mail fallback",
+        "Right panel: photo + 'Pick up where you left off' sample activity",
+        "Signed-in visitors redirected to their destination"
+      ]
+    },
+    {
+      "id": "signup",
+      "route": "/signup",
+      "audience": "guests",
+      "task": "ACC-01",
+      "content": [
+        "'What brings you to FixAm?' — 5 role cards (driver, garage, parts seller, insurance broker, DVLA agent)"
+      ]
+    },
+    {
+      "id": "signup_role",
+      "route": "/signup/[role]",
+      "audience": "guests",
+      "task": "ACC-01",
+      "content": [
+        "OnboardingFrame layout: role photo + pitch, step rail '1 Create account' then the role's setup steps",
+        "AuthMethods mode=signup (phone code / e-mail + full name)"
+      ]
+    },
+    {
+      "id": "onboarding_picker",
+      "route": "/onboarding",
+      "audience": "signed-in",
+      "task": "ACC-02",
+      "content": [
+        "Role picker; asks for name once if account has none",
+        "Already-held roles shown as 'Open'"
+      ]
+    },
+    {
+      "id": "onboarding_role",
+      "route": "/onboarding/[role]",
+      "audience": "signed-in",
+      "task": "ACC-02",
+      "content": [
+        "garage → GarageWizard (4 steps)",
+        "driver → DriverSetup (verify phone if missing, profile, first car)",
+        "parts-seller → VendorSetup (shop, categories, delivery zones, payouts)",
+        "insurance-broker | dvla-agent → BrokerSetup (business, licences, insurers, fee)"
+      ]
+    },
+    {
+      "id": "account_hub",
+      "route": "/account",
+      "audience": "signed-in",
+      "task": "ACC-03",
+      "content": [
+        "All workspaces as cards",
+        "Add another workspace",
+        "Sign out"
+      ]
+    },
+    {
+      "id": "broker_dashboard",
+      "route": "/broker",
+      "audience": "broker",
+      "task": "BRK-01",
+      "content": [
+        "New requests headline + Open inbox",
+        "StatTiles: new requests, fees this month, quote win rate, avg time to quote",
+        "Needs-your-action list",
+        "Fees last 8 weeks bars",
+        "Verified-badge nudge"
+      ]
+    },
+    {
+      "id": "broker_requests",
+      "route": "/broker/requests",
+      "audience": "broker",
+      "task": "BRK-01",
+      "content": [
+        "Filter pills (Open/New/Quoted/Accepted/Processing/Completed/All) as links",
+        "Search by plate, name, phone, BRQ number"
+      ]
+    },
+    {
+      "id": "broker_request_detail",
+      "route": "/broker/requests/[id]",
+      "audience": "broker",
+      "task": "BRK-01",
+      "content": [
+        "Quote form (premium/DVLA fee + service fee, insurer, note)",
+        "Decline / Start processing / Mark as paid / Complete (ref + valid until)",
+        "Timeline",
+        "Requester card with Call + WhatsApp",
+        "Vehicle card"
+      ]
+    },
+    {
+      "id": "broker_settings",
+      "route": "/broker/settings",
+      "audience": "broker_owner",
+      "task": "BRK-01",
+      "content": [
+        "Business profile, kind, NIC licence / DVLA agent no., insurers, default fee"
+      ]
+    },
+    {
+      "id": "portal_renewals",
+      "route": "/portal/renewals",
+      "audience": "customer",
+      "task": "BRK-02",
+      "content": [
+        "Request a quote: insurance|DVLA, service type, vehicle, current expiry, choose broker",
+        "Request cards: accept/decline quote, call/WhatsApp broker, status"
       ]
     }
   ]

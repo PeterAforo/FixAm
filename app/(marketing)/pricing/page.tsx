@@ -120,7 +120,7 @@ async function PlansAndCompare() {
                   ))}
                 </div>
                 <Link
-                  href="/onboarding"
+                  href="/signup/garage"
                   className={cn(
                     "relative rounded-full py-3.5 text-center text-[15px] font-semibold transition-colors",
                     dark

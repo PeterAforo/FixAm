@@ -9,6 +9,7 @@ import { createClient } from "@/lib/auth/supabase/server"
 import { ensureUser } from "@/lib/auth/ensure-user"
 import { resolveMembership, resolvePrincipal } from "@/lib/actions"
 import { AppShell } from "@/components/shell/app-shell"
+import { listMyWorkspaces } from "@/lib/accounts/workspaces"
 import { getImpersonation } from "@/lib/admin/impersonation"
 import type { StaffRole } from "@/lib/auth/permissions"
 import type { ShellNotification } from "@/components/shell/notifications-bell"
@@ -46,7 +47,7 @@ async function ShellLoader({
       ? (ctx.principal.role as StaffRole)
       : "service_advisor"
 
-  const [branchRows, me, recent] = await Promise.all([
+  const [branchRows, me, recent, workspaces] = await Promise.all([
     db()
       .select({ id: branches.id, name: branches.name })
       .from(branches)
@@ -58,6 +59,7 @@ async function ShellLoader({
       .where(eq(notifications.userId, user.id))
       .orderBy(desc(notifications.createdAt))
       .limit(20),
+    listMyWorkspaces(user.id),
   ])
 
   const cookieStore = await cookies()
@@ -82,6 +84,7 @@ async function ShellLoader({
   return (
     <AppShell
       impersonating={impersonating}
+      workspaces={workspaces}
       garageId={garage.id}
       garageSlug={garage.slug}
       garageName={garage.name}

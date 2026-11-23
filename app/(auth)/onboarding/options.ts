@@ -1,0 +1,33 @@
+export const GH_REGIONS = [
+  "Greater Accra",
+  "Ashanti",
+  "Central",
+  "Eastern",
+  "Western",
+  "Western North",
+  "Volta",
+  "Oti",
+  "Northern",
+  "Savannah",
+  "North East",
+  "Upper East",
+  "Upper West",
+  "Bono",
+  "Bono East",
+  "Ahafo",
+]
+
+export const PART_CATEGORIES = [
+  "Engine parts",
+  "Brakes",
+  "Suspension & steering",
+  "Electrical",
+  "Batteries",
+  "Tyres & wheels",
+  "Body parts",
+  "Oils & fluids",
+  "Filters",
+  "Lights",
+  "Accessories",
+  "Tools & equipment",
+]

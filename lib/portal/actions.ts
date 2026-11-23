@@ -87,6 +87,8 @@ export async function verifyPortalOtp(rawInput: unknown): Promise<ActionResult<{
 
 export async function portalLogout(): Promise<ActionResult<{ ok: true }>> {
   await clearPortalSession()
+  const { createClient } = await import("@/lib/auth/supabase/server")
+  await (await createClient()).auth.signOut()
   return { ok: true, data: { ok: true as const } }
 }
 

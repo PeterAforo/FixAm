@@ -92,3 +92,36 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
   so the allowance of real garages is never consumed.
 - Portal passwords use scrypt with per-user salt + timing-safe compare (`lib/portal/password.ts`).
 
+## Unified accounts & routing (Nov 2026)
+
+- **One account per person, roles = workspaces.** Never add a separate login,
+  user table or session cookie for a new role. A workspace is derived from
+  existing rows: `memberships` (garage), `vendor_members`, `broker_members`, or
+  a `portal_profiles`/`customers` row matching the user's verified phone
+  (driver). See `lib/accounts/workspaces.ts`.
+- **Own SMS OTP, Supabase session.** Supabase phone auth would need its own SMS
+  provider config; instead FixAm verifies its code (via `portal_otps`) and mints
+  a session with `admin.generateLink({type:"magiclink"})` + `verifyOtp({token_hash})`.
+  Requires `SUPABASE_SERVICE_ROLE_KEY`.
+- **Phone-only accounts** get an internal auth e-mail `<digits>@phone.fixam.app`
+  (never shown, never mailed; blocked on the e-mail form). `public.users.email`
+  is null for them. If Supabase rejects `phone` on createUser (phone provider
+  off), the phone is stored in `app_metadata.phone`. **Never read identity from
+  `user_metadata`** — users can edit it.
+- **No query strings on auth URLs.** Role lives in the path
+  (`/signup/garage`, `/onboarding/garage`). The "come back to" path lives in
+  the `fixam_next` cookie (30 min, httpOnly), set by `proxy.ts` and cleared when
+  the user reaches it. `postLoginDestination(next?)` resolves: explicit next →
+  cookie → last-used workspace → only workspace → `/account` → `/onboarding`.
+- **Sign-up ≠ sign-in visually.** `/login` is a classic split (form left, photo
+  right). `/signup/<role>` uses `OnboardingFrame` so creating the account reads
+  as step 1 of that role's setup.
+- **Brokers are optional for garages.** Garages keep processing renewals as
+  agents; "Send to broker" creates a linked `broker_requests` row. One open
+  broker request per renewal.
+- **Broker payments are recorded, not processed** (`paid_at` set by broker).
+  Paystack split/subaccount checkout for brokers is future work.
+- **Platform SMS bypasses quiet hours/allowances** (`sendDirectSms`); garage
+  customer messaging still goes through `sendMessage()`.
+- **Photos** are hot-linked from the Unsplash CDN (free licence only, no
+  Unsplash+), rendered with `<img>` via `PhotoImg`; swap ids in `lib/images.ts`.

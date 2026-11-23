@@ -1,5 +1,49 @@
 # Changelog
 
+## Unreleased — Unified accounts, brokers & premium redesign (Nov 2026)
+
+### Accounts & auth
+- **One account for every role.** Drivers, garage staff, parts sellers and
+  insurance/DVLA brokers all use the same Supabase account. The old separate
+  driver-portal login (own OTP cookie + password) is retired; portal data is
+  keyed by the account's verified phone (`getPortalPhone()` → session phone).
+- **Phone sign-in** (`lib/auth/phone-auth.ts`): FixAm sends/verifies its own
+  6-digit SMS code and mints a Supabase session; e-mail + password remains as a
+  fallback. Adding/verifying a phone on an e-mail account is supported.
+- **Clean auth URLs** (no query strings): `/login` (sign in only), `/signup`
+  (role picker), `/signup/<role>` (create account), `/onboarding` (signed-in
+  role picker), `/onboarding/<role>` (setup wizard), `/account` (workspace hub).
+  Roles: `garage`, `driver`, `parts-seller`, `insurance-broker`, `dvla-agent`.
+- `proxy.ts` gates protected areas, stores the post-login destination in the
+  `fixam_next` cookie, and rewrites legacy `?next=` / `?role=` links.
+- **Workspace switcher** in every sidebar (garage, parts shop, broker, My cars)
+  + "Add a workspace"; last-used workspace remembered (`fixam_ws` cookie).
+
+### Brokers (new)
+- Tables `brokers`, `broker_members`, `broker_requests`,
+  `broker_request_events` (migration `0016_unified-accounts-brokers`; also makes
+  `users.email` nullable).
+- Broker workspace `/broker`: dashboard, requests inbox, request detail
+  (quote → accept → processing → complete, mark paid, notes, timeline),
+  business settings.
+- Drivers request quotes at `/portal/renewals`; garages can **Send to broker**
+  from a renewal and accept/decline the broker's quote. Garages can still
+  process renewals themselves.
+- Admin: verify / suspend brokers.
+
+### Messaging
+- Real SMS adapters: Arkesel and Hubtel (`lib/integrations/messaging/ghana-sms.ts`).
+- `lib/messaging/direct.ts` for platform transactional SMS (codes, broker
+  alerts) — bypasses garage quiet hours/allowances.
+
+### UI
+- Premium redesign across marketing, auth, staff app, directory, portal;
+  new About/Contact/Support/Privacy/Terms pages.
+- Curated free Unsplash photography (`lib/images.ts`, `components/marketing/photo.tsx`).
+- Onboarding fits the viewport (no page scroll) with a ~46% photo rail
+  (`OnboardingFrame`), shared by every role's setup.
+- Parts-seller dashboard restyled and moved into the shared `WorkspaceShell`.
+
 ## Unreleased — hardening & launch gap closure
 
 ### Added

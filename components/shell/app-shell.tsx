@@ -14,6 +14,8 @@ import { LogoMark } from "@/components/marketing/logo"
 import { type ShellNotification } from "./notifications-bell"
 import { BranchSwitcher, type ShellBranch } from "./branch-switcher"
 import { ShellHeader } from "./shell-header"
+import { WorkspaceSwitcher } from "./workspace-switcher"
+import type { Workspace } from "@/lib/accounts/workspaces"
 import {
   BarChart3,
   BellRing,
@@ -99,6 +101,7 @@ export function AppShell({
   activeBranchId,
   notifications,
   impersonating = false,
+  workspaces = [],
   children,
 }: {
   garageId: string
@@ -112,6 +115,7 @@ export function AppShell({
   activeBranchId: string | null
   notifications: ShellNotification[]
   impersonating?: boolean
+  workspaces?: Workspace[]
   children: ReactNode
 }) {
   const pathname = usePathname()
@@ -238,13 +242,23 @@ export function AppShell({
             <LogoMark className="size-7 rounded-[9px]" />
             <span className="font-display text-[19px] font-bold tracking-[-0.02em]">FixAm</span>
           </Link>
-          <div className="mt-4 rounded-xl border border-border bg-background px-3 py-2.5">
-            <p className="truncate text-sm font-semibold">{garageName}</p>
-            <div className="mt-0.5 flex items-center justify-between gap-2 text-xs text-muted-foreground">
-              <span className="capitalize">{role.replace(/_/g, " ")}</span>
-              <BranchSwitcher branches={branches} activeBranchId={activeBranchId} garageSlug={garageSlug} />
+          {workspaces.length > 1 ? (
+            <div className="mt-4 space-y-1.5">
+              <WorkspaceSwitcher workspaces={workspaces} currentKey={`garage:${garageSlug}`} />
+              <div className="flex items-center justify-between gap-2 px-1 text-xs text-muted-foreground">
+                <span>Branch</span>
+                <BranchSwitcher branches={branches} activeBranchId={activeBranchId} garageSlug={garageSlug} />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="mt-4 rounded-xl border border-border bg-background px-3 py-2.5">
+              <p className="truncate text-sm font-semibold">{garageName}</p>
+              <div className="mt-0.5 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                <span className="capitalize">{role.replace(/_/g, " ")}</span>
+                <BranchSwitcher branches={branches} activeBranchId={activeBranchId} garageSlug={garageSlug} />
+              </div>
+            </div>
+          )}
           {canCheckIn && (
             <Link
               href={`${base}/check-in`}
