@@ -11,19 +11,21 @@ import { TriageCard, MediaStrip } from "@/components/repair-requests/triage-card
 import { WARNING_LIGHTS } from "@/lib/repair-requests/core"
 import { acceptRepairOffer, cancelRepairRequest, submitRepairRequest, type MyRepairRequest, type SubmitResult } from "@/lib/repair-requests/actions"
 import { searchDestinationGarages, type DestGarage, type DriverCar } from "@/lib/parts-shop/actions"
+import { shrinkPhoto } from "@/components/part-photo/shrink"
 
 const inputCls = "min-h-11 w-full rounded-xl border border-input bg-card px-3.5 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
 const REGIONS = ["Greater Accra", "Ashanti", "Western", "Central", "Eastern", "Volta", "Northern", "Upper East", "Upper West", "Bono", "Bono East", "Ahafo", "Western North", "Oti", "Savannah", "North East"]
 const ghs = (p: number) => `GH₵ ${(p / 100).toLocaleString("en-GH", { maximumFractionDigits: 0 })}`
 
-export function RequestsPanel(props: { cars: DriverCar[]; myGarages: DestGarage[]; requests: MyRepairRequest[]; startOpen: boolean }) {
+export function RequestsPanel(props: { cars: DriverCar[]; myGarages: DestGarage[]; requests: MyRepairRequest[]; startOpen: boolean; attachedScan?: { id: string; codes: string[]; summary: string | null } | null }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [open, setOpen] = useState(props.startOpen)
   const [result, setResult] = useState<Extract<SubmitResult, { ok: true }> | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
 
-  const [complaint, setComplaint] = useState("")
+  const [complaint, setComplaint] = useState(props.attachedScan?.codes.length ? `Check-engine light / scanner found ${props.attachedScan.codes.join(", ")}. ` : "")
+  const [scan, setScan] = useState(props.attachedScan ?? null)
   const [voice, setVoice] = useState<VoiceNoteValue | null>(null)
   const [carKey, setCarKey] = useState(props.cars[0]?.key ?? "other")
   const [other, setOther] = useState({ make: "", model: "", year: "", plate: "" })
@@ -75,7 +77,7 @@ export function RequestsPanel(props: { cars: DriverCar[]; myGarages: DestGarage[
       if (other.plate) fd.set("plate", other.plate)
     }
     lights.forEach((l) => fd.append("warningLights", l))
-    files.forEach((f) => fd.append("media", f))
+    if (scan) fd.set("obdScanId", scan.id)
     fd.set("mode", mode)
     if (mode === "preferred" && garageId) fd.set("preferredGarageId", garageId)
     if (loc) {
@@ -86,6 +88,8 @@ export function RequestsPanel(props: { cars: DriverCar[]; myGarages: DestGarage[
     if (area.city) fd.set("city", area.city)
     fd.set("radiusKm", radius)
     startTransition(async () => {
+      // Photos are shrunk on the phone so uploads stay small (videos go as they are).
+      for (const f of files) fd.append("media", f.type.startsWith("image/") ? await shrinkPhoto(f) : f)
       const r = await submitRepairRequest(fd)
       if (!r.ok) return setMsg(r.error)
       setResult(r)
@@ -94,6 +98,7 @@ export function RequestsPanel(props: { cars: DriverCar[]; myGarages: DestGarage[
       setVoice(null)
       setFiles([])
       setLights([])
+      setScan(null)
       router.refresh()
     })
   }
@@ -139,6 +144,12 @@ export function RequestsPanel(props: { cars: DriverCar[]; myGarages: DestGarage[
                 placeholder="e.g. The car makes a grinding noise when I brake, and the brake light came on this morning" />
               <VoiceNoteButton className="mt-2" onResult={(v) => { setVoice(v); setComplaint(v.english) }} />
               {voice && voice.language !== "en" && <p className="mt-1 text-xs text-muted-foreground">We heard: “{voice.transcript}” — translated above. Fix the English if needed.</p>}
+              {scan && (
+                <p className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-surface-sunken px-3 py-2 text-xs">
+                  <span>Scanner codes attached: <strong className="font-mono">{scan.codes.join(", ") || "none"}</strong> — garages will see the full scan.</span>
+                  <button type="button" className="underline" onClick={() => setScan(null)}>Remove</button>
+                </p>
+              )}
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">

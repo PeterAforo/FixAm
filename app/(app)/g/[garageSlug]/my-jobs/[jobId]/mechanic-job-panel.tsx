@@ -10,6 +10,7 @@ import { addJobFinding, toggleJobTask, updateJobStatus } from "@/lib/jobs/action
 import { getOpenTimer, startTimeLog, stopTimeLog } from "@/lib/jobs/time-actions"
 import { enqueue, isOnline, newClientId, readQueue, removeFromQueue, writeQueue } from "@/lib/offline/queue"
 import { VoiceJobNotes } from "@/components/ai/voice-job-notes"
+import { ObdScanner } from "@/components/obd/obd-scanner"
 
 type Task = { id: string; title: string; isDone: boolean; required: boolean; checklistItem: boolean }
 type Finding = { id: string; title: string; description: string | null; severity: string | null }
@@ -285,6 +286,16 @@ export function MechanicJobPanel(p: Props) {
             <Button onClick={submitFinding} disabled={pending || !findingTitle.trim()} className="min-h-[48px]">Add finding</Button>
           </div>
           <VoiceJobNotes garageId={p.garageId} jobId={p.job.id} onSaved={(m) => { setMsg(m); router.refresh() }} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-base">Fault codes (OBD scanner)</CardTitle></CardHeader>
+        <CardContent>
+          <ObdScanner
+            ctx={{ kind: "garage", garageId: p.garageId, jobId: p.job.id, canClear: true, canAddFindings: true, canOrderParts: false }}
+            onSaved={() => router.refresh()}
+          />
         </CardContent>
       </Card>
 

@@ -11,6 +11,7 @@ import { and, eq } from "drizzle-orm"
 import { VehicleDetailPanel } from "./vehicle-detail-panel"
 import { getOwnerPassport } from "@/lib/passport/service"
 import { PassportCard } from "@/components/passport/passport-card"
+import { DriverScanCard } from "./driver-scan-card"
 
 async function PortalVehicleContent({ params }: { params: Promise<{ vehicleId: string }> }) {
   await connection()
@@ -47,6 +48,7 @@ async function PortalVehicleContent({ params }: { params: Promise<{ vehicleId: s
         garageName={data.vehicle.garageName}
         existingReview={existingReview ?? null}
       />
+      <DriverScanCard vehicleId={data.vehicle.id} />
       {passport && <PassportCard vehicleId={data.vehicle.id} initial={passport} plate={data.vehicle.plateNumber} />}
     </main>
   )

@@ -2017,23 +2017,31 @@
       "notes": "Metadata only — prompts and transcripts are never stored."
     },
     "obd_scans": {
-      "status": "planned (P8)",
+      "status": "built (P8-13)",
       "tenant": false,
+      "note": "garage_id set for garage scans (job), null for driver scans (vehicle). Clears audited in audit_logs (obd.clear_codes.*).",
       "columns": {
         "id": "uuid pk",
-        "vehicle_ref": "text",
-        "vin": "text",
-        "garage_id": "uuid",
-        "job_id": "uuid",
+        "garage_id": "uuid fk",
+        "user_id": "uuid fk users",
+        "customer_id": "uuid fk",
+        "vehicle_id": "uuid fk",
+        "job_id": "uuid fk",
         "repair_request_id": "uuid",
-        "inspection_id": "uuid",
-        "scanned_by": "uuid fk:users",
-        "dtcs": "jsonb [{code,type,description,severity}]",
+        "inspection_id": "uuid (P8-20)",
+        "source": "text (garage|driver)",
+        "adapter_name": "text",
+        "protocol": "text",
+        "vin": "text",
+        "mil_on": "bool",
+        "dtcs": "jsonb [{code,kind}]",
         "freeze_frame": "jsonb",
-        "live_data": "jsonb",
-        "cleared": "bool default:false",
-        "ai_summary": "text",
-        "created_at": "timestamptz req default:now()"
+        "live": "jsonb",
+        "explanation": "jsonb",
+        "clear_requested_at": "timestamptz",
+        "cleared_at": "timestamptz",
+        "cleared_by": "uuid fk users",
+        "created_at": "timestamptz"
       }
     },
     "financing_applications": {

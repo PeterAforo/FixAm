@@ -13,6 +13,7 @@ import {
   repairRequestOffers,
   repairRequestRecipients,
   repairRequests,
+  obdScans,
 } from "@/lib/db/schema"
 import { getSessionUserId } from "@/lib/auth/ensure-user"
 import { getPortalPhone } from "@/lib/portal/session"
@@ -147,7 +148,19 @@ export async function submitRepairRequest(formData: FormData): Promise<SubmitRes
     }
   }
 
-  const triage = await triageComplaint({ complaint: d.complaint, vehicle: vehicleLabel, warningLights: d.warningLights, photos, ctx: { userId: me.userId } })
+  // P8-13: codes from the driver's OBD scan sharpen the triage.
+  let triageText = d.complaint
+  const scanId = String(formData.get("obdScanId") ?? "")
+  if (/^[0-9a-f-]{36}$/i.test(scanId)) {
+    const { scanForUser, linkScanToRequest } = await import("@/lib/obd/service")
+    const scan = await scanForUser(scanId, me.userId).catch(() => null)
+    if (scan) {
+      const codes = (scan.dtcs as { code: string; kind: string }[]).map((x) => `${x.code} (${x.kind})`)
+      triageText = `${d.complaint}\n\nOBD scanner: ${codes.length ? codes.join(", ") : "no fault codes"}${scan.milOn ? "; check-engine light ON" : ""}.`
+      await linkScanToRequest(scanId, id, me.userId).catch(() => undefined)
+    }
+  }
+  const triage = await triageComplaint({ complaint: triageText, vehicle: vehicleLabel, warningLights: d.warningLights, photos, ctx: { userId: me.userId } })
 
   let recipients: { id: string; distanceKm: number | null }[]
   if (d.mode === "preferred") {
@@ -374,6 +387,8 @@ export type GarageLead = {
   media: { id: string; kind: string; url: string }[]
   myOffer: { priceMin: number | null; priceMax: number | null; inspectionFee: number; earliestAt: string; message: string | null; status: string } | null
   offerCount: number
+  /** P8-13: fault codes from the driver's OBD scan, if attached. */
+  obdCodes: { code: string; kind: string; title: string; severity: string }[]
 }
 
 export async function listGarageLeads(raw: unknown): Promise<GarageLead[]> {
@@ -397,7 +412,18 @@ export async function listGarageLeads(raw: unknown): Promise<GarageLead[]> {
     .limit(60)
   const ids = rows.map((r) => r.r.id)
   if (ids.length === 0) return []
-  const [offers, media] = await Promise.all([db().select().from(repairRequestOffers).where(inArray(repairRequestOffers.requestId, ids)), mediaWithUrls(ids)])
+  const [offers, media, scans] = await Promise.all([
+    db().select().from(repairRequestOffers).where(inArray(repairRequestOffers.requestId, ids)),
+    mediaWithUrls(ids),
+    db().select({ requestId: obdScans.repairRequestId, explanation: obdScans.explanation, dtcs: obdScans.dtcs }).from(obdScans).where(inArray(obdScans.repairRequestId, ids)),
+  ])
+  const codesFor = (requestId: string): GarageLead["obdCodes"] => {
+    const s = scans.find((x) => x.requestId === requestId)
+    if (!s) return []
+    const e = s.explanation as { codes?: { code: string; kind: string; title: string; severity: string }[] } | null
+    return e?.codes?.map((c) => ({ code: c.code, kind: c.kind, title: c.title, severity: c.severity }))
+      ?? (s.dtcs as { code: string; kind: string }[]).map((d) => ({ ...d, title: "", severity: "soon" }))
+  }
   await db()
     .update(repairRequestRecipients)
     .set({ viewedAt: new Date() })
@@ -428,6 +454,7 @@ export async function listGarageLeads(raw: unknown): Promise<GarageLead[]> {
           ? { priceMin: mine.priceMin != null ? Number(mine.priceMin) : null, priceMax: mine.priceMax != null ? Number(mine.priceMax) : null, inspectionFee: Number(mine.inspectionFee), earliestAt: mine.earliestAt.toISOString(), message: mine.message, status: mine.status }
           : null,
         offerCount: offers.filter((o) => o.requestId === r.id && o.status !== "withdrawn").length,
+        obdCodes: codesFor(r.id),
       }
     })
 }

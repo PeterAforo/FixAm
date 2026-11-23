@@ -30,6 +30,7 @@ import { setPartTypeOnJob } from "@/lib/part-offers/actions"
 import type { JobRepairRequest } from "@/lib/repair-requests/service"
 import { MediaStrip, TriageCard } from "@/components/repair-requests/triage-card"
 import { VoiceJobNotes } from "@/components/ai/voice-job-notes"
+import { ObdScanner } from "@/components/obd/obd-scanner"
 
 const inputCls =
   "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
@@ -519,6 +520,15 @@ export function JobDetailPanel(props: {
           <CardContent className="space-y-4 p-5">
             <h2 className="text-[15px] font-semibold">Findings</h2>
             {canUpdate && <VoiceJobNotes garageId={garageId} jobId={job.id} onSaved={(m) => { setMsg(m); router.refresh() }} />}
+            <details className="rounded-xl border border-border p-3">
+              <summary className="cursor-pointer text-sm font-semibold">Read fault codes (OBD scanner)</summary>
+              <div className="mt-3">
+                <ObdScanner
+                  ctx={{ kind: "garage", garageId, jobId: job.id, canClear: canStatusUpdate, canAddFindings: canUpdate, canOrderParts: props.canOrderParts }}
+                  onSaved={() => router.refresh()}
+                />
+              </div>
+            </details>
             {canUpdate && (
               <div className="grid gap-2 rounded-xl border border-dashed border-border p-3 sm:grid-cols-[1fr_1fr_auto]">
                 <input className={inputCls} placeholder="Finding title * e.g. Front shocks leaking" value={finding.title} onChange={(e) => setFinding({ ...finding, title: e.target.value })} />

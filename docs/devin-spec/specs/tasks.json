@@ -940,7 +940,8 @@
             "Mechanic pairs a dongle and reads codes on Android Chrome",
             "Each code shows meaning, severity and likely parts with vendor offers",
             "Clearing codes requires staff role and writes an audit row"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-14",

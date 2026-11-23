@@ -97,6 +97,14 @@ export function LeadsPanel({ garageId, garageSlug, leads }: { garageId: string; 
                   {l.warningLights.length > 0 && <span>Lights: {l.warningLights.join(", ").replace(/_/g, " ")}</span>}
                   <span>{new Date(l.createdAt).toLocaleString("en-GH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
                 </p>
+                {l.obdCodes.length > 0 && (
+                  <ul className="mt-2 space-y-0.5 rounded-lg bg-surface-sunken px-3 py-2 text-xs">
+                    <li className="font-semibold">Driver&apos;s scanner codes</li>
+                    {l.obdCodes.map((c) => (
+                      <li key={c.code}><span className="font-mono font-semibold">{c.code}</span>{c.kind !== "stored" ? ` (${c.kind})` : ""}{c.title ? ` — ${c.title}` : ""}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button size="sm" disabled={pending} onClick={() => startOffer(l)}>{l.myOffer ? "Update offer" : "Send offer"}</Button>

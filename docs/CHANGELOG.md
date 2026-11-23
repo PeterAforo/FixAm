@@ -2,6 +2,35 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-13 OBD-II scanner diagnostics ✅
+- **Web Bluetooth + ELM327 (BLE adapters)** in Chrome on Android (and desktop
+  Chrome/Edge): reads VIN, check-engine light, **stored / pending / permanent**
+  codes, the freeze frame (rpm, coolant, speed, load when the fault was
+  stored) and **live data** (RPM, coolant, speed, battery voltage, refreshed
+  every ~1.5 s). Supports the common BLE GATT layouts (FFF0, FFE0, Vgate,
+  18F0). iPhones get "use Chrome on Android" (Web Bluetooth isn't allowed on
+  iOS); classic-Bluetooth-only adapters can't be used from a browser.
+- Protocol parsing handles CAN single/multi-frame and K-line/J1850 replies
+  from several ECUs (`lib/obd/protocol.ts`, tested).
+- **Fault-code library** of 130+ common generic codes with plain meaning,
+  severity (stop / fix soon / can wait), likely parts from the standard parts
+  list and "check first" tips; other codes are described from their structure
+  (maker-specific codes flagged). **AI explanation** (`explain_dtcs` prompt,
+  library fallback) per code for this car, with likely parts mapped to part
+  types — the library's "stop" can't be downgraded by the AI.
+- **Garage** (job card → Findings, and the mechanic's job screen): scan, see
+  offers per likely part (own stock + vendors), **Add to findings**.
+  **Clear codes**: staff with job-status rights only, a reason is required,
+  and an audit row (`obd.clear_codes.requested`) is written *before* the clear
+  command is sent; the outcome is audited too (`…done` / `…failed`).
+- **Driver** (car page → "Read your car's fault codes"): same scan, links to
+  parts that fit, and **Get it fixed** sends the codes with a repair request —
+  triage uses them and garages see them on the lead.
+- A scanned VIN fills a missing VIN on the car; a different VIN is flagged.
+- Repair-request photos are now shrunk on the phone before upload (fits the
+  4 MB limit).
+- Migration `0028_obd-scans` (`inspection_id` is ready for P8-20).
+
 ### P8-12 Part recognition from photos ✅
 - **Snap the part**: Claude vision (`identify_part` prompt) looks at a photo
   and picks from the standard parts list (numbered candidates, up to 5 with

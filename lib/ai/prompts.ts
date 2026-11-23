@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { rulesTriage, SPECIALTY_IDS } from "@/lib/repair-requests/core"
 import { rulesJobNotes } from "@/lib/jobs/voice-notes-core"
+import { rulesDtcExplanation } from "@/lib/obd/explain-core"
 
 /**
  * Prompt registry. Every AI feature registers a prompt here with a version,
@@ -186,4 +187,62 @@ export const identifyPartPrompt = definePrompt({
     fitmentHint: null,
   }),
   maxTokens: 400,
+})
+
+/** OBD fault codes → plain-language explanation (P8-13). */
+export const explainDtcsPrompt = definePrompt({
+  key: "explain_dtcs",
+  version: 1,
+  system:
+    "You are an experienced Ghanaian auto mechanic explaining OBD-II fault codes to a driver or a junior mechanic. " +
+    "For each code, explain in one or two short sentences what it means for THIS car and what usually causes it, using simple English. " +
+    "Use the standard meaning given, but note when the brand commonly uses the code differently. Severity: stop = stop driving or risk " +
+    "serious damage/safety; soon = fix within days; monitor = can wait but should be checked. List likely replacement parts by common " +
+    "names, most likely first, and say when a cheap check (fuel cap, loose connector, cleaning) should come before buying parts. " +
+    "Consider codes together — one fault often triggers others (e.g. misfires causing catalyst codes). Never invent codes.",
+  render: (i: {
+    vehicle: string | null
+    codes: { code: string; kind: string; meaning: string; known: boolean }[]
+    milOn: boolean | null
+    live: Record<string, number | undefined>
+    freezeFrame: Record<string, unknown> | null
+  }) =>
+    `Vehicle: ${i.vehicle ?? "unknown"}\nCheck-engine light: ${i.milOn == null ? "unknown" : i.milOn ? "ON" : "off"}\n` +
+    `Live data: ${JSON.stringify(i.live)}\nFreeze frame: ${i.freezeFrame ? JSON.stringify(i.freezeFrame) : "none"}\n\nCodes:\n` +
+    i.codes.map((c) => `- ${c.code} (${c.kind}): ${c.meaning}${c.known ? "" : " [generic description only]"}`).join("\n"),
+  output: z.object({
+    summary: z.string().min(1).max(500),
+    overallSeverity: z.enum(["stop", "soon", "monitor"]),
+    codes: z.array(z.object({
+      code: z.string(),
+      explanation: z.string().min(1).max(400),
+      severity: z.enum(["stop", "soon", "monitor"]),
+      likelyParts: z.array(z.string().min(1).max(80)).max(5),
+      checkFirst: z.string().max(200).nullable(),
+    })).max(20),
+  }),
+  jsonSchema: {
+    type: "object",
+    properties: {
+      summary: { type: "string" },
+      overallSeverity: { type: "string", enum: ["stop", "soon", "monitor"] },
+      codes: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            code: { type: "string" },
+            explanation: { type: "string" },
+            severity: { type: "string", enum: ["stop", "soon", "monitor"] },
+            likelyParts: { type: "array", items: { type: "string" } },
+            checkFirst: { type: ["string", "null"] },
+          },
+          required: ["code", "explanation", "severity", "likelyParts", "checkFirst"],
+        },
+      },
+    },
+    required: ["summary", "overallSeverity", "codes"],
+  },
+  mock: (i) => rulesDtcExplanation(i.codes.map((c) => c.code)),
+  maxTokens: 1500,
 })
