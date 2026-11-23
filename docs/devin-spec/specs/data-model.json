@@ -2162,38 +2162,50 @@
       }
     },
     "insurance_claims": {
-      "status": "planned (P8)",
+      "status": "done (P8-17)",
       "tenant": false,
       "columns": {
         "id": "uuid pk",
         "number": "text uniq",
         "user_id": "uuid req",
+        "customer_id": "uuid fk:customers",
+        "vehicle_id": "uuid fk:vehicles",
         "vehicle_ref": "text req",
         "broker_id": "uuid fk:brokers",
+        "insurer_name": "text",
+        "insurer_contact": "text",
         "garage_id": "uuid",
         "job_id": "uuid",
         "estimate_id": "uuid",
         "occurred_at": "timestamptz",
         "location": "text",
+        "lat": "numeric",
+        "lng": "numeric",
         "police_report_no": "text",
         "other_party": "jsonb",
         "injuries": "bool",
+        "description": "text",
         "photos": "jsonb",
         "documents": "jsonb",
+        "estimate_amount": "money",
         "approved_amount": "money",
+        "draft": "jsonb",
+        "submitted_at": "timestamptz",
+        "settled_at": "timestamptz",
         "status": "text (draft|submitted|assessing|approved|partially_approved|rejected|repair_authorised|settled)",
         "created_at": "timestamptz req default:now()",
         "updated_at": "timestamptz req default:now()"
       }
     },
     "insurance_claim_events": {
-      "status": "planned (P8)",
+      "status": "done (P8-17)",
       "tenant": false,
       "columns": {
         "id": "uuid pk",
         "claim_id": "uuid req",
         "status": "text",
         "actor": "text",
+        "actor_user_id": "uuid",
         "note": "text",
         "created_at": "timestamptz req default:now()"
       }

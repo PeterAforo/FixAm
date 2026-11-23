@@ -19,7 +19,9 @@
     "reports": "Reports",
     "myStats": "My stats",
     "settings": "Settings",
-    "checkIn": "Check in"
+    "checkIn": "Check in",
+    "claims": "Claims",
+    "leads": "Leads"
   },
   "common": {
     "save": "Save",

@@ -325,6 +325,32 @@
           "body": "{{status}}"
         }
       }
+    },
+    {
+      "key": "claim_submitted",
+      "category": "transactional",
+      "channels": {
+        "sms": {
+          "body": "FixAm: claim {{number}} for {{vehicle}} was submitted. Track it: {{link}}"
+        },
+        "push": {
+          "title": "Claim submitted",
+          "body": "Claim {{number}} for {{vehicle}} was submitted."
+        }
+      }
+    },
+    {
+      "key": "claim_status",
+      "category": "transactional",
+      "channels": {
+        "sms": {
+          "body": "FixAm: claim {{number}} ({{vehicle}}) is now {{status}}{{note}}. Details: {{link}}"
+        },
+        "push": {
+          "title": "Claim update",
+          "body": "Claim {{number}} is now {{status}}."
+        }
+      }
     }
   ],
   "inbound_whatsapp_sms": {

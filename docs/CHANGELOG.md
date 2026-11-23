@@ -2,6 +2,27 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-17 Accident & insurance claims ✅
+- **Driver claim wizard** (`/portal/claims/new`, drafts autosave and can be
+  resumed at `/portal/claims/[id]/edit`): when/where (GPS pin button), up to 6
+  damage photos, police report number + upload, other driver's details,
+  injuries yes/no, vehicle, preferred garage and broker. Built for a phone —
+  one screen per topic.
+- **Routing**: the claim goes to the driver's chosen broker, else their most
+  recent broker, else the insurer contact on the vehicle's current policy.
+  Brokers get a **Claims** tab in `/broker` (list + detail); garages get a
+  **Claims** screen (`/g/<slug>/claims`) for claims naming them.
+- **Statuses** `draft → submitted → assessing → approved | partially_approved
+  | rejected → repair_authorised → settled`, enforced in `lib/claims/core.ts`
+  with tests; every change writes an `insurance_claim_events` timeline row.
+- **Garage side**: link a job and record a repair estimate
+  (`claims.estimate` — owner/manager/advisor). "Authorise repair" approves the
+  linked estimate and job; partially approved = insurer covers the approved
+  amount, the rest is customer-pay.
+- **Notifications**: every status change SMSes driver, garage and broker
+  (`claim_submitted`, `claim_status` templates — 53 total now).
+- Migration `0032_insurance-claims`.
+
 ### P8-16 Car pickup & drop-off ✅
 - **Garage setting** (Settings → Pickup & drop-off): on/off, fee per run
   (each way) and distance. **New staff role `garage_driver`** (Staff →

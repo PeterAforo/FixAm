@@ -60,7 +60,7 @@ const ICONS: Record<string, LucideIcon> = {
 
 /** Sidebar grouping (by spec nav label). Anything not listed falls into the first group. */
 const GROUPS: { title: string | null; labels: string[] }[] = [
-  { title: null, labels: ["Dashboard", "Job board", "My jobs", "Bookings", "Leads"] },
+  { title: null, labels: ["Dashboard", "Job board", "My jobs", "Bookings", "Leads", "Claims"] },
   { title: "Customers", labels: ["Vehicles", "Customers", "Reminders", "Renewals"] },
   { title: "Inventory", labels: ["Parts & stock", "POS", "Marketplace"] },
   { title: "Business", labels: ["Money", "Reports", "My stats"] },

@@ -992,7 +992,8 @@
             "Driver files a claim with photos and police report in under 5 minutes",
             "Broker sees and updates the claim; driver and garage are notified",
             "Approved claims authorise the linked garage job"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-18",
