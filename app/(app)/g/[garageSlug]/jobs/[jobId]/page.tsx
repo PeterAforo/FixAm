@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation"
 import { Suspense } from "react"
 import { connection } from "next/server"
-import { and, asc, desc, eq, isNull } from "drizzle-orm"
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm"
 import { db } from "@/lib/db"
 import {
   bays,
@@ -17,12 +17,14 @@ import {
   jobs,
   users,
   vehicles,
+  vendorOrders,
 } from "@/lib/db/schema"
 import { getSessionUserId, ensureUser } from "@/lib/auth/ensure-user"
 import { resolveMembership } from "@/lib/actions"
 import { can, type StaffRole } from "@/lib/auth/permissions"
 import { JobDetailPanel } from "./job-detail-panel"
 import { nextStatuses } from "@/lib/jobs/transitions"
+import { listPartTypes } from "@/lib/parts-catalog/actions"
 
 async function JobLoader({
   params,
@@ -117,6 +119,13 @@ async function JobLoader({
 
   const v = vehicle[0]
   const c = customer[0]
+  const orderIds = itemRows.map((i) => i.vendorOrderId).filter((x): x is string => Boolean(x))
+  const [allPartTypes, orderRows] = await Promise.all([
+    listPartTypes(),
+    orderIds.length ? db().select({ id: vendorOrders.id, number: vendorOrders.number, status: vendorOrders.status }).from(vendorOrders).where(inArray(vendorOrders.id, orderIds)) : Promise.resolve([]),
+  ])
+  const partTypeName = new Map(allPartTypes.map((p) => [p.id, p.name]))
+  const orderById = new Map(orderRows.map((o) => [o.id, o]))
 
   const [parentJob] = job.warrantyParentJobId
     ? await db().select({ number: jobs.number }).from(jobs).where(eq(jobs.id, job.warrantyParentJobId)).limit(1)
@@ -160,6 +169,9 @@ async function JobLoader({
         severity: f.severity,
         customerVisible: f.customerVisible ?? true,
         createdAt: f.createdAt.toISOString(),
+        recommendation: f.recommendation,
+        partTypeId: f.partTypeId,
+        partTypeName: f.partTypeId ? partTypeName.get(f.partTypeId) ?? null : null,
       }))}
       items={itemRows.map((i) => ({
         id: i.id,
@@ -169,7 +181,15 @@ async function JobLoader({
         unitPrice: Number(i.unitPrice),
         labourHours: i.labourHours != null ? Number(i.labourHours) : null,
         approvalStatus: i.approvalStatus,
+        partTypeId: i.partTypeId,
+        partTypeName: i.partTypeId ? partTypeName.get(i.partTypeId) ?? null : null,
+        supplyMode: i.supplyMode,
+        partId: i.partId,
+        vendorOrderNumber: i.vendorOrderId ? orderById.get(i.vendorOrderId)?.number ?? null : null,
+        vendorOrderStatus: i.vendorOrderId ? orderById.get(i.vendorOrderId)?.status ?? null : null,
       }))}
+      partTypes={allPartTypes.map((p) => ({ id: p.id, name: p.name }))}
+      canOrderParts={can(principal, "purchase_orders.create")}
       tasks={taskRows.map((t) => ({
         id: t.id,
         title: t.title,

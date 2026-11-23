@@ -19,7 +19,12 @@ type Estimate = {
   total: number
   depositRequired: number
   validUntil: string | null
-  items: { id: string; type: string; description: string; quantity: number; unitPrice: number; discountAmount: number; approvalStatus: string | null; severity?: string | null }[]
+  items: {
+    id: string; type: string; description: string; quantity: number; unitPrice: number; discountAmount: number
+    approvalStatus: string | null; severity?: string | null; supplyMode?: string
+    buyOption?: { productId: string; vendorName: string; name: string; price: number; deliveryFee: number; total: number; etaHours: number | null } | null
+  }[]
+  fittingFee?: number
 }
 
 /** Spec estimate_approval: urgent pre-selected, severity chips, sticky summary. */
@@ -32,6 +37,7 @@ export function ApprovalPanel({ token, estimate }: { token: string; estimate: Es
     }
     return init
   })
+  const [supply, setSupply] = useState<Record<string, "garage" | "customer">>({})
   const [signer, setSigner] = useState("")
   const [signature, setSignature] = useState("")
   const [done, setDone] = useState<string | null>(null)
@@ -41,10 +47,18 @@ export function ApprovalPanel({ token, estimate }: { token: string; estimate: Es
   const awaiting = estimate.status === "sent" || estimate.status === "partially_approved"
   const lineTotal = (i: Estimate["items"][number]) => Math.round(i.quantity * i.unitPrice - i.discountAmount)
 
+  const buying = (i: Estimate["items"][number]) => decisions[i.id] === "approved" && supply[i.id] === "customer" && Boolean(i.buyOption)
   const approvedTotal = useMemo(
-    () => estimate.items.filter((i) => decisions[i.id] === "approved").reduce((s, i) => s + lineTotal(i), 0),
-    [decisions, estimate.items]
+    () => estimate.items.filter((i) => decisions[i.id] === "approved" && !buying(i)).reduce((s, i) => s + lineTotal(i), 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [decisions, supply, estimate.items]
   )
+  const buyNowTotal = useMemo(() => {
+    const picked = estimate.items.filter(buying)
+    if (picked.length === 0) return 0
+    return picked.reduce((s, i) => s + (i.buyOption?.total ?? 0) * Math.max(1, Math.round(i.quantity)), 0) + (estimate.fittingFee ?? 0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [decisions, supply, estimate.items, estimate.fittingFee])
 
   function decide(id: string, d: "approved" | "declined") {
     setDecisions((prev) => {
@@ -57,7 +71,11 @@ export function ApprovalPanel({ token, estimate }: { token: string; estimate: Es
 
   function submit() {
     setErr(null)
-    const list = Object.entries(decisions).map(([itemId, decision]) => ({ itemId, decision }))
+    const list = Object.entries(decisions).map(([itemId, decision]) => ({
+      itemId,
+      decision,
+      supply: decision === "approved" && supply[itemId] === "customer" ? ("customer" as const) : undefined,
+    }))
     if (list.length === 0) { setErr("Approve or decline at least one item"); return }
     if (signer.trim().length < 2) { setErr("Please type your full name to sign"); return }
     if (!signature.trim()) { setErr("Please draw or type your signature"); return }
@@ -68,8 +86,12 @@ export function ApprovalPanel({ token, estimate }: { token: string; estimate: Es
         signerName: signer.trim(),
         signatureDataUrl: signature.trim(),
       })
-      if (res.ok) setDone(res.data.status)
-      else setErr(res.error.message)
+      if (!res.ok) return setErr(res.error.message)
+      if (res.data.checkoutUrl) {
+        window.location.href = res.data.checkoutUrl
+        return
+      }
+      setDone(res.data.status)
     })
   }
 
@@ -142,6 +164,19 @@ export function ApprovalPanel({ token, estimate }: { token: string; estimate: Es
                 ) : (
                   <div className="mt-3"><StatusPill status={i.approvalStatus ?? "pending"} /></div>
                 )}
+                {awaiting && d === "approved" && i.buyOption && (
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-left">
+                    <button type="button" onClick={() => setSupply((p) => ({ ...p, [i.id]: "garage" }))} aria-pressed={supply[i.id] !== "customer"}
+                      className={`rounded-xl border px-3 py-2 text-xs ${supply[i.id] !== "customer" ? "border-foreground bg-card font-semibold" : "border-border text-muted-foreground"}`}>
+                      Garage supplies it<br /><span className="tabular-nums">{ghs(lineTotal(i))}</span>
+                    </button>
+                    <button type="button" onClick={() => setSupply((p) => ({ ...p, [i.id]: "customer" }))} aria-pressed={supply[i.id] === "customer"}
+                      className={`rounded-xl border px-3 py-2 text-xs ${supply[i.id] === "customer" ? "border-foreground bg-card font-semibold" : "border-border text-muted-foreground"}`}>
+                      I&apos;ll buy it on FixAm<br /><span className="tabular-nums">{ghs(i.buyOption.total * Math.max(1, Math.round(i.quantity)))}</span>
+                      <span className="block text-[10px] font-normal text-muted-foreground">{i.buyOption.vendorName}{i.buyOption.etaHours ? ` · ~${i.buyOption.etaHours} h` : ""} · delivered to the garage</span>
+                    </button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )
@@ -155,6 +190,12 @@ export function ApprovalPanel({ token, estimate }: { token: string; estimate: Es
             <span className="text-muted-foreground">Approved total</span>
             <span className="font-display text-lg font-bold tabular-nums">{ghs(approvedTotal)}</span>
           </div>
+          {buyNowTotal > 0 && (
+            <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+              <span>Parts you&apos;re buying on FixAm (pay now{estimate.fittingFee ? `, incl. ${ghs(estimate.fittingFee)} fitting` : ""})</span>
+              <span className="font-semibold tabular-nums text-foreground">{ghs(buyNowTotal)}</span>
+            </div>
+          )}
           {awaiting ? (
             <details className="mb-2 rounded-xl border border-border bg-surface-sunken p-3">
               <summary className="cursor-pointer text-xs font-bold uppercase tracking-wide text-muted-foreground">Sign to approve</summary>
@@ -196,7 +237,7 @@ export function ApprovalPanel({ token, estimate }: { token: string; estimate: Es
           {err && <p className="mb-2 text-sm font-semibold text-danger">{err}</p>}
           {awaiting ? (
             <Button onClick={submit} loading={pending} size="lg" className="w-full">
-              Sign &amp; approve {ghs(approvedTotal)}
+              {buyNowTotal > 0 ? `Sign & pay ${ghs(buyNowTotal)} for parts` : <>Sign &amp; approve {ghs(approvedTotal)}</>}
             </Button>
           ) : (
             <div className="space-y-1 rounded-xl bg-surface-sunken p-3 text-sm">

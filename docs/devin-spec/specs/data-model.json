@@ -774,7 +774,9 @@
         "description": "text",
         "severity": "enum:finding_severity req",
         "created_by": "uuid fk:users",
-        "customer_visible": "bool default:true"
+        "customer_visible": "bool default:true",
+        "recommendation": "text (replace|repair|monitor)",
+        "part_type_id": "uuid fk:part_types"
       }
     },
     "job_media": {
@@ -811,7 +813,11 @@
         "tax_codes": "text[]",
         "approval_status": "enum:approval_status default:'pending'",
         "is_issued_from_stock": "bool default:false",
-        "sort_order": "int default:0"
+        "sort_order": "int default:0",
+        "part_type_id": "uuid fk:part_types",
+        "part_type_confidence": "numeric(3,2)",
+        "supply_mode": "text req default:garage (garage|customer)",
+        "vendor_order_id": "uuid fk:vendor_orders"
       }
     },
     "job_tasks": {
@@ -901,7 +907,8 @@
         "preferred_vendor_product_id": "uuid fk:vendor_products",
         "is_service_item": "bool default:false",
         "online_visible": "bool default:false",
-        "is_active": "bool default:true"
+        "is_active": "bool default:true",
+        "part_type_id": "uuid fk:part_types"
       },
       "unique": [
         [

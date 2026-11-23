@@ -61,6 +61,7 @@ export const parts = pgTable(
     photoUrl: text("photo_url"),
     preferredVendorId: uuid("preferred_vendor_id"), // fk:vendors below
     preferredVendorProductId: uuid("preferred_vendor_product_id"),
+    partTypeId: uuid("part_type_id").references(() => partTypes.id),
     isServiceItem: boolean("is_service_item").default(false),
     onlineVisible: boolean("online_visible").default(false),
     isActive: boolean("is_active").default(true),

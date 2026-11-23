@@ -148,6 +148,13 @@
       "when": 1795418967266,
       "tag": "0020_driver-parts-orders",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1795423063891,
+      "tag": "0021_diagnosis-part-offers",
+      "breakpoints": true
     }
   ]
 }

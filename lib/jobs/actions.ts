@@ -696,9 +696,11 @@ const findingSchema = z.object({
   description: z.string().max(2000).optional().or(z.literal("")),
   severity: z.enum(["urgent", "recommended", "can_wait"]).default("recommended"),
   customerVisible: z.boolean().default(true),
+  recommendation: z.enum(["replace", "repair", "monitor"]).optional(),
+  partTypeId: z.string().uuid().optional(),
 })
 
-export async function addJobFinding(rawInput: unknown): Promise<ActionResult<{ findingId: string }>> {
+export async function addJobFinding(rawInput: unknown): Promise<ActionResult<{ findingId: string; partTypeId: string | null; partTypeName: string | null }>> {
   const userId = await getSessionUserId()
   if (!userId) return { ok: false, error: { code: "UNAUTHENTICATED", message: "Sign in first" } }
   const parsed = findingSchema.safeParse(rawInput)
@@ -711,6 +713,16 @@ export async function addJobFinding(rawInput: unknown): Promise<ActionResult<{ f
   const job = await getJob(d.garageId, d.jobId)
   if (!job) return { ok: false, error: { code: "NOT_FOUND", message: "Job not found" } }
 
+  // P8-04: a "replace" finding is mapped to a standard part so offers can be shown instantly.
+  let partTypeId = d.partTypeId ?? null
+  let partTypeName: string | null = null
+  if (!partTypeId && d.recommendation === "replace") {
+    const { classifyPartText } = await import("@/lib/part-offers/classify")
+    const guess = await classifyPartText(`${d.title}. ${d.description ?? ""}`, { garageId: d.garageId, userId })
+    partTypeId = guess?.partTypeId ?? null
+    partTypeName = guess?.name ?? null
+  }
+
   const [row] = await db()
     .insert(jobFindings)
     .values({
@@ -719,11 +731,13 @@ export async function addJobFinding(rawInput: unknown): Promise<ActionResult<{ f
       title: d.title,
       description: d.description || null,
       severity: d.severity,
+      recommendation: d.recommendation ?? null,
+      partTypeId,
       createdBy: userId,
       customerVisible: d.customerVisible,
     })
     .returning({ id: jobFindings.id })
-  return { ok: true, data: { findingId: row!.id } }
+  return { ok: true, data: { findingId: row!.id, partTypeId, partTypeName } }
 }
 
 const itemSchema = z.object({
@@ -735,9 +749,11 @@ const itemSchema = z.object({
   quantity: z.number().positive().max(9999).default(1),
   unitPrice: z.number().int().min(0), // pesewas
   labourHours: z.number().min(0).max(999).optional(),
+  partTypeId: z.string().uuid().optional(),
+  findingId: z.string().uuid().optional(),
 })
 
-export async function addJobItem(rawInput: unknown): Promise<ActionResult<{ itemId: string }>> {
+export async function addJobItem(rawInput: unknown): Promise<ActionResult<{ itemId: string; partTypeId: string | null; partTypeName: string | null }>> {
   const userId = await getSessionUserId()
   if (!userId) return { ok: false, error: { code: "UNAUTHENTICATED", message: "Sign in first" } }
   const parsed = itemSchema.safeParse(rawInput)
@@ -755,21 +771,35 @@ export async function addJobItem(rawInput: unknown): Promise<ActionResult<{ item
   const job = await getJob(d.garageId, d.jobId)
   if (!job) return { ok: false, error: { code: "NOT_FOUND", message: "Job not found" } }
 
+  let partTypeId = d.partTypeId ?? null
+  let partTypeName: string | null = null
+  let confidence: number | null = d.partTypeId ? 1 : null
+  if (!partTypeId && d.type === "part") {
+    const { classifyPartText } = await import("@/lib/part-offers/classify")
+    const guess = await classifyPartText(d.description, { garageId: d.garageId, userId })
+    partTypeId = guess?.partTypeId ?? null
+    partTypeName = guess?.name ?? null
+    confidence = guess?.confidence ?? null
+  }
+
   const [row] = await db()
     .insert(jobItems)
     .values({
       garageId: d.garageId,
       jobId: d.jobId,
+      findingId: d.findingId ?? null,
       type: d.type,
       description: d.description,
       partId: d.partId ?? null,
+      partTypeId,
+      partTypeConfidence: confidence != null ? confidence.toFixed(2) : null,
       quantity: String(d.quantity),
       unitPrice: BigInt(d.unitPrice),
       labourHours: d.labourHours != null ? String(d.labourHours) : null,
       sortOrder: 100,
     })
     .returning({ id: jobItems.id })
-  return { ok: true, data: { itemId: row!.id } }
+  return { ok: true, data: { itemId: row!.id, partTypeId, partTypeName } }
 }
 
 export async function toggleJobTask(rawInput: unknown): Promise<ActionResult<{ taskId: string; isDone: boolean }>> {

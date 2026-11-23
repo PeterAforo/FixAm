@@ -2,6 +2,25 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-04 Diagnosis → instant part offers ✅
+- Findings get a recommendation (replace / repair / monitor). A "replace"
+  finding or a part line is mapped to a standard part: instant rules match
+  first, Claude (`map_part_type` prompt, picks only from candidates) when the
+  rules are unsure; a "Which part?" picker is the fallback.
+- Offers panel on the job card: own stock first ("Use this"), then up to six
+  vendor offers for this exact car, ranked by fit, price incl. delivery to the
+  garage, ETA and seller rating (`lib/part-offers`). "Order to garage" places
+  a job-linked vendor order in one tap; "Add to estimate" adds the part line.
+- Estimate approval link: for each approved part line the customer can pick
+  **Garage supplies it** or **I'll buy it on FixAm** (best deliverable offer,
+  delivered to the garage, fitting fee shown). Buying creates the vendor order
+  linked to the job, zeroes that line so the garage's markup applies only to
+  parts it supplies, and sends the customer to pay. Their orders also show in
+  the driver app's My orders (matched by phone).
+- Migration `0021_diagnosis-part-offers` (job_items.part_type_id /
+  part_type_confidence / supply_mode / vendor_order_id, job_findings
+  recommendation + part_type_id, parts.part_type_id).
+
 ### P8-03 Drivers buy parts, delivered to their garage ✅
 - Driver app → **Buy parts**: pick the car, search, see only parts that fit
   (P8-01 fitment), basket, and choose **my garage / another garage / deliver to

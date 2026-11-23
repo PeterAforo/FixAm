@@ -29,6 +29,7 @@ import { bays, branches, garages, users } from "./identity"
 import { customers, vehicles } from "./customers"
 import { renewalRequests, dueItems } from "./renewals"
 import { parts, vendorOrders } from "./inventory"
+import { partTypes } from "./parts"
 
 const money = (name: string) => bigint(name, { mode: "bigint" })
 
@@ -184,6 +185,9 @@ export const jobFindings = pgTable(
     title: text("title").notNull(),
     description: text("description"),
     severity: findingSeverityEnum("severity").notNull(),
+    /** replace|repair|monitor — "replace" findings trigger instant part offers (P8-04). */
+    recommendation: text("recommendation"),
+    partTypeId: uuid("part_type_id").references(() => partTypes.id),
     createdBy: uuid("created_by").references(() => users.id),
     customerVisible: boolean("customer_visible").default(true),
     ...timestamps,
@@ -229,6 +233,11 @@ export const jobItems = pgTable(
     discountAmount: money("discount_amount").default(sql`0`),
     taxCodes: text("tax_codes").array(),
     approvalStatus: approvalStatusEnum("approval_status").default("pending"),
+    /** P8-04: standard part this line is for, how sure we are, and who supplies it. */
+    partTypeId: uuid("part_type_id").references(() => partTypes.id),
+    partTypeConfidence: numeric("part_type_confidence", { precision: 3, scale: 2 }),
+    supplyMode: text("supply_mode").notNull().default("garage"), // garage|customer
+    vendorOrderId: uuid("vendor_order_id").references(() => vendorOrders.id),
     isIssuedFromStock: boolean("is_issued_from_stock").default(false),
     sortOrder: integer("sort_order").default(0),
     ...timestamps,

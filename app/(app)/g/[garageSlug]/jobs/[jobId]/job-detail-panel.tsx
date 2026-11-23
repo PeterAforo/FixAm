@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
+import { Fragment, useRef, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Camera, CheckCircle2, PartyPopper, Plus, ShieldCheck, Upload } from "lucide-react"
@@ -21,6 +21,8 @@ import {
 } from "@/lib/jobs/actions"
 import { createInvoiceFromJob } from "@/lib/money/actions"
 import type { JobStatus } from "@/lib/jobs/transitions"
+import { PartOffersPanel } from "@/components/part-offers/part-offers-panel"
+import { setPartTypeOnJob } from "@/lib/part-offers/actions"
 
 const inputCls =
   "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
@@ -75,8 +77,10 @@ export function JobDetailPanel(props: {
   branchName: string | null
   bayName: string | null
   assignments: { userId: string; name: string; isLead: boolean }[]
-  findings: { id: string; title: string; description: string | null; severity: string; customerVisible: boolean; createdAt: string }[]
-  items: { id: string; type: string; description: string; quantity: number; unitPrice: number; labourHours: number | null; approvalStatus: string | null }[]
+  findings: { id: string; title: string; description: string | null; severity: string; customerVisible: boolean; createdAt: string; recommendation: string | null; partTypeId: string | null; partTypeName: string | null }[]
+  items: { id: string; type: string; description: string; quantity: number; unitPrice: number; labourHours: number | null; approvalStatus: string | null; partTypeId: string | null; partTypeName: string | null; supplyMode: string; vendorOrderNumber: string | null; vendorOrderStatus: string | null; partId: string | null }[]
+  partTypes: { id: string; name: string }[]
+  canOrderParts: boolean
   tasks: { id: string; title: string; isDone: boolean; required: boolean; checklistItem: boolean; assignedTo: string | null }[]
   media: { id: string; kind: string; stage: string | null; caption: string | null; storagePath: string; customerVisible: boolean; createdAt: string }[]
   events: { id: string; fromStatus: JobStatus | null; toStatus: JobStatus; note: string | null; customerVisible: boolean; actorName: string | null; createdAt: string }[]
@@ -103,7 +107,8 @@ export function JobDetailPanel(props: {
   const [msg, setMsg] = useState<string | null>(null)
 
   // forms
-  const [finding, setFinding] = useState({ title: "", description: "", severity: "recommended" })
+  const [finding, setFinding] = useState({ title: "", description: "", severity: "recommended", recommendation: "replace" })
+  const [openOffers, setOpenOffers] = useState<string | null>(null)
   const [item, setItem] = useState({ type: "labour", description: "", quantity: "1", unitPrice: "", labourHours: "" })
   const [mediaStage, setMediaStage] = useState("diagnosis")
   const [oilForm, setOilForm] = useState({
@@ -160,9 +165,11 @@ export function JobDetailPanel(props: {
         title: finding.title.trim(),
         description: finding.description || undefined,
         severity: finding.severity as "urgent" | "recommended" | "can_wait",
+        recommendation: (finding.recommendation || undefined) as "replace" | "repair" | "monitor" | undefined,
       })
       if (res.ok) {
-        setFinding({ title: "", description: "", severity: "recommended" })
+        setFinding({ title: "", description: "", severity: "recommended", recommendation: "replace" })
+        if (res.data.partTypeId) setOpenOffers(`f:${res.data.findingId}`)
         router.refresh()
       } else setMsg(res.error.message)
     })
@@ -186,8 +193,26 @@ export function JobDetailPanel(props: {
       })
       if (res.ok) {
         setItem({ type: "labour", description: "", quantity: "1", unitPrice: "", labourHours: "" })
+        if (res.data.partTypeId) setOpenOffers(`i:${res.data.itemId}`)
         router.refresh()
       } else setMsg(res.error.message)
+    })
+  }
+
+  function addOfferLine(findingId: string, offer: { name: string; total: number; partTypeId: string }) {
+    startTransition(async () => {
+      const res = await addJobItem({ garageId, jobId: job.id, type: "part", description: offer.name, quantity: 1, unitPrice: offer.total, partTypeId: offer.partTypeId, findingId })
+      setMsg(res.ok ? `Added "${offer.name}" to the estimate — adjust the price on the Items tab if you add a markup.` : res.error.message)
+      router.refresh()
+    })
+  }
+
+  function pickPartType(target: { findingId?: string; jobItemId?: string }, partTypeId: string) {
+    startTransition(async () => {
+      const r = await setPartTypeOnJob({ garageId, partTypeId: partTypeId || null, ...target })
+      if (!r.ok) setMsg(r.error)
+      else setOpenOffers(target.findingId ? `f:${target.findingId}` : `i:${target.jobItemId}`)
+      router.refresh()
     })
   }
 
@@ -430,9 +455,14 @@ export function JobDetailPanel(props: {
             <h2 className="text-[15px] font-semibold">Findings</h2>
             {canUpdate && (
               <div className="grid gap-2 rounded-xl border border-dashed border-border p-3 sm:grid-cols-[1fr_1fr_auto]">
-                <input className={inputCls} placeholder="Finding title *" value={finding.title} onChange={(e) => setFinding({ ...finding, title: e.target.value })} />
+                <input className={inputCls} placeholder="Finding title * e.g. Front shocks leaking" value={finding.title} onChange={(e) => setFinding({ ...finding, title: e.target.value })} />
                 <input className={inputCls} placeholder="Details" value={finding.description} onChange={(e) => setFinding({ ...finding, description: e.target.value })} />
                 <div className="flex gap-2">
+                  <select className={inputCls} value={finding.recommendation} onChange={(e) => setFinding({ ...finding, recommendation: e.target.value })} aria-label="Recommendation">
+                    <option value="replace">Replace part</option>
+                    <option value="repair">Repair</option>
+                    <option value="monitor">Monitor</option>
+                  </select>
                   <select className={inputCls} value={finding.severity} onChange={(e) => setFinding({ ...finding, severity: e.target.value })}>
                     <option value="urgent">Urgent</option>
                     <option value="recommended">Recommended</option>
@@ -454,6 +484,26 @@ export function JobDetailPanel(props: {
                       {!f.customerVisible && <StatusPill tone="neutral">internal</StatusPill>}
                     </div>
                     {f.description && <p className="mt-1 text-sm text-muted-foreground">{f.description}</p>}
+                    {f.recommendation === "replace" && (
+                      f.partTypeId ? (
+                        <div className="mt-2">
+                          <button type="button" className="text-xs font-semibold underline" onClick={() => setOpenOffers(openOffers === `f:${f.id}` ? null : `f:${f.id}`)}>
+                            {openOffers === `f:${f.id}` ? "Hide" : "Show"} offers for {f.partTypeName ?? "this part"}
+                          </button>
+                          {openOffers === `f:${f.id}` && (
+                            <PartOffersPanel garageId={garageId} jobId={job.id} partTypeId={f.partTypeId} canOrder={props.canOrderParts}
+                              onAddLine={canUpdate ? (o) => addOfferLine(f.id, o) : undefined} onDone={(m) => { setMsg(m); router.refresh() }} />
+                          )}
+                        </div>
+                      ) : canUpdate ? (
+                        <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                          Which part? <select className={`${inputCls} !min-h-8 max-w-xs`} defaultValue="" onChange={(e) => e.target.value && pickPartType({ findingId: f.id }, e.target.value)}>
+                            <option value="">Pick a part to see offers…</option>
+                            {props.partTypes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                          </select>
+                        </label>
+                      ) : null
+                    )}
                   </li>
                 ))}
               </ul>
@@ -495,14 +545,31 @@ export function JobDetailPanel(props: {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {items.map((i) => (
-                    <tr key={i.id}>
-                      <td className="py-2 pr-3">{i.description}</td>
+                    <Fragment key={i.id}>
+                    <tr>
+                      <td className="py-2 pr-3">
+                        {i.description}
+                        {i.supplyMode === "customer" && <span className="ml-2 rounded bg-[#E6F4FF] px-1.5 py-0.5 text-[10px] font-semibold text-[#0B5CAD]">Customer buying</span>}
+                        {i.vendorOrderNumber && <span className="ml-2 text-[11px] text-muted-foreground">{i.vendorOrderNumber} · {i.vendorOrderStatus?.replace(/_/g, " ")}</span>}
+                        {i.type === "part" && i.partTypeId && !i.partId && !i.vendorOrderNumber && (
+                          <button type="button" className="ml-2 text-[11px] font-semibold underline" onClick={() => setOpenOffers(openOffers === `i:${i.id}` ? null : `i:${i.id}`)}>
+                            {openOffers === `i:${i.id}` ? "hide offers" : "offers"}
+                          </button>
+                        )}
+                      </td>
                       <td className="text-muted-foreground">{i.type.replace(/_/g, " ")}</td>
                       <td className="text-right">{i.quantity}</td>
                       <td className="text-right">{ghs(i.unitPrice)}</td>
                       <td className="text-right font-semibold">{ghs(i.unitPrice * i.quantity)}</td>
                       <td><StatusPill status={i.approvalStatus ?? "pending"} /></td>
                     </tr>
+                    {openOffers === `i:${i.id}` && i.partTypeId && (
+                      <tr><td colSpan={6} className="pb-3">
+                        <PartOffersPanel garageId={garageId} jobId={job.id} partTypeId={i.partTypeId} jobItemId={i.id} canOrder={props.canOrderParts}
+                          onDone={(m) => { setMsg(m); setOpenOffers(null); router.refresh() }} />
+                      </td></tr>
+                    )}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>

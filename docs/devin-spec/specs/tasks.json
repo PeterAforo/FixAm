@@ -828,7 +828,8 @@
             "Offers appear within 2 s of saving a replace finding",
             "Customer choosing 'I'll buy it' creates a vendor order delivered to the garage, linked to the job",
             "Garage markup applies only to garage-supplied lines"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-05",

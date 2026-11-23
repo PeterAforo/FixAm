@@ -8,8 +8,9 @@ import { TrackerPanel } from "./tracker-panel"
 import { InvoicePayPanel } from "./invoice-pay-panel"
 import { ReminderPanel } from "./reminder-panel"
 
-async function TokenView({ params }: { params: Promise<{ token: string }> }) {
+async function TokenView({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ payment?: string }> }) {
   const { token } = await params
+  const { payment } = await searchParams
 
   // Estimate approval links and job tracker links share /t/[token];
   // estimate hashes live on estimates.token_hash, tracker hashes on
@@ -29,6 +30,9 @@ async function TokenView({ params }: { params: Promise<{ token: string }> }) {
             </p>
             {est.validUntil && <p className="mt-1 text-xs text-muted-foreground">Valid until {est.validUntil}</p>}
           </header>
+          {payment === "success" && <p className="mb-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900">Payment received — your parts are ordered and will be delivered to {est.garageName}. FixAm holds the money until they arrive.</p>}
+          {payment === "pending" && <p className="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">Waiting for your payment to confirm — you&apos;ll get an SMS once it does.</p>}
+          {payment === "failed" && <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-900">The parts payment didn&apos;t go through. Ask {est.garageName} to resend, or pay from your FixAm account.</p>}
           <ApprovalPanel token={token} estimate={est} />
           <p className="mt-6 text-center text-xs text-muted-foreground">
             Powered by FixAm · Questions? Contact the garage directly.
@@ -119,10 +123,10 @@ async function TokenView({ params }: { params: Promise<{ token: string }> }) {
   return <TrackerPanel token={token} initial={trk} />
 }
 
-export default function MagicLinkPage({ params }: { params: Promise<{ token: string }> }) {
+export default function MagicLinkPage({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ payment?: string }> }) {
   return (
     <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" /></div>}>
-      <TokenView params={params} />
+      <TokenView params={params} searchParams={searchParams} />
     </Suspense>
   )
 }

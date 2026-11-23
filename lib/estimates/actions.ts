@@ -21,6 +21,31 @@ import { garageTaxContext } from "@/lib/money/tax-context"
 import { finalizeApproval } from "./core"
 import { sendMessage } from "@/lib/messaging/send"
 import { uuidv7 } from "@/lib/id"
+import { garageSettings } from "@/lib/db/schema"
+import { findFittingProducts } from "@/lib/parts-catalog/actions"
+import { rankVendorOffers } from "@/lib/part-offers/service"
+import { createBuyerPartOrder } from "@/lib/parts-shop/order-service"
+
+export type BuyOption = { productId: string; vendorName: string; name: string; price: number; deliveryFee: number; total: number; etaHours: number | null }
+
+/** Best deliverable vendor offer per part type for this garage + car (estimate "I'll buy it"). */
+async function buyOptionsFor(garageId: string, vehicle: { make: string; model: string; year: number | null } | null, partTypeIds: string[]) {
+  const out = new Map<string, BuyOption>()
+  if (!vehicle || partTypeIds.length === 0) return { options: out, fittingFee: 0 }
+  const [g] = await db()
+    .select({ region: garages.region, city: garages.city, accepts: garageSettings.acceptsCustomerParts, fee: garageSettings.customerPartFittingFee })
+    .from(garages)
+    .leftJoin(garageSettings, eq(garageSettings.garageId, garages.id))
+    .where(eq(garages.id, garageId))
+    .limit(1)
+  if (!g || g.accepts === false) return { options: out, fittingFee: 0 }
+  for (const ptId of [...new Set(partTypeIds)]) {
+    const products = await findFittingProducts({ partTypeId: ptId, make: vehicle.make, model: vehicle.model, year: vehicle.year ?? undefined, limit: 20 })
+    const best = (await rankVendorOffers(products, { region: g.region, city: g.city })).find((o) => o.deliverable)
+    if (best) out.set(ptId, { productId: best.productId, vendorName: best.vendorName, name: best.name, price: best.price, deliveryFee: best.deliveryFee, total: best.total, etaHours: best.etaHours })
+  }
+  return { options: out, fittingFee: Number(g.fee ?? 0n) }
+}
 
 const staffPrincipal = (role: StaffRole, garageId: string, branchId: string | null) =>
   ({ kind: "staff" as const, role, garageId, branchId })
@@ -268,7 +293,8 @@ export async function getPublicEstimate(rawInput: unknown): Promise<
     garageName: string
     vehiclePlate: string | null
     customerName: string | null
-    items: { id: string; type: string; description: string; quantity: number; unitPrice: number; discountAmount: number; approvalStatus: string | null; severity: string | null }[]
+    items: { id: string; type: string; description: string; quantity: number; unitPrice: number; discountAmount: number; approvalStatus: string | null; severity: string | null; supplyMode: string; buyOption: BuyOption | null }[]
+    fittingFee: number
   } | null>
 > {
   const parsed = z.object({ token: z.string().min(16).max(128) }).safeParse(rawInput)
@@ -300,6 +326,11 @@ export async function getPublicEstimate(rawInput: unknown): Promise<
     : []
   const severityByFinding = new Map(findings.map((f) => [f.id, f.severity]))
 
+  const awaiting = ["sent", "partially_approved"].includes(est.status)
+  const buyable = awaiting ? items.filter((i) => i.type === "part" && i.partTypeId && i.approvalStatus === "pending" && i.supplyMode === "garage") : []
+  const v = vehicle[0]
+  const { options, fittingFee } = await buyOptionsFor(est.garageId, v ? { make: v.make, model: v.model, year: v.year } : null, buyable.map((i) => i.partTypeId!))
+
   return {
     ok: true,
     data: {
@@ -324,7 +355,10 @@ export async function getPublicEstimate(rawInput: unknown): Promise<
         discountAmount: Number(i.discountAmount ?? 0),
         approvalStatus: i.approvalStatus,
         severity: i.findingId ? severityByFinding.get(i.findingId) ?? null : null,
+        supplyMode: i.supplyMode,
+        buyOption: buyable.some((b) => b.id === i.id) && i.partTypeId ? options.get(i.partTypeId) ?? null : null,
       })),
+      fittingFee,
     },
   }
 }
@@ -334,13 +368,15 @@ const respondSchema = z.object({
   decisions: z.array(z.object({
     itemId: z.string().uuid(),
     decision: z.enum(["approved", "declined"]),
+    /** P8-04: for part lines — garage supplies it (default) or the customer buys it on FixAm. */
+    supply: z.enum(["garage", "customer"]).optional(),
   })).min(1),
   signerName: z.string().min(2).max(120),
   signatureDataUrl: z.string().max(200_000).optional(),
 })
 
 /** Customer approves/declines lines via the magic link. */
-export async function respondToEstimate(rawInput: unknown): Promise<ActionResult<{ status: string }>> {
+export async function respondToEstimate(rawInput: unknown): Promise<ActionResult<{ status: string; checkoutUrl?: string }>> {
   const parsed = respondSchema.safeParse(rawInput)
   if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Check the form" } }
   const d = parsed.data
@@ -358,7 +394,46 @@ export async function respondToEstimate(rawInput: unknown): Promise<ActionResult
   const approvedIds = d.decisions.filter((x) => x.decision === "approved").map((x) => x.itemId)
   const declinedIds = d.decisions.filter((x) => x.decision === "declined").map((x) => x.itemId)
 
-  return finalizeApproval({
+  // "I'll buy it": create the vendor order (delivered to this garage, linked to the job) first,
+  // then zero those lines so the garage's markup only applies to parts it supplies.
+  let checkoutUrl: string | undefined
+  const customerIds = d.decisions.filter((x) => x.decision === "approved" && x.supply === "customer").map((x) => x.itemId)
+  if (customerIds.length) {
+    const lines = await db()
+      .select()
+      .from(jobItems)
+      .where(and(eq(jobItems.estimateId, est.id), inArray(jobItems.id, customerIds), eq(jobItems.type, "part")))
+    const [job] = await db().select().from(jobs).where(eq(jobs.id, est.jobId)).limit(1)
+    const [veh] = job ? await db().select().from(vehicles).where(eq(vehicles.id, job.vehicleId)).limit(1) : []
+    const [cust] = job ? await db().select({ phone: customers.phone }).from(customers).where(eq(customers.id, job.customerId)).limit(1) : []
+    if (!job || !veh || !cust?.phone) return { ok: false, error: { code: "VALIDATION", message: "We couldn't set up buying parts for this estimate — ask the garage" } }
+    const { options } = await buyOptionsFor(est.garageId, { make: veh.make, model: veh.model, year: veh.year }, lines.map((l) => l.partTypeId).filter((x): x is string => Boolean(x)))
+    const picks = lines
+      .map((l) => ({ line: l, option: l.partTypeId ? options.get(l.partTypeId) : undefined }))
+      .filter((x): x is { line: typeof lines[number]; option: BuyOption } => Boolean(x.option))
+    if (picks.length !== customerIds.length) {
+      return { ok: false, error: { code: "VALIDATION", message: "One of those parts can't be bought on FixAm right now — let the garage supply it" } }
+    }
+    const order = await createBuyerPartOrder({
+      items: picks.map((p) => ({ productId: p.option.productId, quantity: Math.max(1, Math.round(Number(p.line.quantity))) })),
+      destination: { type: "garage", garageId: est.garageId },
+      vehicleLabel: `${veh.make} ${veh.model}${veh.year ? ` ${veh.year}` : ""} · ${veh.plateNumber}`,
+      buyer: { userId: null, phone: cust.phone },
+      jobId: est.jobId,
+      returnPath: `/t/${d.token}`,
+    })
+    if (!order.ok) return { ok: false, error: { code: "VALIDATION", message: order.error } }
+    for (const p of picks) {
+      const vo = order.orders.find((o) => o.productIds.includes(p.option.productId))
+      await db()
+        .update(jobItems)
+        .set({ supplyMode: "customer", unitPrice: 0n, vendorOrderId: vo?.id ?? null, description: `${p.line.description} (customer buying on FixAm)`, updatedAt: new Date() })
+        .where(eq(jobItems.id, p.line.id))
+    }
+    checkoutUrl = order.checkoutUrl
+  }
+
+  const result = await finalizeApproval({
     garageId: est.garageId,
     estimate: est,
     approvedIds,
@@ -371,4 +446,5 @@ export async function respondToEstimate(rawInput: unknown): Promise<ActionResult
     actorUserId: null,
     auditAction: "estimate.customer_respond",
   })
+  return result.ok ? { ok: true, data: { status: result.data.status, checkoutUrl } } : result
 }
