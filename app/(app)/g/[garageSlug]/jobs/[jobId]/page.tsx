@@ -187,6 +187,7 @@ async function JobLoader({
         partTypeName: i.partTypeId ? partTypeName.get(i.partTypeId) ?? null : null,
         supplyMode: i.supplyMode,
         partId: i.partId,
+        oldPartProof: i.oldPartProof,
         vendorOrderNumber: i.vendorOrderId ? orderById.get(i.vendorOrderId)?.number ?? null : null,
         vendorOrderStatus: i.vendorOrderId ? orderById.get(i.vendorOrderId)?.status ?? null : null,
       }))}

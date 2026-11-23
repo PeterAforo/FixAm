@@ -865,7 +865,8 @@
           "acceptance_criteria": [
             "Invoice issue blocked until proof exists when the setting is on",
             "Customer sees before/after media on the tracker"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-08",
@@ -877,7 +878,8 @@
           "acceptance_criteria": [
             "Mechanic reviews and edits the draft before saving",
             "Nothing is saved without confirmation"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-09",

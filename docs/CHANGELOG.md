@@ -2,6 +2,24 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-08 Voice job notes → structured job card ✅
+- "Talk through the job" on the mechanic's job screen and the job card
+  Findings tab: speak in Twi/Ga/Ewe/Hausa/English (or type) → AI (`job_notes`
+  prompt; rules fallback) drafts findings (severity + replace/repair/monitor),
+  tasks, parts (matched to the standard parts list) and labour hours.
+- The mechanic edits and ticks entries; **nothing is saved until "Save
+  selected"**. Parts land at GH₵0 for the advisor to price; labour uses the
+  garage's default labour rate.
+
+### P8-07 Old-part proof and before/after media ✅
+- Each part line on the job card needs **old-part proof**: a photo (stored as
+  job media, stage `old_part`), "customer took it", or "not a replacement".
+  Issuing an invoice for a job is blocked until every billable part line has
+  proof. Settings → Workshop rules turns this off (default on).
+- Customer tracker (`/t/…`) now groups media into **Before**, **After** and
+  **Old parts we replaced**, and plays short videos.
+- Migration `0023_old-part-proof`.
+
 ### P8-06 Complaint-first repair requests + AI triage ✅
 - Driver app → **Get it fixed** (also `/request`, a shareable link): type the
   problem or say it in Twi/Ga/Ewe/Hausa (voice note → English), pick the car,

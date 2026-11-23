@@ -387,7 +387,8 @@
         "currency": "text req default:'GHS'",
         "accepts_customer_parts": "bool req default:true",
         "customer_part_fitting_fee": "money req default:0",
-        "specialties": "text[] req default:{} (repair-lead matching)"
+        "specialties": "text[] req default:{} (repair-lead matching)",
+        "require_old_part_proof": "bool req default:true"
       },
       "planned_columns": {
         "accepts_customer_parts": "bool req default:true",
@@ -789,7 +790,7 @@
         "job_id": "uuid req fk:jobs",
         "finding_id": "uuid fk:job_findings",
         "kind": "text req (photo|video|voice)",
-        "stage": "text (check_in|diagnosis|repair|qc|delivery)",
+        "stage": "text (check_in|diagnosis|repair|qc|delivery|old_part)",
         "storage_path": "text req",
         "caption": "text",
         "customer_visible": "bool default:true",
@@ -819,7 +820,9 @@
         "part_type_id": "uuid fk:part_types",
         "part_type_confidence": "numeric(3,2)",
         "supply_mode": "text req default:garage (garage|customer)",
-        "vendor_order_id": "uuid fk:vendor_orders"
+        "vendor_order_id": "uuid fk:vendor_orders",
+        "old_part_proof": "text (photo|customer_took|not_replacement)",
+        "old_part_media_id": "uuid (job_media)"
       }
     },
     "job_tasks": {

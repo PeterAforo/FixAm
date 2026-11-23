@@ -9,6 +9,7 @@ import { StatusPill } from "@/components/brand/status-pill"
 import { addJobFinding, toggleJobTask, updateJobStatus } from "@/lib/jobs/actions"
 import { getOpenTimer, startTimeLog, stopTimeLog } from "@/lib/jobs/time-actions"
 import { enqueue, isOnline, newClientId, readQueue, removeFromQueue, writeQueue } from "@/lib/offline/queue"
+import { VoiceJobNotes } from "@/components/ai/voice-job-notes"
 
 type Task = { id: string; title: string; isDone: boolean; required: boolean; checklistItem: boolean }
 type Finding = { id: string; title: string; description: string | null; severity: string | null }
@@ -283,6 +284,7 @@ export function MechanicJobPanel(p: Props) {
             />
             <Button onClick={submitFinding} disabled={pending || !findingTitle.trim()} className="min-h-[48px]">Add finding</Button>
           </div>
+          <VoiceJobNotes garageId={p.garageId} jobId={p.job.id} onSaved={(m) => { setMsg(m); router.refresh() }} />
         </CardContent>
       </Card>
 

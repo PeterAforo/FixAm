@@ -866,9 +866,11 @@ const mediaSchema = z.object({
   garageId: z.string().uuid(),
   jobId: z.string().uuid(),
   kind: z.enum(["photo", "video", "voice"]).default("photo"),
-  stage: z.enum(["check_in", "diagnosis", "repair", "qc", "delivery"]).optional(),
+  stage: z.enum(["check_in", "diagnosis", "repair", "qc", "delivery", "old_part"]).optional(),
   caption: z.string().max(300).optional().or(z.literal("")),
   customerVisible: z.boolean().default(true),
+  /** P8-07: photo of the removed part for this line. */
+  jobItemId: z.string().uuid().optional(),
 })
 
 export async function uploadJobMedia(formData: FormData): Promise<ActionResult<{ mediaId: string }>> {
@@ -882,6 +884,7 @@ export async function uploadJobMedia(formData: FormData): Promise<ActionResult<{
     stage: formData.get("stage") || undefined,
     caption: formData.get("caption") ?? "",
     customerVisible: formData.get("customerVisible") !== "false",
+    jobItemId: formData.get("jobItemId") || undefined,
   })
   if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Invalid input" } }
   const d = parsed.data
@@ -918,7 +921,30 @@ export async function uploadJobMedia(formData: FormData): Promise<ActionResult<{
       uploadedBy: userId,
     })
     .returning({ id: jobMedia.id })
+  if (d.jobItemId) {
+    await db()
+      .update(jobItems)
+      .set({ oldPartProof: "photo", oldPartMediaId: row!.id, updatedAt: new Date() })
+      .where(and(eq(jobItems.id, d.jobItemId), eq(jobItems.garageId, d.garageId), eq(jobItems.jobId, d.jobId)))
+  }
   return { ok: true, data: { mediaId: row!.id } }
+}
+
+/** P8-07: record old-part proof without a photo — the customer took the part, or the line isn't a replacement. */
+export async function setOldPartProof(rawInput: unknown): Promise<ActionResult<{ itemId: string }>> {
+  const userId = await getSessionUserId()
+  if (!userId) return { ok: false, error: { code: "UNAUTHENTICATED", message: "Sign in first" } }
+  const parsed = z.object({ garageId: z.string().uuid(), jobItemId: z.string().uuid(), proof: z.enum(["customer_took", "not_replacement"]).nullable() }).safeParse(rawInput)
+  if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Invalid input" } }
+  const d = parsed.data
+  const ctx = await requireMembership(userId, d.garageId)
+  if (!ctx || !can(ctx.principal, "jobs.update")) return { ok: false, error: { code: "FORBIDDEN", message: "No permission" } }
+  await db()
+    .update(jobItems)
+    .set({ oldPartProof: d.proof, oldPartMediaId: null, updatedAt: new Date() })
+    .where(and(eq(jobItems.id, d.jobItemId), eq(jobItems.garageId, d.garageId)))
+  await writeAuditLog({ garageId: d.garageId, actorUserId: userId, action: "job_item.old_part_proof", entityType: "job_item", entityId: d.jobItemId, after: { proof: d.proof } }).catch(() => undefined)
+  return { ok: true, data: { itemId: d.jobItemId } }
 }
 
 /** Staff roster for assignment pickers (active members with names). */

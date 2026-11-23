@@ -41,7 +41,7 @@ export type TrackerData = {
   garageLogoUrl: string | null
   mechanicFirstName: string | null
   findings: { id: string; title: string; description: string | null; severity: string }[]
-  media: { id: string; kind: string; caption: string | null; url: string | null }[]
+  media: { id: string; kind: string; stage: string | null; caption: string | null; url: string | null }[]
   events: { id: string; toStatus: string; note: string | null; createdAt: string }[]
   finished: boolean
 }
@@ -76,11 +76,11 @@ export async function getTrackerData(rawInput: unknown): Promise<ActionResult<Tr
       .orderBy(desc(jobFindings.createdAt))
       .limit(20),
     db()
-      .select({ id: jobMedia.id, kind: jobMedia.kind, caption: jobMedia.caption, storagePath: jobMedia.storagePath })
+      .select({ id: jobMedia.id, kind: jobMedia.kind, stage: jobMedia.stage, caption: jobMedia.caption, storagePath: jobMedia.storagePath })
       .from(jobMedia)
       .where(and(eq(jobMedia.jobId, job.id), eq(jobMedia.customerVisible, true)))
       .orderBy(desc(jobMedia.createdAt))
-      .limit(12),
+      .limit(30),
     db()
       .select({ id: jobStatusEvents.id, toStatus: jobStatusEvents.toStatus, note: jobStatusEvents.note, createdAt: jobStatusEvents.createdAt })
       .from(jobStatusEvents)
@@ -92,9 +92,9 @@ export async function getTrackerData(rawInput: unknown): Promise<ActionResult<Tr
   const media = await Promise.all(
     mediaRows.map(async (m) => {
       try {
-        return { id: m.id, kind: m.kind, caption: m.caption, url: await storageProvider().getSignedUrl(m.storagePath, 600) }
+        return { id: m.id, kind: m.kind, stage: m.stage, caption: m.caption, url: await storageProvider().getSignedUrl(m.storagePath, 600) }
       } catch {
-        return { id: m.id, kind: m.kind, caption: m.caption, url: null }
+        return { id: m.id, kind: m.kind, stage: m.stage, caption: m.caption, url: null }
       }
     })
   )

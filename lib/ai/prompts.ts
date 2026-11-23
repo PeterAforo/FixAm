@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { rulesTriage, SPECIALTY_IDS } from "@/lib/repair-requests/core"
+import { rulesJobNotes } from "@/lib/jobs/voice-notes-core"
 
 /**
  * Prompt registry. Every AI feature registers a prompt here with a version,
@@ -105,4 +106,35 @@ export const triagePrompt = definePrompt({
   },
   mock: (i) => rulesTriage(i.complaint, i.warningLights),
   maxTokens: 900,
+})
+
+/** Mechanic's voice note → draft job card entries for review (P8-08). Nothing is saved without confirmation. */
+export const jobNotesPrompt = definePrompt({
+  key: "job_notes",
+  version: 1,
+  system:
+    "You turn a Ghanaian mechanic's spoken job notes (already translated to English, may be informal) into draft job card entries. " +
+    "Findings = problems seen on the car (severity urgent|recommended|can_wait, recommendation replace|repair|monitor). " +
+    "Tasks = work steps to do. Parts = parts to fit with quantity. Labour = labour lines with estimated hours. " +
+    "Only include what the mechanic actually said; do not invent prices. Keep titles short (under 60 characters).",
+  render: (i: { notes: string; vehicle: string | null; complaint: string | null }) =>
+    `Vehicle: ${i.vehicle ?? "unknown"}\nCustomer complaint: ${i.complaint ?? "—"}\n\nMechanic's notes: ${i.notes}`,
+  output: z.object({
+    findings: z.array(z.object({ title: z.string().min(1).max(120), description: z.string().max(400).nullable(), severity: z.enum(["urgent", "recommended", "can_wait"]), recommendation: z.enum(["replace", "repair", "monitor"]) })).max(10),
+    tasks: z.array(z.object({ title: z.string().min(1).max(120) })).max(15),
+    parts: z.array(z.object({ description: z.string().min(1).max(120), quantity: z.number().min(0.25).max(100) })).max(15),
+    labour: z.array(z.object({ description: z.string().min(1).max(120), hours: z.number().min(0).max(100) })).max(10),
+  }),
+  jsonSchema: {
+    type: "object",
+    properties: {
+      findings: { type: "array", items: { type: "object", properties: { title: { type: "string" }, description: { type: ["string", "null"] }, severity: { type: "string", enum: ["urgent", "recommended", "can_wait"] }, recommendation: { type: "string", enum: ["replace", "repair", "monitor"] } }, required: ["title", "description", "severity", "recommendation"] } },
+      tasks: { type: "array", items: { type: "object", properties: { title: { type: "string" } }, required: ["title"] } },
+      parts: { type: "array", items: { type: "object", properties: { description: { type: "string" }, quantity: { type: "number" } }, required: ["description", "quantity"] } },
+      labour: { type: "array", items: { type: "object", properties: { description: { type: "string" }, hours: { type: "number" } }, required: ["description", "hours"] } },
+    },
+    required: ["findings", "tasks", "parts", "labour"],
+  },
+  mock: (i) => rulesJobNotes(i.notes),
+  maxTokens: 1200,
 })

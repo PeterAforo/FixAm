@@ -189,6 +189,21 @@ export async function issueInvoice(rawInput: unknown): Promise<ActionResult<{ in
   if (!inv) return { ok: false, error: { code: "NOT_FOUND", message: "Invoice not found" } }
   if (inv.status !== "draft") return { ok: false, error: { code: "VALIDATION", message: "Only draft invoices can be issued" } }
 
+  // P8-07: replaced parts need proof (old-part photo, customer took it, or "not a replacement").
+  if (inv.source === "job" && inv.sourceId) {
+    const { missingOldPartProof } = await import("@/lib/jobs/old-part-proof")
+    const missing = await missingOldPartProof(d.garageId, inv.sourceId)
+    if (missing.length) {
+      return {
+        ok: false,
+        error: {
+          code: "VALIDATION",
+          message: `Add old-part proof first (photo or "customer took it") for: ${missing.slice(0, 3).join(", ")}${missing.length > 3 ? ` and ${missing.length - 3} more` : ""}. You can turn this rule off in Settings.`,
+        },
+      }
+    }
+  }
+
   // document_sequences requires a concrete branch for gapless numbering —
   // fall back to the garage's default branch for manual invoices.
   let seqBranchId = inv.branchId

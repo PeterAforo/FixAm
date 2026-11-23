@@ -18,6 +18,7 @@ import {
   updateJobStatus,
   uploadJobMedia,
   recordJobOilService,
+  setOldPartProof,
 } from "@/lib/jobs/actions"
 import { createInvoiceFromJob } from "@/lib/money/actions"
 import type { JobStatus } from "@/lib/jobs/transitions"
@@ -25,6 +26,7 @@ import { PartOffersPanel } from "@/components/part-offers/part-offers-panel"
 import { setPartTypeOnJob } from "@/lib/part-offers/actions"
 import type { JobRepairRequest } from "@/lib/repair-requests/service"
 import { MediaStrip, TriageCard } from "@/components/repair-requests/triage-card"
+import { VoiceJobNotes } from "@/components/ai/voice-job-notes"
 
 const inputCls =
   "min-h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm outline-none focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
@@ -80,7 +82,7 @@ export function JobDetailPanel(props: {
   bayName: string | null
   assignments: { userId: string; name: string; isLead: boolean }[]
   findings: { id: string; title: string; description: string | null; severity: string; customerVisible: boolean; createdAt: string; recommendation: string | null; partTypeId: string | null; partTypeName: string | null }[]
-  items: { id: string; type: string; description: string; quantity: number; unitPrice: number; labourHours: number | null; approvalStatus: string | null; partTypeId: string | null; partTypeName: string | null; supplyMode: string; vendorOrderNumber: string | null; vendorOrderStatus: string | null; partId: string | null }[]
+  items: { id: string; type: string; description: string; quantity: number; unitPrice: number; labourHours: number | null; approvalStatus: string | null; partTypeId: string | null; partTypeName: string | null; supplyMode: string; vendorOrderNumber: string | null; vendorOrderStatus: string | null; partId: string | null; oldPartProof: string | null }[]
   partTypes: { id: string; name: string }[]
   canOrderParts: boolean
   repairRequest?: JobRepairRequest | null
@@ -248,8 +250,44 @@ export function JobDetailPanel(props: {
 
   const mediaUrl = (path: string) => `/api/dev-storage/${encodeURIComponent(path)}`
 
+  // P8-07 old-part proof
+  const proofRef = useRef<HTMLInputElement>(null)
+  const [proofItem, setProofItem] = useState<string | null>(null)
+  function pickProofPhoto(itemId: string) {
+    setProofItem(itemId)
+    proofRef.current?.click()
+  }
+  function onProofFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file || !proofItem) return
+    startTransition(async () => {
+      const fd = new FormData()
+      fd.set("garageId", garageId)
+      fd.set("jobId", job.id)
+      fd.set("kind", "photo")
+      fd.set("stage", "old_part")
+      fd.set("jobItemId", proofItem)
+      fd.set("caption", "Old part removed")
+      fd.set("file", file)
+      const res = await uploadJobMedia(fd)
+      setMsg(res.ok ? "Old-part photo saved — the customer sees it on their tracker." : res.error.message)
+      setProofItem(null)
+      router.refresh()
+    })
+  }
+  function proof(itemId: string, value: "customer_took" | "not_replacement" | null) {
+    startTransition(async () => {
+      const res = await setOldPartProof({ garageId, jobItemId: itemId, proof: value })
+      if (!res.ok) setMsg(res.error.message)
+      router.refresh()
+    })
+  }
+  const PROOF_LABEL: Record<string, string> = { photo: "Old part photo ✓", customer_took: "Customer took old part ✓", not_replacement: "Not a replacement" }
+
   return (
     <div className="space-y-6">
+      <input ref={proofRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onProofFile} />
       {/* Header */}
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -475,6 +513,7 @@ export function JobDetailPanel(props: {
         <Card>
           <CardContent className="space-y-4 p-5">
             <h2 className="text-[15px] font-semibold">Findings</h2>
+            {canUpdate && <VoiceJobNotes garageId={garageId} jobId={job.id} onSaved={(m) => { setMsg(m); router.refresh() }} />}
             {canUpdate && (
               <div className="grid gap-2 rounded-xl border border-dashed border-border p-3 sm:grid-cols-[1fr_1fr_auto]">
                 <input className={inputCls} placeholder="Finding title * e.g. Front shocks leaking" value={finding.title} onChange={(e) => setFinding({ ...finding, title: e.target.value })} />
@@ -573,6 +612,25 @@ export function JobDetailPanel(props: {
                         {i.description}
                         {i.supplyMode === "customer" && <span className="ml-2 rounded bg-[#E6F4FF] px-1.5 py-0.5 text-[10px] font-semibold text-[#0B5CAD]">Customer buying</span>}
                         {i.vendorOrderNumber && <span className="ml-2 text-[11px] text-muted-foreground">{i.vendorOrderNumber} · {i.vendorOrderStatus?.replace(/_/g, " ")}</span>}
+                        {i.type === "part" && (
+                          <span className="mt-1 flex flex-wrap items-center gap-2 text-[11px]">
+                            {i.oldPartProof ? (
+                              <>
+                                <span className="rounded bg-emerald-50 px-1.5 py-0.5 font-semibold text-emerald-800">{PROOF_LABEL[i.oldPartProof] ?? i.oldPartProof}</span>
+                                {canUpdate && <button type="button" className="underline text-muted-foreground" onClick={() => proof(i.id, null)}>undo</button>}
+                              </>
+                            ) : canUpdate ? (
+                              <>
+                                <span className="text-muted-foreground">Old part:</span>
+                                <button type="button" className="inline-flex items-center gap-1 font-semibold underline" disabled={pending} onClick={() => pickProofPhoto(i.id)}><Camera className="size-3" /> photo</button>
+                                <button type="button" className="font-semibold underline" disabled={pending} onClick={() => proof(i.id, "customer_took")}>customer took it</button>
+                                <button type="button" className="underline text-muted-foreground" disabled={pending} onClick={() => proof(i.id, "not_replacement")}>not a replacement</button>
+                              </>
+                            ) : (
+                              <span className="text-muted-foreground">Old-part proof needed</span>
+                            )}
+                          </span>
+                        )}
                         {i.type === "part" && i.partTypeId && !i.partId && !i.vendorOrderNumber && (
                           <button type="button" className="ml-2 text-[11px] font-semibold underline" onClick={() => setOpenOffers(openOffers === `i:${i.id}` ? null : `i:${i.id}`)}>
                             {openOffers === `i:${i.id}` ? "hide offers" : "offers"}

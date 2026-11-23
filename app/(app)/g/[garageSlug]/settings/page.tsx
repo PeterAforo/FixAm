@@ -15,6 +15,7 @@ import { CoveragePanel } from "./coverage-panel"
 import { ReviewsPanel } from "./reviews-panel"
 import { CustomerPartsPanel } from "./customer-parts-panel"
 import { SpecialtiesPanel } from "./specialties-panel"
+import { WorkshopRulesPanel } from "./workshop-rules-panel"
 import { garageSettings } from "@/lib/db/schema"
 import { getCustomerPartsSettings } from "@/lib/parts-shop/garage-actions"
 
@@ -45,7 +46,7 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
     canManageSettings ? getCustomerPartsSettings(garage.id) : Promise.resolve(null),
   ])
   const [settingsRow] = canManageSettings
-    ? await db().select({ specialties: garageSettings.specialties }).from(garageSettings).where(eq(garageSettings.garageId, garage.id)).limit(1)
+    ? await db().select({ specialties: garageSettings.specialties, requireOldPartProof: garageSettings.requireOldPartProof }).from(garageSettings).where(eq(garageSettings.garageId, garage.id)).limit(1)
     : []
   const reviews = canManageSettings
     ? await db()
@@ -93,6 +94,13 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
             garageId={garage.id}
             reviews={reviews.map((r) => ({ ...r, createdAt: r.createdAt.toISOString().slice(0, 10) }))}
           />
+        </section>
+      )}
+
+      {canManageSettings && (
+        <section>
+          <h2 className="text-[15px] font-semibold">Workshop rules</h2>
+          <WorkshopRulesPanel garageId={garage.id} requireOldPartProof={settingsRow?.requireOldPartProof ?? true} />
         </section>
       )}
 

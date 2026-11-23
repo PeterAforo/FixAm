@@ -155,20 +155,30 @@ export function TrackerPanel({ token, initial }: { token: string; initial: Track
               </CardContent></Card>
             )}
 
-            {/* Photos */}
+            {/* Photos & videos — before / after / old parts (P8-07) */}
             {data.media.length > 0 && (
-              <Card><CardContent className="p-5">
-                <h2 className="mb-3 font-display text-base font-bold">Photos</h2>
-                <div className="grid grid-cols-3 gap-2">
-                  {data.media.map((m) => (
-                    m.url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img key={m.id} src={m.url} alt={m.caption ?? "job photo"} className="aspect-square w-full rounded-lg border border-border object-cover" />
-                    ) : (
-                      <div key={m.id} className="flex aspect-square items-center justify-center rounded-lg bg-muted text-xs text-muted-foreground">{m.kind}</div>
-                    )
-                  ))}
-                </div>
+              <Card><CardContent className="space-y-4 p-5">
+                {([
+                  ["Before", data.media.filter((m) => m.stage === "check_in" || m.stage === "diagnosis")],
+                  ["After", data.media.filter((m) => m.stage === "repair" || m.stage === "qc" || m.stage === "delivery" || !m.stage)],
+                  ["Old parts we replaced", data.media.filter((m) => m.stage === "old_part")],
+                ] as const).filter(([, list]) => list.length > 0).map(([title, list]) => (
+                  <div key={title}>
+                    <h2 className="mb-2 font-display text-base font-bold">{title}</h2>
+                    <div className="grid grid-cols-3 gap-2">
+                      {list.map((m) =>
+                        !m.url ? (
+                          <div key={m.id} className="flex aspect-square items-center justify-center rounded-lg bg-muted text-xs text-muted-foreground">{m.kind}</div>
+                        ) : m.kind === "video" ? (
+                          <video key={m.id} src={m.url} controls playsInline className="aspect-square w-full rounded-lg border border-border bg-black object-cover" />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img key={m.id} src={m.url} alt={m.caption ?? "job photo"} className="aspect-square w-full rounded-lg border border-border object-cover" />
+                        )
+                      )}
+                    </div>
+                  </div>
+                ))}
               </CardContent></Card>
             )}
 

@@ -91,6 +91,8 @@ export const garageSettings = pgTable("garage_settings", {
   /** Flat fee for fitting a part the driver bought, shown before they pay. */
   customerPartFittingFee: moneyCol("customer_part_fitting_fee").notNull().default(sql`0`),
   /** Specialties for repair-request matching (P8-06); empty = general garage. */
+  /** P8-07: part lines need old-part proof before an invoice can be issued. */
+  requireOldPartProof: boolean("require_old_part_proof").notNull().default(true),
   specialties: text("specialties").array().notNull().default(sql`'{}'::text[]`),
   currency: text("currency").notNull().default("GHS"),
   ...timestamps,

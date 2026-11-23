@@ -240,6 +240,9 @@ export const jobItems = pgTable(
     partTypeConfidence: numeric("part_type_confidence", { precision: 3, scale: 2 }),
     supplyMode: text("supply_mode").notNull().default("garage"), // garage|customer
     vendorOrderId: uuid("vendor_order_id").references(() => vendorOrders.id),
+    /** P8-07: proof the old part was replaced — photo|customer_took|not_replacement. */
+    oldPartProof: text("old_part_proof"),
+    oldPartMediaId: uuid("old_part_media_id"),
     isIssuedFromStock: boolean("is_issued_from_stock").default(false),
     sortOrder: integer("sort_order").default(0),
     ...timestamps,
