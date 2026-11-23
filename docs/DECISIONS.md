@@ -158,3 +158,19 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
 - **Cost estimates grounded in garage invoice history.** `garagePriceHints` feeds the garage's recent invoice-line averages into the `inspection_report` prompt; output is labelled estimates, never quotes.
 - **Payment via existing theTeller reconcile.** Inspections store `payment_reference`; `reconcileReference` gained a third lookup before vendor orders � no new webhook needed.
 
+
+## P8-21 — launch readiness notes
+
+- **theTeller has no webhooks.** Settlement relies on the customer return
+  redirect (`/payments/return/[reference]/[to]`) plus the Inngest
+  `reconcileReference` sweep. The legacy `/api/webhooks/paystack` route and
+  `lib/money/paystack-webhook.ts` remain for the mock provider path but are
+  dead code once `PAYMENT_PROVIDER=theteller`; remove in a cleanup pass.
+- **Production env gate.** `lib/env.ts` runs from `instrumentation.ts` and
+  throws at startup when required vars (core + theTeller creds when
+  `PAYMENT_PROVIDER=theteller`) are missing — a misconfigured deploy fails
+  loudly instead of serving broken payments.
+- **E2E in CI is opt-in via secrets.** `tests/e2e` needs a seeded
+  environment, so the CI step only runs when `PLAYWRIGHT_BASE_URL` (and
+  credentials) secrets exist; `check-rls` likewise enforces only when
+  `DATABASE_URL` is present.

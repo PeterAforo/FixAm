@@ -1037,6 +1037,23 @@
             "Report shareable by link and downloadable as PDF"
           ],
           "status": "done"
+        },
+        {
+          "id": "P8-21",
+          "title": "Launch readiness",
+          "depends_on": [
+            "P8-20"
+          ],
+          "description": "Bring the launch checklist up to date (theTeller replaces Paystack, full P8 acceptance status, not-real-yet stand-ins), complete .env.example with a production startup check, add scripts/check-rls.ts to CI, write Playwright e2e flows 1-8 with stub adapters, and produce docs/STAGING-TEST-PLAN.md plus a first-deploy runbook.",
+          "acceptance_criteria": [
+            "LAUNCH-CHECKLIST.md covers every P8 criterion and has no Paystack references",
+            ".env.example is complete and the production startup check works",
+            "scripts/check-rls.ts passes and runs in CI",
+            "Playwright suite (flows 1 to 8) passes in CI with no external keys",
+            "docs/STAGING-TEST-PLAN.md and the first-deploy runbook exist",
+            "Any bug the e2e tests uncover is fixed and listed in the CHANGELOG"
+          ],
+          "status": "done"
         }
       ]
     }

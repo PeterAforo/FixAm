@@ -107,3 +107,123 @@ Fixed-window limits in `rate_limits` (Postgres), enforced in server actions:
 
 `pnpm db:seed` is idempotent — safe to re-run. Demo logins use
 `Password123!` (see `scripts/seed.ts` / `docs/devin-spec/specs/seed-data.json`).
+
+## First deploy runbook
+
+Do these in order when taking the app to a new environment.
+
+### 1. Database
+
+```bash
+pnpm install
+pnpm db:migrate        # applies every migration in drizzle/ (0016 ? latest)
+pnpm check:rls         # lists any public table missing RLS; must print "all public tables have RLS enabled"
+```
+
+Confirm RLS is on for every table:
+
+```sql
+select tablename from pg_tables
+where schemaname = 'public' and not rowsecurity;
+-- expected: 0 rows
+```
+
+### 2. Vercel environment variables
+
+Set in **Vercel ? Settings ? Environment Variables** (Production + Preview),
+grouped by feature. See `.env.example` for the full annotated list.
+
+- **Core (required):** `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SUPABASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+  `DATABASE_URL`, `DATABASE_URL_DIRECT`, `MAGIC_LINK_SECRET`,
+  `LINK_SIGNING_SECRET`, `PAYOUT_ENCRYPTION_KEY`, `ADMIN_ALERT_PHONE`.
+- **Payments:** `PAYMENT_PROVIDER=theteller`, `THETELLER_ENV`,
+  `THETELLER_MERCHANT_ID`, `THETELLER_API_USER`, `THETELLER_API_KEY`,
+  `THETELLER_PASS_CODE` (+ optional `THETELLER_API_BASE`,
+  `THETELLER_CHECKOUT_URL`, `THETELLER_DEFAULT_EMAIL`).
+- **SMS:** `MESSAGING_SMS_PROVIDER=arkesel|hubtel`, `ARKESEL_API_KEY` or
+  `HUBTEL_CLIENT_ID`/`HUBTEL_CLIENT_SECRET`, `SMS_SENDER_ID`,
+  `SMS_WEBHOOK_SECRET`.
+- **WhatsApp:** `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`,
+  `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`.
+- **AI/speech:** `AI_PROVIDER=claude`, `ANTHROPIC_API_KEY`,
+  `ANTHROPIC_MODEL`, `AI_PRICE_INPUT_PER_MTOK`, `AI_PRICE_OUTPUT_PER_MTOK`;
+  `SPEECH_PROVIDER=khaya`, `KHAYA_API_KEY`, `KHAYA_BASE_URL`,
+  `KHAYA_ASR_PATH`, `KHAYA_TRANSLATE_PATH`.
+- **Delivery:** `DELIVERY_PROVIDER`, `DELIVERY_OPS_PHONE`.
+- **Financing:** `FINANCING_PROVIDER=mock` until a lender is signed.
+- **Email/push/observability:** `RESEND_API_KEY`, `EMAIL_FROM`,
+  `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `SENTRY_DSN`,
+  `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`,
+  `SENTRY_AUTH_TOKEN`.
+- **Inngest:** `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY`.
+
+### 3. theTeller — no webhook to configure
+
+theTeller has **no webhooks**. Settlement works two ways, both already built:
+
+- the customer returns to `https://<your-domain>/payments/return/<reference>/<to>`
+  (passed as `redirect_url` at checkout; theTeller appends `?code=…`), which
+  calls `reconcileReference`;
+- the Inngest escrow sweep polls pending references via
+  `PaymentProvider.verify(reference)` — missed returns self-heal.
+
+What you must set in the PaySwitch merchant dashboard: the **float account
+pass code** (`THETELLER_PASS_CODE`) for payouts, and make sure test/live mode
+(`THETELLER_ENV`) matches the keys. There is no callback URL to register.
+
+### 4. WhatsApp webhook + templates
+
+- Webhook URL: `https://<your-domain>/api/webhooks/whatsapp`
+- Verify token: the value of `WHATSAPP_VERIFY_TOKEN`.
+- Subscribe the app to the `messages` field.
+
+Submit every template below to Meta (WhatsApp Manager ? Message templates)
+before relying on WhatsApp sends — SMS fallback covers gaps meanwhile:
+
+`otp_code` (AUTHENTICATION), `check_in_tracker`, `estimate_ready`,
+`job_ready`, `payment_receipt`, `booking_confirmed`, `booking_tomorrow`,
+`oil_due_soon`, `oil_due`, `oil_overdue`, `service_due_soon`, `service_due`,
+`service_overdue`, `insurance_due_soon`, `insurance_due`,
+`insurance_overdue`, `roadworthy_due_soon`, `roadworthy_due`,
+`roadworthy_overdue`, `registration_due_soon`, `registration_due`,
+`registration_overdue`, `drivers_licence_due_soon`, `drivers_licence_due`,
+`drivers_licence_overdue`, `custom_due_soon`, `custom_due`,
+`custom_overdue`, `combined_due`, `mileage_confirm`, `mileage_nudge`,
+`instalment_due_soon`, `instalment_due`, `instalment_overdue`,
+`credit_statement_ready`, `credit_statement_overdue`, `renewal_update`,
+`staff_invite`, `fixam_assistant_reply`, `inspection_report_ready`,
+`seasonal_harmattan`, `seasonal_rainy` (all UTILITY unless noted; seasonal
+pair are MARKETING).
+
+### 5. Inngest
+
+- Deploy, then in the Inngest dashboard add the app: serve URL
+  `https://<your-domain>/api/inngest`.
+- Put the generated `INNGEST_EVENT_KEY` / `INNGEST_SIGNING_KEY` back into
+  Vercel and redeploy.
+- For local dev: `pnpm inngest:dev`.
+
+### 6. Supabase storage
+
+Create buckets (all private; access via signed URLs from the app):
+
+- `job-photos` — check-in/repair photos
+- `inspection-photos` — pre-purchase inspection evidence
+- `claim-documents` — accident/insurance claim uploads
+- `rider-documents` — rider licence/Ghana Card/motorbike photos
+- `avatars` — optional profile images
+
+Attach RLS/storage policies scoped to the owning garage/customer (mirror the
+table RLS: garage members read/write their garage prefix; customers read
+their own objects only).
+
+### 7. Seed (staging only)
+
+```bash
+DATABASE_URL=... pnpm db:seed
+```
+
+Idempotent — safe to re-run; seeds the demo garage, staff, customers,
+vendors, brokers and riders used by `tests/e2e` and the staging test plan.
+**Never run the seed against production.**

@@ -2,6 +2,35 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-21 Launch readiness ✅
+- **Launch checklist updated** (`docs/LAUNCH-CHECKLIST.md`): all Paystack
+  references replaced with theTeller, a full P8-01→P8-21 acceptance table
+  (verified-in-tests vs needs-staging), and a "Not real yet" section listing
+  every stand-in (mock lender, 0% tow commission, HTML-print invoices, Sentry
+  off, mock adapters).
+- **Env audit**: `.env.example` completed — Paystack block removed, all
+  `process.env` reads documented with required/optional + safe defaults
+  (`LINK_SIGNING_SECRET`, `SMS_WEBHOOK_SECRET`, `FINANCING_*`, support
+  contacts, theTeller extras).
+- **Production startup check**: `lib/env.ts` (called from
+  `instrumentation.ts`) throws at boot when required vars are missing —
+  core vars always, theTeller credentials when `PAYMENT_PROVIDER=theteller`.
+- **`scripts/check-rls.ts` + `pnpm check:rls`**: lists public tables without
+  RLS, exits non-zero if any exist; wired into CI (enforces when the
+  `DATABASE_URL` secret is set).
+- **Playwright flows 1–8** (`tests/e2e/flows.spec.ts`): garage lifecycle,
+  job→invoice→receipt, public booking/PIN handover, repair requests,
+  parts ordering, towing SOS, all P8 surfaces (claims/riders/inbox/
+  inspections/`/i/<token>`), and cross-tenant isolation — env-gated like the
+  existing auth spec; e2e CI step runs only when staging secrets exist.
+- **Docs**: `docs/STAGING-TEST-PLAN.md` (owner phone checklist) and a
+  "First deploy" runbook in `docs/OPERATIONS.md` (migrations + RLS query,
+  env vars by feature, theTeller notes, WhatsApp webhook + all 43 Meta
+  template names, Inngest, storage buckets, staging-only seed).
+- **Bug fixes from this task**: none — no e2e run against a live seeded
+  environment was possible in this session; flows are written to skip cleanly
+  until `PLAYWRIGHT_*` secrets are configured (see staging test plan).
+
 ### P8-20 Pre-purchase inspections ✅
 - **Garage settings**: `offers_inspections` + `inspection_price` (pesewas) on
   `garage_settings`, edited in Settings → "Pre-purchase inspections".

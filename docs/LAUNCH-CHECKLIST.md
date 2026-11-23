@@ -27,8 +27,10 @@ proven by unit tests or a local build.
   creates `oil_change` due items.
 - Invoice numbers via `document_sequences` (`nextDocNumber`) — gapless,
   concurrency-safe; issued invoices immutable.
-- Paystack webhook: signature-verified, idempotent via `webhook_events`,
-  MoMo/card payments settle only via webhook.
+- theTeller payments: checkout via `lib/integrations/payments/theteller.ts`,
+  settlement only via signature-verified webhook + `reconcileReference`,
+  idempotent via `webhook_events` (`lib/money/payments.ts`,
+  `lib/integrations/payments.ts`).
 - Instalment plans generate scheduled due items; late fees per spec.
 - Credit accounts: limit enforcement with audited owner override; ageing
   buckets unit-tested; statement-day generation via Inngest.
@@ -85,7 +87,7 @@ against a deployed staging environment:
 | P1-05 check-in < 2 min on tablet | Timed manual test |
 | P1-06 two-browser realtime < 1s | Open two sessions, move a card |
 | P1-07 airplane-mode offline sync, photo upload retry | Device test on staging |
-| P2-02 MoMo test payment via webhook | Paystack test keys on staging |
+| P2-02 MoMo test payment via theTeller webhook | theTeller test keys on staging |
 | P2-08 dashboard < 2.5s Lighthouse throttled | Run Lighthouse on staging |
 | P3-01 CSV import of 500 parts | Run import on staging |
 | P3-02 counter sale < 30s | Timed manual test |
@@ -118,3 +120,57 @@ against a deployed staging environment:
 - [ ] Broker: sign up → driver requests quote → broker quotes (SMS) → driver accepts → complete.
 - [ ] Garage "Send to broker" on a renewal → accept broker quote in renewals panel.
 - [ ] Admin verifies a broker → Verified badge shows in pickers.
+
+## Phase 8 — acceptance criteria status (P8-01 ? P8-21)
+
+Each criterion is marked **verified in code/tests** (with the test file) or
+**needs staging** (hardware, live API, or real database required).
+
+| Task | Criterion | Status |
+|---|---|---|
+| P8-01 | Garage seasonal campaigns (harmattan/rainy) send via approved templates, SMS fallback, `/u/<token>` opt-out | needs staging — Meta template approval + live sends (`lib/seasonal/*`, `lib/messaging/templates.test.ts`) |
+| P8-02 | Part-photo recognition suggests parts from a photo | needs staging — real Anthropic vision + garage photo eval (`scripts/eval-part-photos.ts`, target =80% top-1) |
+| P8-03 | Customer parts ordering ? vendor fulfil ? delivery | needs staging — live delivery partner (`lib/part-offers`, vendor order flow) |
+| P8-04 | OBD scan via Android Web Bluetooth (ELM327) | needs staging — physical adapter + Android Chrome (`lib/obd/*`, `components/obd/*`) |
+| P8-05 | Pay-later / financing instalments | verified in code/tests (`lib/financing/core.test.ts`); live lender is a stand-in — see Not real yet |
+| P8-06 | Towing SOS ? operator dispatch ? live tracking ? settlement | needs staging — two real phones + GPS (`lib/towing/*`, `tests/e2e/flows.spec.ts` flow 6) |
+| P8-07 | Pickup & drop-off runs with PINs, photos, `/p/<token>` handover | needs staging — real devices + photos (`lib/pickups/*`, flows.spec flow 3) |
+| P8-08 | Public vehicle passport `/v/<token>` + printable passport + QR | verified in code/tests (`lib/passport/core.test.ts`); QR scan on a phone — needs staging |
+| P8-09 | Driver marketplace / service discovery | verified in code/tests (unit suites); live directory data — needs staging |
+| P8-10 | Garage analytics / fixam score | verified in code/tests (`lib/domain` score tests) |
+| P8-11 | WhatsApp template messaging to customers | needs staging — Meta template approvals (`message-templates.json`, `lib/messaging/templates.test.ts`) |
+| P8-12 | Multi-branch / fleet operations | verified in code/tests (RLS + permission suites) |
+| P8-13 | Insurance & DVLA renewal reminders with partner links | verified in code/tests; live partner feeds — needs staging |
+| P8-14 | Customer portal depth (history, documents, privacy) | verified in code/tests; phone OTP on a real SIM — needs staging |
+| P8-15 | Voice notes for job notes (Khaya ASR, tw/gaa/ee/ha) | needs staging — funded Khaya key + real voice notes (`lib/jobs/voice-*`) |
+| P8-16 | Workshop rules / quality gates | verified in code/tests (`lib/jobs` rule tests) |
+| P8-17 | Accident & insurance claims wizard ? broker/garage ? statuses ? repair authorisation | verified in code/tests (`lib/claims/core.test.ts`); SMS delivery + live insurer routing — needs staging |
+| P8-18 | FixAm rider network: onboarding, admin approval, dispatch, PINs, escrow payout | verified in code/tests (`lib/riders/*`); MoMo payout + GPS — needs staging |
+| P8-19 | Garage WhatsApp AI assistant: webhook, tools, inbox takeover, 24h window | verified in code/tests (`lib/whatsapp/*`); live Meta webhook + approved `fixam_assistant_reply` template — needs staging |
+| P8-20 | Pre-purchase inspections: booking+payment, ~120-point checklist, OBD attach, AI summary, PDF, `/i/<token>` share, passport link | verified in code/tests (`lib/inspections/core.test.ts`); theTeller charge + PDF fidelity on a phone — needs staging |
+| P8-21 | Launch readiness: checklist, env audit, `check-rls`, Playwright flows 1–8, staging plan | this document + `scripts/check-rls.ts` + `tests/e2e/flows.spec.ts` + `docs/STAGING-TEST-PLAN.md` |
+
+## Not real yet — stand-ins and what replaces them
+
+- **Mock lender (`FINANCING_PROVIDER=mock`)** — pay-later plans run on a
+  simulated lender at `FINANCING_MOCK_MONTHLY_RATE_BP`. Replacing it: sign a
+  lender, implement their API in `lib/integrations/financing.ts`, set
+  `FINANCING_PROVIDER=<lender>` + credentials.
+- **0% tow commission** — towing settlement currently pays operators without
+  a platform commission; it is an owner pricing decision, not a bug. Change
+  `lib/towing` settlement split when decided.
+- **HTML-print invoice PDFs** — invoices render print-optimized HTML at
+  `/print/invoices/[id]`; "Save as PDF" in the browser is the PDF. Server-side
+  PDF (like inspection reports via `@react-pdf/renderer`) is future work.
+- **Sentry off** — `SENTRY_DSN`/`NEXT_PUBLIC_SENTRY_DSN` unset ? SDK no-ops.
+  Set DSNs + org/project/auth token to enable error tracking and source maps.
+- **Mock adapters on by default** — `lib/integrations/index.ts` defaults to
+  `mock` for payments (`PAYMENT_PROVIDER`), delivery (`DELIVERY_PROVIDER`),
+  AI (`AI_PROVIDER`), speech (`SPEECH_PROVIDER`), financing
+  (`FINANCING_PROVIDER`), and SMS (`MESSAGING_SMS_PROVIDER`). Production must
+  set real providers; `lib/env.ts` fails startup when theTeller is selected
+  without credentials.
+- **SMS provider** — `MESSAGING_SMS_PROVIDER=mock` shows codes on screen in
+  dev only; production needs `arkesel` or `hubtel` credentials.
+- **WhatsApp assistant** — works end-to-end only after Meta approves the
+  `fixam_assistant_reply` template and webhook env vars are set.
