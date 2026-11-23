@@ -27,6 +27,8 @@ import { applyStockMovement } from "@/lib/parts/stock"
 import { paymentProvider } from "@/lib/integrations/payments"
 import { sendMessage } from "@/lib/messaging/send"
 import { uuidv7 } from "@/lib/id"
+import { nextPaymentReference } from "@/lib/payments/reference"
+import { createHold, getHoldForEntity, reconcileReference, releaseHold } from "@/lib/escrow/service"
 
 const staffPrincipal = (role: StaffRole, garageId: string, branchId: string | null) =>
   ({ kind: "staff" as const, role, garageId, branchId })
@@ -189,7 +191,7 @@ export async function createVendorOrder(rawInput: unknown): Promise<
   }
 
   const [garage, branch] = await Promise.all([
-    db().select({ id: garages.id, region: garages.region, city: garages.city }).from(garages).where(eq(garages.id, d.garageId)).limit(1),
+    db().select({ id: garages.id, slug: garages.slug, region: garages.region, city: garages.city }).from(garages).where(eq(garages.id, d.garageId)).limit(1),
     db().select({ id: branches.id }).from(branches).where(and(eq(branches.id, d.branchId), eq(branches.garageId, d.garageId))).limit(1),
   ])
   if (!garage[0] || !branch[0]) return { ok: false, error: { code: "NOT_FOUND", message: "Garage or branch not found" } }
@@ -292,16 +294,26 @@ export async function createVendorOrder(rawInput: unknown): Promise<
   // optional checkout
   let checkoutUrl: string | undefined
   if (d.payNow && grandTotal > 0n) {
-    const ref = `VO-${created.map((c) => c.number).join("+")}`
     try {
+      const ref = await nextPaymentReference()
+      // Money is held by FixAm until the garage confirms receipt (escrow).
+      for (const c of created) {
+        const [o] = await db().select().from(vendorOrders).where(eq(vendorOrders.id, c.id)).limit(1)
+        if (!o) continue
+        await db().update(vendorOrders).set({ paystackReference: ref }).where(eq(vendorOrders.id, c.id))
+        await createHold({
+          entityType: "vendor_order", entityId: o.id, garageId: d.garageId, buyerUserId: userId,
+          payeeType: "vendor", payeeId: o.vendorId, gross: o.total,
+          commissionAmount: o.commissionAmount ?? 0n, paymentReference: ref,
+        })
+      }
       const init = await paymentProvider().initializeCheckout({
         amountPesewas: grandTotal, reference: ref,
+        description: `FixAm parts ${created.map((c) => c.number).join(", ")}`.slice(0, 100),
+        returnPath: `/g/${garage[0].slug}/marketplace?tab=orders`,
         metadata: { garageId: d.garageId, orderIds: created.map((c) => c.id).join(",") },
       })
       checkoutUrl = init.authorizationUrl
-      for (const c of created) {
-        await db().update(vendorOrders).set({ paystackReference: ref }).where(eq(vendorOrders.id, c.id))
-      }
     } catch {
       // payment init failure leaves orders pending — garage can pay later
     }
@@ -458,6 +470,9 @@ export async function receiveVendorOrder(rawInput: unknown): Promise<ActionResul
   }
 
   await db().update(vendorOrders).set({ status: "received", updatedAt: new Date() }).where(eq(vendorOrders.id, order.id))
+  // Receipt confirmed → release the vendor's money (net of commission).
+  const hold = await getHoldForEntity("vendor_order", order.id)
+  if (hold?.status === "held") await releaseHold(hold.id, { actorUserId: userId, note: "Garage confirmed receipt" }).catch(() => undefined)
   await db().insert(vendorOrderEvents).values({
     id: uuidv7(), garageId: d.garageId, vendorOrderId: order.id,
     status: "received", actorUserId: userId, note: d.notes ?? null,
@@ -571,14 +586,6 @@ export async function verifyVendorOrderPayment(rawInput: unknown) {
   if (!order?.paystackReference) return { ok: true as const, data: { status: order?.paymentStatus ?? "none" } }
   if (order.paymentStatus === "paid") return { ok: true as const, data: { status: "paid" } }
 
-  const v = await paymentProvider().verify(order.paystackReference)
-  if (v.status === "success") {
-    await db().update(vendorOrders).set({ paymentStatus: "paid", updatedAt: new Date() }).where(eq(vendorOrders.id, order.id))
-    return { ok: true as const, data: { status: "paid" } }
-  }
-  if (v.status === "failed") {
-    await db().update(vendorOrders).set({ paymentStatus: "failed", updatedAt: new Date() }).where(eq(vendorOrders.id, order.id))
-    return { ok: true as const, data: { status: "failed" } }
-  }
-  return { ok: true as const, data: { status: "pending" } }
+  const status = await reconcileReference(order.paystackReference)
+  return { ok: true as const, data: { status: status === "success" ? "paid" : status === "unknown" ? "pending" : status } }
 }

@@ -18,6 +18,8 @@ import { getSessionUserId } from "@/lib/auth/ensure-user"
 import { can, type Principal } from "@/lib/auth/permissions"
 import { parseVendorProductsCsv, type VendorCsvIssue } from "./csv"
 import { uuidv7 } from "@/lib/id"
+import { encryptPayoutAccount, parseFreeTextMomo } from "@/lib/escrow/payout-account"
+import { getHoldForEntity, refundHold, scheduleAutoRelease } from "@/lib/escrow/service"
 
 // ---------------------------------------------------------------------------
 // Membership resolution
@@ -31,6 +33,12 @@ export async function resolveVendorMembership(userId: string) {
     .where(and(eq(vendorMembers.userId, userId), isNull(vendors.deletedAt)))
     .limit(1)
   return row ?? null
+}
+
+function legacyPayout(method: string | undefined, text: string | undefined): string | null {
+  if (method === "bank") return null
+  const acct = parseFreeTextMomo(text)
+  return acct ? encryptPayoutAccount(acct) : null
 }
 
 function vendorPrincipal(role: string): Principal {
@@ -85,8 +93,8 @@ export async function vendorSignup(rawInput: unknown): Promise<ActionResult<{ ve
     categories: d.categories,
     deliveryZones: d.deliveryZones.map((z) => ({ ...z, fee: z.fee ?? 0 })),
     payoutMethod: d.payoutMethod ?? null,
-    // payout details stored plaintext pending encryption-at-rest pass (P5)
-    payoutDetailsEncrypted: d.payoutDetails ?? null,
+    // Free-text MoMo line → encrypted payout account when it parses; otherwise set in Payouts.
+    payoutDetailsEncrypted: legacyPayout(d.payoutMethod, d.payoutDetails),
     status: "pending",
   })
   await db().insert(vendorMembers).values({
@@ -135,15 +143,17 @@ export async function updateVendorProfile(rawInput: unknown): Promise<ActionResu
     ...(d.region !== undefined ? { region: d.region || null } : {}),
     ...(d.categories !== undefined ? { categories: d.categories } : {}),
     ...(d.deliveryZones !== undefined ? { deliveryZones: d.deliveryZones.map((z) => ({ ...z, fee: z.fee ?? 0 })) } : {}),
-    ...(d.payoutMethod !== undefined ? { payoutMethod: d.payoutMethod } : {}),
-    ...(d.payoutDetails !== undefined ? { payoutDetailsEncrypted: d.payoutDetails || null } : {}),
+    // Payout accounts are managed in Payouts (saveVendorPayoutAccount); a parsable MoMo line is still accepted.
+    ...(d.payoutDetails && legacyPayout(d.payoutMethod, d.payoutDetails)
+      ? { payoutMethod: "momo", payoutDetailsEncrypted: legacyPayout(d.payoutMethod, d.payoutDetails) }
+      : {}),
     ...(d.logoUrl !== undefined ? { logoUrl: d.logoUrl || null } : {}),
     updatedAt: new Date(),
   }).where(eq(vendors.id, ctx.vendor.id))
 
   await writeAuditLog({
     garageId: null, actorUserId: userId, action: "vendor.profile.update",
-    entityType: "vendor", entityId: ctx.vendor.id, after: d as Record<string, unknown>,
+    entityType: "vendor", entityId: ctx.vendor.id, after: { ...d, payoutDetails: d.payoutDetails ? "[redacted]" : undefined } as Record<string, unknown>,
   }).catch(() => {})
   return { ok: true, data: { ok: true as const } }
 }
@@ -415,6 +425,13 @@ export async function fulfilVendorOrder(rawInput: unknown): Promise<ActionResult
     id: uuidv7(), vendorOrderId: order.id, garageId: order.garageId,
     status: nextStatus as never, actorUserId: userId, note: d.note ?? null,
   })
+
+  // Escrow: delivery starts the buyer-protection clock; a cancelled paid order is refunded.
+  const hold = await getHoldForEntity("vendor_order", order.id)
+  if (hold?.status === "held") {
+    if (nextStatus === "delivered") await scheduleAutoRelease(hold.id).catch(() => undefined)
+    if (nextStatus === "cancelled") await refundHold(hold.id, { actorUserId: userId, note: `Vendor cancelled${d.note ? `: ${d.note}` : ""}` }).catch(() => undefined)
+  }
 
   return { ok: true, data: { status: nextStatus } }
 }

@@ -15,6 +15,7 @@ import { writeAuditLog, resolveMembership, type ActionResult } from "@/lib/actio
 import { getSessionUserId } from "@/lib/auth/ensure-user"
 import { can, type StaffRole } from "@/lib/auth/permissions"
 import { paymentProvider } from "@/lib/integrations/payments"
+import { nextPaymentReference } from "@/lib/payments/reference"
 import { sendMessage } from "@/lib/messaging/send"
 import { applyPaymentToInvoice, reverseInvoicePayment } from "./payments-core"
 import { nextDocNumber } from "./sequence"
@@ -184,7 +185,7 @@ export async function initiateInvoicePayment(rawInput: unknown): Promise<
     return { ok: false, error: { code: "VALIDATION", message: "Invalid amount" } }
   }
 
-  const reference = `FIXAM-${randomBytes(12).toString("hex")}`
+  const reference = await nextPaymentReference()
   const paymentId = uuidv7()
   const receiptToken = randomBytes(24).toString("hex")
 
@@ -218,7 +219,10 @@ export async function initiateInvoicePayment(rawInput: unknown): Promise<
       })
       return { ok: true, data: { paymentId, reference, displayText: res.displayText } }
     }
+    const [g] = await db().select({ slug: garages.slug }).from(garages).where(eq(garages.id, d.garageId)).limit(1)
     const res = await provider.initializeCheckout({
+      returnPath: g ? `/g/${g.slug}/invoices/${inv.id}` : undefined,
+      description: `Invoice ${inv.number ?? ""}`.trim(),
       amountPesewas: amount,
       email: d.payerEmail,
       phone: d.payerPhone,
@@ -258,7 +262,7 @@ export async function initiatePublicInvoicePayment(rawInput: unknown): Promise<
   }
 
   const amount = inv.balanceDue
-  const reference = `FIXAM-${randomBytes(12).toString("hex")}`
+  const reference = await nextPaymentReference()
   const paymentId = uuidv7()
   const receiptToken = randomBytes(24).toString("hex")
 
@@ -293,6 +297,8 @@ export async function initiatePublicInvoicePayment(rawInput: unknown): Promise<
       return { ok: true, data: { paymentId, reference, displayText: res.displayText } }
     }
     const res = await provider.initializeCheckout({
+      returnPath: `/t/${d.token}`,
+      description: `Invoice ${inv.number ?? ""}`.trim(),
       amountPesewas: amount,
       email: d.payerEmail,
       phone: d.payerPhone,
@@ -374,7 +380,18 @@ export async function refundPayment(rawInput: unknown): Promise<ActionResult<{ r
   }
 
   const provider = paymentProvider()
-  const result = await provider.refund({ reference: p.paystackReference ?? p.id, amountPesewas: amount })
+  let result: { refundId: string; status: string }
+  try {
+    result = await provider.refund({ reference: p.paystackReference ?? p.id, amountPesewas: amount })
+  } catch {
+    return {
+      ok: false,
+      error: {
+        code: "INTERNAL",
+        message: "The gateway couldn't reverse this payment (MoMo payments can't be reversed). Pay the customer back directly, then record it as a cash refund.",
+      },
+    }
+  }
 
   const refundId = uuidv7()
   await db().insert(refunds).values({

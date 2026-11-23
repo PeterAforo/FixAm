@@ -134,6 +134,13 @@
       "when": 1795416232820,
       "tag": "0018_ai-calls",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795416967646,
+      "tag": "0019_escrow-payouts",
+      "breakpoints": true
     }
   ]
 }

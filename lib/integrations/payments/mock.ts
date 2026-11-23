@@ -5,6 +5,8 @@ import type {
   PaymentInitResult,
   PaymentProvider,
   PaymentVerification,
+  PayoutProvider,
+  PayoutResult,
   RefundResult,
 } from "../types"
 
@@ -16,7 +18,7 @@ import type {
 export type MockTransaction = {
   reference: string
   amountPesewas: string // bigint as string for JSON
-  kind: "checkout" | "momo" | "refund"
+  kind: "checkout" | "momo" | "refund" | "payout"
   status: "pending" | "success" | "failed"
   createdAt: string
   paidAt?: string
@@ -100,6 +102,40 @@ export function createMockPaymentProvider(): PaymentProvider {
         data: body.data,
         eventId: body.id ?? randomUUID(),
       }
+    },
+  }
+}
+
+/**
+ * Mock payouts — succeed immediately unless the account number ends in 0000
+ * (fails, retryable) or 9999 (fails permanently), so retry paths can be tested.
+ */
+export function createMockPayoutProvider(): PayoutProvider {
+  function outcome(account: string, transactionId: string, amount: bigint): PayoutResult {
+    const digits = account.replace(/\D/g, "")
+    transactions.set(transactionId, {
+      reference: transactionId,
+      amountPesewas: amount.toString(),
+      kind: "payout",
+      status: digits.endsWith("0000") || digits.endsWith("9999") ? "failed" : "success",
+      createdAt: new Date().toISOString(),
+    })
+    if (digits.endsWith("0000")) return { status: "failed", code: "105", message: "Mock transient failure", retryable: true }
+    if (digits.endsWith("9999")) return { status: "failed", code: "102", message: "Mock: number not registered", retryable: false }
+    return { status: "success", providerReference: `mock_${transactionId}`, accountName: "MOCK ACCOUNT" }
+  }
+  return {
+    name: "mock",
+    async transferMomo(input) {
+      return outcome(input.phone, input.transactionId, input.amountPesewas)
+    },
+    async transferBank(input) {
+      return outcome(input.accountNumber, input.transactionId, input.amountPesewas)
+    },
+    async verifyTransfer(transactionId) {
+      const tx = transactions.get(transactionId)
+      if (!tx) return { status: "failed", code: "NOT_FOUND", message: "Unknown payout", retryable: false }
+      return tx.status === "success" ? { status: "success" } : tx.status === "pending" ? { status: "pending" } : { status: "failed", code: "105", message: "Mock failure", retryable: true }
     },
   }
 }

@@ -798,7 +798,8 @@
             "Pending transactions resolve via the poller without the redirect",
             "Release triggers a vendor MoMo payout net of commission; failed payouts retry and alert admin",
             "Every money movement is audit-logged and idempotent"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-03",

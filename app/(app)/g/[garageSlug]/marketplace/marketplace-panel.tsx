@@ -13,6 +13,7 @@ import {
   reviewVendorOrder,
   verifyVendorOrderPayment,
 } from "@/lib/marketplace/actions"
+import { disputeVendorOrder } from "@/lib/escrow/actions"
 
 type Product = {
   id: string; sku: string; name: string; brand: string | null; category: string
@@ -49,6 +50,7 @@ export function MarketplacePanel(props: {
   canReceive: boolean
   initialQ: string
   initialTab: "shop" | "orders"
+  paymentNotice?: "success" | "pending" | "failed" | null
 }) {
   const { garageId, garageSlug, branches, products, garageLocation, orders, canOrder, canReceive } = props
   const router = useRouter()
@@ -59,7 +61,16 @@ export function MarketplacePanel(props: {
   const [showCart, setShowCart] = useState(false)
   const [branchId, setBranchId] = useState(branches[0]?.id ?? "")
   const [payNow, setPayNow] = useState(false)
-  const [msg, setMsg] = useState<string | null>(null)
+  const [msg, setMsg] = useState<string | null>(
+    props.paymentNotice === "success"
+      ? "Payment received. FixAm holds it safely and pays the vendor once you receive the parts."
+      : props.paymentNotice === "pending"
+        ? "We're still waiting for the payment to confirm — this page updates within a few minutes."
+        : props.paymentNotice === "failed"
+          ? "The payment didn't go through. Open the order and try again, or pay on delivery."
+          : null
+  )
+  const [disputeText, setDisputeText] = useState<string | null>(null)
 
   const [openOrder, setOpenOrder] = useState<string | null>(null)
   const [detail, setDetail] = useState<OrderDetail | null>(null)
@@ -202,7 +213,7 @@ export function MarketplacePanel(props: {
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={payNow} onChange={(e) => setPayNow(e.target.checked)} />
-                Pay now (card / MoMo)
+                Pay now (card / MoMo) — held by FixAm until you receive the parts
               </label>
               <Button onClick={checkout} disabled={pending || !canOrder || !branchId}>
                 Place order — {formatGHS(cartTotal)}
@@ -354,7 +365,27 @@ export function MarketplacePanel(props: {
                             <Button variant="secondary" disabled={pending}
                               onClick={() => act(() => verifyVendorOrderPayment({ garageId, orderId: detail.id }))}>Check payment</Button>
                           )}
+                          {canReceive && detail.paymentStatus === "paid" && !["received", "cancelled", "rejected"].includes(detail.status) && disputeText === null && (
+                            <Button variant="secondary" disabled={pending} onClick={() => setDisputeText("")}>Report a problem</Button>
+                          )}
                         </div>
+                        {disputeText !== null && (
+                          <div className="rounded-xl border border-border p-3">
+                            <p className="text-sm font-semibold">What went wrong?</p>
+                            <p className="text-xs text-muted-foreground">We&apos;ll hold the vendor&apos;s money while the FixAm team sorts it out.</p>
+                            <textarea value={disputeText} onChange={(e) => setDisputeText(e.target.value)} rows={3}
+                              placeholder="e.g. Wrong part delivered — ordered front pads, got rear" className={`${inputCls} mt-2`} />
+                            <div className="mt-2 flex gap-2">
+                              <Button disabled={pending || disputeText.trim().length < 10}
+                                onClick={() => act(async () => {
+                                  const r = await disputeVendorOrder({ garageId, orderId: detail.id, reason: disputeText })
+                                  if (r.ok) setDisputeText(null)
+                                  return r
+                                }, "Problem reported — payment frozen while we look into it")}>Send report</Button>
+                              <Button variant="secondary" disabled={pending} onClick={() => setDisputeText(null)}>Cancel</Button>
+                            </div>
+                          </div>
+                        )}
 
                         {detail.canReview && (
                           <div className="rounded-xl border border-border p-3">

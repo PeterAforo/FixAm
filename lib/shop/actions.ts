@@ -19,6 +19,8 @@ import { normalizeGhPhone } from "@/lib/phone"
 import { paymentProvider } from "@/lib/integrations/payments"
 import { nextDocNumber } from "@/lib/money/sequence"
 import { uuidv7 } from "@/lib/id"
+import { nextPaymentReference } from "@/lib/payments/reference"
+import { createHold } from "@/lib/escrow/service"
 import { isCompatible } from "./compat"
 
 // ---------------------------------------------------------------------------
@@ -307,16 +309,27 @@ export async function placeCustomerOrder(rawInput: unknown) {
   // optional payment for vendor items
   let checkoutUrl: string | undefined
   if (d.payNow && grandTotal > 0n) {
-    const ref = `CO-${createdOrders.map((o) => o.number).join("+")}`
     try {
+      const ref = await nextPaymentReference()
+      for (const c of createdOrders) {
+        const [o] = await db().select().from(vendorOrders).where(eq(vendorOrders.id, c.id)).limit(1)
+        if (!o) continue
+        await db().update(vendorOrders).set({ paystackReference: ref }).where(eq(vendorOrders.id, o.id))
+        // Held by FixAm until the garage confirms the part arrived.
+        await createHold({
+          entityType: "vendor_order", entityId: o.id, garageId: garage.id,
+          payeeType: "vendor", payeeId: o.vendorId, gross: o.total,
+          commissionAmount: o.commissionAmount ?? 0n, paymentReference: ref, payerPhone: phone,
+        })
+      }
       const init = await paymentProvider().initializeCheckout({
         amountPesewas: grandTotal, reference: ref,
+        description: `Parts for ${garage.name}`.slice(0, 100),
+        returnPath: `/o/${garage.slug}`,
+        phone,
         metadata: { garageId: garage.id, customerOrder: "1" },
       })
       checkoutUrl = init.authorizationUrl
-      for (const o of createdOrders) {
-        await db().update(vendorOrders).set({ paystackReference: ref }).where(eq(vendorOrders.id, o.id))
-      }
     } catch { /* orders stay pending */ }
   }
 

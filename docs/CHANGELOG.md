@@ -2,6 +2,29 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-02 theTeller payments, escrow & payouts ✅
+- `PAYMENT_PROVIDER=theteller`: hosted checkout, MoMo direct debit (000200),
+  status check, card reversal, and float payouts to MoMo (404000) and bank
+  (404020 → name check → authorize). Mock keeps working without keys.
+- Every payment uses a 12-digit reference from the `payment_txn_seq` sequence.
+- theTeller has no webhooks: `/api/payments/return/{ref}/{path}` confirms on
+  return, and the Inngest `payments-pending-poller` (every 5 min) settles the
+  rest — invoices, instalments and vendor orders alike.
+- Escrow (`escrow_holds`): marketplace and shop orders paid online are held
+  until the garage receives them (or 72 h after the vendor marks delivered),
+  then released net of commission. Vendor cancellation refunds the buyer.
+  Garages can "Report a problem", which freezes the money.
+- Payouts (`payouts`): queued on release, sent immediately via Inngest, retried
+  with backoff (new transaction id only after confirming the old one failed),
+  admin alerted after 5 attempts or when a vendor has no payout account.
+- Append-only `ledger_entries` with unique idempotency keys (DB trigger blocks
+  edits); every movement is audit-logged.
+- Vendor → Payouts: held / on the way / paid out, payout history, and an
+  encrypted MoMo or bank payout account (`PAYOUT_ENCRYPTION_KEY`).
+- Admin → Payments held & payouts: release or refund disputes with a note,
+  retry blocked payouts.
+- Migration `0019_escrow-payouts`.
+
 ### P8-05 AI + speech providers ✅
 - `AiProvider` (Claude Messages API, structured output via a forced tool call,
   image input) and `SpeechProvider` (Khaya ASR + translation for Twi, Ga, Ewe,

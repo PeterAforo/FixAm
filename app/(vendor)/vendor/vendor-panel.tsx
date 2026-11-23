@@ -18,6 +18,8 @@ import {
 } from "@/lib/vendors/actions"
 import { parseVendorProductsCsv, type VendorCsvIssue, type VendorCsvRow } from "@/lib/vendors/csv"
 import type { PartTypeView } from "@/lib/parts-catalog/actions"
+import type { VendorPayoutsView } from "@/lib/escrow/actions"
+import { VendorPayouts } from "./vendor-payouts"
 
 type Dash = NonNullable<Extract<Awaited<ReturnType<typeof getVendorDashboard>>, { ok: true; data: object }>["data"]>
 type Product = {
@@ -54,7 +56,7 @@ const NEXT_ACTION: Record<string, { label: string; action: string } | null> = {
   delivered: null, received: null, cancelled: null, rejected: null,
 }
 
-export function VendorPanel(props: { dashboard: Dash | null; products: Product[]; partTypes?: PartTypeView[] }) {
+export function VendorPanel(props: { dashboard: Dash | null; products: Product[]; partTypes?: PartTypeView[]; payouts?: VendorPayoutsView | null }) {
   const { dashboard, products } = props
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -186,7 +188,6 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
         phone: profForm.phone || undefined, email: profForm.email || undefined,
         city: profForm.city || undefined, region: profForm.region || undefined,
         categories: profForm.categories.split(",").map((s) => s.trim()).filter(Boolean),
-        payoutMethod: profForm.payoutMethod, payoutDetails: profForm.payoutDetails || undefined,
         deliveryZones: profForm.deliveryZones
           .filter((z) => z.region.trim())
           .map((z) => ({
@@ -468,34 +469,14 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
         </div>
       )}
 
-      {tab === "payouts" && dashboard.canPayouts && (() => {
-        const paidOrders = dashboard.orders.filter((o) => o.status === "delivered" || o.status === "received")
-        const earnings = paidOrders.reduce((s, o) => s + o.subtotal - o.commissionAmount, 0)
-        const pending = dashboard.orders.filter((o) => !["delivered", "received", "cancelled", "rejected", "returned"].includes(o.status))
-          .reduce((s, o) => s + o.subtotal - o.commissionAmount, 0)
-        return (
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Card><CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Paid out / payable</p>
-              <p className="font-display text-xl font-bold tabular-nums">{formatGHS(earnings)}</p>
-            </CardContent></Card>
-            <Card><CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">In transit</p>
-              <p className="font-display text-xl font-bold tabular-nums">{formatGHS(pending)}</p>
-            </CardContent></Card>
-            <Card><CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Payout method</p>
-              <p className="font-semibold capitalize">{v.payoutMethod ?? "Not set"}</p>
-              <p className="mt-1 text-xs text-muted-foreground">Payouts are released after orders are marked received. Update details in Profile.</p>
-            </CardContent></Card>
-          </div>
-        )
-      })()}
+      {tab === "payouts" && dashboard.canPayouts && (
+        <VendorPayouts view={props.payouts ?? null} isOwner={dashboard.role === "vendor_owner"} />
+      )}
 
       {tab === "profile" && dashboard.canSettings && (
         <Card className="max-w-xl">
           <CardContent className="p-5">
-            <h2 className="font-display text-lg font-bold">Business profile & payouts</h2>
+            <h2 className="font-display text-lg font-bold">Business profile</h2>
             <form onSubmit={saveProfile} className="mt-3 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <input value={profForm.phone} onChange={(e) => setProfForm({ ...profForm, phone: e.target.value })} placeholder="Phone" className={inputCls} />
@@ -504,13 +485,6 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
                 <input value={profForm.region} onChange={(e) => setProfForm({ ...profForm, region: e.target.value })} placeholder="Region" className={inputCls} />
               </div>
               <input value={profForm.categories} onChange={(e) => setProfForm({ ...profForm, categories: e.target.value })} placeholder="Categories (comma separated)" className={inputCls} />
-              <div className="grid grid-cols-2 gap-3">
-                <select value={profForm.payoutMethod} onChange={(e) => setProfForm({ ...profForm, payoutMethod: e.target.value as "momo" | "bank" })} className={inputCls}>
-                  <option value="momo">MoMo payout</option>
-                  <option value="bank">Bank transfer</option>
-                </select>
-                <input value={profForm.payoutDetails} onChange={(e) => setProfForm({ ...profForm, payoutDetails: e.target.value })} placeholder="Payout number / account" className={inputCls} />
-              </div>
               <div>
                 <div className="mb-1 flex items-center justify-between">
                   <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Delivery zones</label>

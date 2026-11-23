@@ -12,7 +12,7 @@ import { MarketplacePanel } from "./marketplace-panel"
 
 async function Loader({ params, searchParams }: {
   params: Promise<{ garageSlug: string }>
-  searchParams: Promise<{ q?: string; tab?: string }>
+  searchParams: Promise<{ q?: string; tab?: string; payment?: string }>
 }) {
   await connection()
   const { garageSlug } = await params
@@ -51,14 +51,15 @@ async function Loader({ params, searchParams }: {
       canOrder={canOrder}
       canReceive={canReceive}
       initialQ={sp.q ?? ""}
-      initialTab={sp.tab === "orders" ? "orders" : "shop"}
+      initialTab={sp.tab === "orders" || sp.payment ? "orders" : "shop"}
+      paymentNotice={sp.payment === "success" || sp.payment === "pending" || sp.payment === "failed" ? sp.payment : null}
     />
   )
 }
 
 export default function MarketplacePage(props: {
   params: Promise<{ garageSlug: string }>
-  searchParams: Promise<{ q?: string; tab?: string }>
+  searchParams: Promise<{ q?: string; tab?: string; payment?: string }>
 }) {
   return (
     <div className="px-5 py-6 md:px-10 md:py-8">

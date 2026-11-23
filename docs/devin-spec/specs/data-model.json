@@ -1014,7 +1014,15 @@
         "min_order_qty": "int default:1",
         "lead_time_hours": "int",
         "photos": "text[]",
-        "is_active": "bool default:true"
+        "is_active": "bool default:true",
+        "part_type_id": "uuid fk:part_types",
+        "condition": "text (genuine|aftermarket|home_used)",
+        "fit_make": "text",
+        "fit_model": "text",
+        "fit_year_from": "int",
+        "fit_year_to": "int",
+        "oem_number": "text",
+        "warranty_days": "int"
       },
       "unique": [
         [
@@ -1025,17 +1033,7 @@
       "indexes": [
         "category",
         "name (trigram)"
-      ],
-      "planned_columns": {
-        "part_type_id": "uuid fk:part_types",
-        "condition": "text (genuine|aftermarket|home_used)",
-        "fit_make": "text",
-        "fit_model": "text",
-        "fit_year_from": "int",
-        "fit_year_to": "int",
-        "oem_number": "text",
-        "warranty_days": "int"
-      }
+      ]
     },
     "vendor_orders": {
       "tenant": false,
@@ -1794,16 +1792,21 @@
       }
     },
     "part_types": {
-      "status": "planned (P8)",
+      "status": "built (P8-01)",
       "tenant": false,
       "columns": {
         "id": "uuid pk",
-        "name": "text req uniq",
+        "slug": "text req uniq",
+        "name": "text req",
         "category": "text req",
-        "synonyms": "text[] req default:{} (incl. tw/gaa/ee/ha street names)",
+        "synonyms": "text[] req default:{}",
         "typical_labour_hours": "numeric(4,2)",
-        "created_at": "timestamptz req default:now()"
-      }
+        "created_at": "timestamptz req default:now()",
+        "updated_at": "timestamptz req default:now()"
+      },
+      "indexes": [
+        "category"
+      ]
     },
     "repair_requests": {
       "status": "planned (P8)",
@@ -1848,42 +1851,75 @@
       }
     },
     "escrow_holds": {
-      "status": "planned (P8)",
+      "status": "built (P8-02)",
       "tenant": false,
       "columns": {
         "id": "uuid pk",
-        "vendor_order_id": "uuid req fk:vendor_orders",
-        "payer_user_id": "uuid fk:users",
-        "amount": "money req",
-        "commission": "money req",
-        "fitting_fee": "money",
-        "provider": "text req default:'theteller'",
-        "provider_txn_id": "text req uniq (12 digits)",
-        "status": "text (pending|held|released|refunded|disputed)",
+        "garage_id": "uuid fk:garages (buyer garage; null = driver)",
+        "buyer_user_id": "uuid fk:users",
+        "entity_type": "text req (vendor_order)",
+        "entity_id": "uuid req",
+        "payee_type": "text req (vendor|garage)",
+        "payee_id": "uuid req",
+        "payment_reference": "text (12-digit)",
+        "payer_phone": "text",
+        "payer_network": "text",
+        "gross_amount": "money req",
+        "commission_amount": "money req",
+        "fitting_fee_amount": "money req",
+        "fitting_garage_id": "uuid fk:garages",
+        "net_amount": "money req",
+        "status": "text req (pending_payment|held|disputed|released|refunded|cancelled)",
+        "held_at": "timestamptz",
         "release_after": "timestamptz",
         "released_at": "timestamptz",
-        "created_at": "timestamptz req default:now()",
-        "updated_at": "timestamptz req default:now()"
-      }
+        "refunded_at": "timestamptz",
+        "dispute_reason": "text",
+        "dispute_opened_by": "uuid fk:users",
+        "dispute_opened_at": "timestamptz",
+        "resolved_by": "uuid fk:users",
+        "resolution_note": "text",
+        "created_at": "timestamptz",
+        "updated_at": "timestamptz"
+      },
+      "unique": [
+        [
+          "entity_type",
+          "entity_id"
+        ]
+      ]
     },
     "payouts": {
-      "status": "planned (P8)",
+      "status": "built (P8-02)",
       "tenant": false,
       "columns": {
         "id": "uuid pk",
-        "vendor_id": "uuid req fk:vendors",
         "escrow_hold_id": "uuid fk:escrow_holds",
-        "amount": "money req",
-        "method": "text (momo|bank)",
-        "account_issuer": "text (MTN|VDF|ATL|GIP…)",
+        "purpose": "text req (vendor_release|fitting_fee|refund)",
+        "recipient_type": "text req (vendor|garage|customer)",
+        "recipient_id": "uuid",
+        "method": "text req (momo|bank)",
+        "network": "text",
+        "bank_code": "text",
         "account_number": "text req",
-        "provider_txn_id": "text uniq",
-        "status": "text (queued|sent|failed|reversed)",
-        "failure_reason": "text",
-        "attempts": "int req default:0",
-        "created_at": "timestamptz req default:now()",
-        "updated_at": "timestamptz req default:now()"
-      }
+        "account_name": "text",
+        "amount": "money req",
+        "transaction_id": "text req uniq (12-digit)",
+        "provider_reference": "text",
+        "status": "text req (queued|processing|pending_confirmation|succeeded|needs_attention)",
+        "attempts": "int req",
+        "next_attempt_at": "timestamptz",
+        "last_error": "text",
+        "completed_at": "timestamptz",
+        "created_at": "timestamptz",
+        "updated_at": "timestamptz"
+      },
+      "unique": [
+        [
+          "escrow_hold_id",
+          "purpose"
+        ]
+      ]
     },
     "price_observations": {
       "status": "planned (P8)",
@@ -1910,20 +1946,27 @@
       }
     },
     "ai_calls": {
-      "status": "planned (P8)",
+      "status": "built (P8-05)",
       "tenant": false,
       "columns": {
         "id": "uuid pk",
-        "purpose": "text req (triage|part_match|voice_jobcard|fair_quote|translate)",
-        "provider": "text req",
-        "model": "text req",
-        "input_tokens": "int",
-        "output_tokens": "int",
-        "cost_usd_micros": "bigint",
-        "garage_id": "uuid",
-        "user_id": "uuid",
+        "garage_id": "uuid fk:garages",
+        "user_id": "uuid fk:users",
+        "kind": "text req (llm|asr|translate)",
+        "provider": "text req (claude|khaya|mock)",
+        "model": "text",
+        "prompt_key": "text",
+        "prompt_version": "int",
+        "input_tokens": "int req default:0",
+        "output_tokens": "int req default:0",
+        "audio_seconds": "numeric(8,2)",
+        "cost_micro_usd": "bigint req default:0",
+        "status": "text req (ok|error)",
+        "error_code": "text",
+        "latency_ms": "int req",
         "created_at": "timestamptz req default:now()"
-      }
+      },
+      "notes": "Metadata only — prompts and transcripts are never stored."
     },
     "obd_scans": {
       "status": "planned (P8)",
@@ -2159,6 +2202,24 @@
         "report_token": "text uniq",
         "created_at": "timestamptz req default:now()"
       }
+    },
+    "ledger_entries": {
+      "status": "built (P8-02)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "escrow_hold_id": "uuid fk:escrow_holds",
+        "payout_id": "uuid fk:payouts",
+        "debit_account": "text req",
+        "credit_account": "text req",
+        "amount": "money req",
+        "memo": "text",
+        "meta": "jsonb",
+        "idempotency_key": "text req uniq",
+        "actor_user_id": "uuid",
+        "created_at": "timestamptz"
+      },
+      "notes": "Append-only (trigger blocks UPDATE/DELETE). Accounts: customer_funds, escrow, vendor_payable, garage_payable, fixam_commission, payout_clearing, refund."
     }
   },
   "domain_rules": {

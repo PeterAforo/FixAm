@@ -59,6 +59,9 @@ export interface PaymentProvider {
     phone?: string
     reference: string
     metadata?: Record<string, string>
+    /** App path to return to after hosted checkout (e.g. /pay/abc). */
+    returnPath?: string
+    description?: string
   }): Promise<PaymentInitResult>
   chargeMobileMoney(input: {
     amountPesewas: bigint
@@ -66,6 +69,7 @@ export interface PaymentProvider {
     network: "mtn" | "telecel" | "airteltigo"
     reference: string
     metadata?: Record<string, string>
+    description?: string
   }): Promise<MoMoChargeResult>
   verify(reference: string): Promise<PaymentVerification>
   refund(input: { reference: string; amountPesewas?: bigint }): Promise<RefundResult>
@@ -77,4 +81,21 @@ export interface StorageProvider {
   put(key: string, body: Uint8Array | string, contentType?: string): Promise<{ key: string }>
   getSignedUrl(key: string, expiresInSeconds?: number): Promise<string>
   delete(key: string): Promise<void>
+}
+
+export type PayoutNetwork = "mtn" | "telecel" | "airteltigo"
+
+export type PayoutResult =
+  | { status: "success"; providerReference?: string; accountName?: string }
+  | { status: "pending"; providerReference?: string; accountName?: string }
+  | { status: "failed"; code: string; message: string; retryable: boolean }
+
+export interface PayoutProvider {
+  readonly name: string
+  /** Send money from FixAm's float to a MoMo wallet. */
+  transferMomo(input: { amountPesewas: bigint; phone: string; network: PayoutNetwork; transactionId: string; description: string }): Promise<PayoutResult>
+  /** Send money from FixAm's float to a Ghana bank account (name enquiry + authorize). */
+  transferBank(input: { amountPesewas: bigint; accountNumber: string; bankCode: string; transactionId: string; description: string; expectedName?: string }): Promise<PayoutResult>
+  /** Check a payout that came back pending. */
+  verifyTransfer(transactionId: string): Promise<PayoutResult>
 }

@@ -3,6 +3,7 @@ import { AdminVendorsSection } from "./admin-vendors-section"
 import { AdminBrokersSection } from "./admin-brokers-section"
 import { AdminPartsSection } from "./admin-parts-section"
 import { AdminAiUsageSection } from "./admin-ai-usage-section"
+import { AdminEscrowSection } from "./admin-escrow-section"
 import { AdminDvlaFeesSection } from "./admin-dvla-fees-section"
 import { AdminGaragesSection } from "./admin-garages-section"
 import { AdminPartnersSection } from "./admin-partners-section"
@@ -22,6 +23,9 @@ export default function AdminPage() {
       </Suspense>
       <Suspense fallback={null}>
         <AdminPrivacySection />
+      </Suspense>
+      <Suspense fallback={null}>
+        <AdminEscrowSection />
       </Suspense>
       <Suspense fallback={null}>
         <AdminVendorsSection />
