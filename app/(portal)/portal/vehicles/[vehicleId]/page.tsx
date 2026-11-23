@@ -9,6 +9,8 @@ import { db } from "@/lib/db"
 import { garageReviews } from "@/lib/db/schema"
 import { and, eq } from "drizzle-orm"
 import { VehicleDetailPanel } from "./vehicle-detail-panel"
+import { getOwnerPassport } from "@/lib/passport/service"
+import { PassportCard } from "@/components/passport/passport-card"
 
 async function PortalVehicleContent({ params }: { params: Promise<{ vehicleId: string }> }) {
   await connection()
@@ -27,6 +29,8 @@ async function PortalVehicleContent({ params }: { params: Promise<{ vehicleId: s
         })
       : []
 
+  const passport = await getOwnerPassport(phone, data.vehicle.id).catch(() => null)
+
   const [existingReview] = await db()
     .select({ rating: garageReviews.rating, comment: garageReviews.comment })
     .from(garageReviews)
@@ -43,6 +47,7 @@ async function PortalVehicleContent({ params }: { params: Promise<{ vehicleId: s
         garageName={data.vehicle.garageName}
         existingReview={existingReview ?? null}
       />
+      {passport && <PassportCard vehicleId={data.vehicle.id} initial={passport} plate={data.vehicle.plateNumber} />}
     </main>
   )
 }

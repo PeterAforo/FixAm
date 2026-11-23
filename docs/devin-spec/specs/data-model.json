@@ -1973,14 +1973,22 @@
       }
     },
     "vehicle_passports": {
-      "status": "planned (P8)",
+      "status": "built (P8-10)",
       "tenant": false,
+      "note": "One public passport per plate (plate_search) across garages. Owner (by phone) controls it; regenerating rotates token. Public page never shows owner details or prices.",
       "columns": {
         "id": "uuid pk",
-        "portal_vehicle_id": "uuid req",
-        "token": "text req uniq",
-        "enabled": "bool req default:true",
-        "created_at": "timestamptz req default:now()"
+        "plate_search": "text req unique",
+        "owner_phone": "text req",
+        "token": "text req unique (16 chars, /v/<token>)",
+        "enabled": "bool default false",
+        "show_mileage": "bool default true",
+        "show_garage_names": "bool default true",
+        "view_count": "int",
+        "last_viewed_at": "timestamptz",
+        "regenerated_at": "timestamptz",
+        "created_at": "timestamptz",
+        "updated_at": "timestamptz"
       }
     },
     "ai_calls": {

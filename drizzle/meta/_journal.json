@@ -176,6 +176,13 @@
       "when": 1795427297606,
       "tag": "0024_fair-quote",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1795441868710,
+      "tag": "0025_vehicle-passport",
+      "breakpoints": true
     }
   ]
 }

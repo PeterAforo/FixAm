@@ -2,6 +2,24 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-10 Vehicle passport ✅
+- One public history page per car (`/v/<token>`), built from every FixAm
+  garage that has serviced that plate: completed visits (date, garage and
+  city, mileage, the work done, parts replaced with proof), a mileage check
+  ("only went up" or a warning if it went down) with a small chart, and
+  whether insurance, roadworthy and registration are current (month only).
+- Never shows the owner's name or phone, prices, notes, complaint text,
+  policy numbers or the driver's licence. Phone numbers and e-mails typed
+  into work lines are stripped. The page is not indexed by search engines.
+- The owner controls it from the car's page in the driver app: on/off
+  (off by default), show/hide mileage, show/hide garage names, copy the
+  link, share on WhatsApp, view count, and **Get a new link** (old links
+  and stickers stop working). A new owner of the car takes over
+  automatically; the passport switches off and gets a fresh link.
+- Printable QR sticker sheet (`/print/passport/<vehicleId>`, 4 stickers on
+  A4). New dependency: `qrcode` (run `npm install`).
+- Migration `0025_vehicle-passport`.
+
 ### P8-09 Fair-quote check ✅
 - Every issued invoice now feeds anonymised **price observations**
   (`price_observations`): part unit prices by standard part type, and labour
