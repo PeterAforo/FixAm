@@ -286,6 +286,14 @@ export async function issueInvoice(rawInput: unknown): Promise<ActionResult<{ in
     }
   }
 
+  // P8-14: an approved "pay later" application for this job pays the invoice now.
+  try {
+    const { disburseForIssuedInvoice } = await import("@/lib/financing/service")
+    await disburseForIssuedInvoice(inv.id)
+  } catch {
+    // the hourly financing sync retries
+  }
+
   // P8-09: feed the fair-quote price data (best-effort; nightly backfill catches misses).
   try {
     const { recordInvoiceObservations } = await import("@/lib/fair-quote/service")

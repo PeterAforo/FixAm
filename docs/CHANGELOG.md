@@ -2,6 +2,30 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-14 Fix now, pay later ✅
+- `FinancingProvider` adapter (`lib/integrations/financing.ts`) for a partner
+  lender — **mock lender first** (`FINANCING_PROVIDER=mock`): decides at
+  once with predictable test rules (under GH₵200 or over GH₵15,000 →
+  declined; phone ending in 9 → declined; over GH₵8,000 → max 3 months),
+  example price `FINANCING_MOCK_MONTHLY_RATE_BP` (default 4% a month, flat).
+- **Customer applies from the estimate approval page** (after approving) or
+  **the invoice page**: monthly options for 1–6 months with the total and
+  lender charge, full name, Ghana Card number (sent to the lender only —
+  never stored) and explicit consent. Decision shown straight away.
+- **Garage is paid up-front**: when an approved plan meets an issued invoice
+  (immediately at invoice stage, or when the invoice is issued after an
+  estimate-stage approval), the lender disburses and the invoice gets a
+  **"financing" payment** for the financed amount (never more than the
+  balance; anything above the approval is paid as normal). Audited.
+- **Repayments** tracked per month; driver app → **Pay later** shows plans,
+  progress and the next "Pay" link (lender's page; a test page for the mock).
+  **Reminders** 3 days before, on the day, and 3 and 10 days late (one per
+  stage, missed stages skipped), sent with the garage's quiet hours applied —
+  a reminder that would land in quiet hours waits for the next run.
+- Hourly sync for pending decisions, unpaid approved plans and lender-side
+  repayments. Garage-run instalment plans are unchanged and still available.
+- Migration `0029_pay-later` (adds `financing` to `payment_method`).
+
 ### P8-13 OBD-II scanner diagnostics ✅
 - **Web Bluetooth + ELM327 (BLE adapters)** in Chrome on Android (and desktop
   Chrome/Edge): reads VIN, check-engine light, **stored / pending / permanent**

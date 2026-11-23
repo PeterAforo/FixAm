@@ -954,7 +954,8 @@
             "Customer applies from the approval page and gets a decision",
             "Approved financing marks the invoice paid for the garage",
             "Repayment reminders follow messaging quiet hours"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-15",

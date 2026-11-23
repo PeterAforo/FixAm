@@ -7,6 +7,8 @@ import { ApprovalPanel } from "./approval-panel"
 import { TrackerPanel } from "./tracker-panel"
 import { InvoicePayPanel } from "./invoice-pay-panel"
 import { ReminderPanel } from "./reminder-panel"
+import { PayLaterCard } from "@/components/financing/pay-later-card"
+import { getPayLater } from "@/lib/financing/actions"
 
 async function TokenView({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ payment?: string }> }) {
   const { token } = await params
@@ -17,6 +19,9 @@ async function TokenView({ params, searchParams }: { params: Promise<{ token: st
   // jobs.tracker_token_hash — try estimate first, then tracker.
   const estRes = await getPublicEstimate({ token })
   const est = estRes.ok ? estRes.data : null
+
+  // P8-14: pay later (approval page and invoice page).
+  const payLater = est ? await getPayLater({ token }).catch(() => null) : null
 
   if (est) {
     return (
@@ -34,6 +39,7 @@ async function TokenView({ params, searchParams }: { params: Promise<{ token: st
           {payment === "pending" && <p className="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">Waiting for your payment to confirm — you&apos;ll get an SMS once it does.</p>}
           {payment === "failed" && <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-900">The parts payment didn&apos;t go through. Ask {est.garageName} to resend, or pay from your FixAm account.</p>}
           <ApprovalPanel token={token} estimate={est} />
+          {payLater && <PayLaterCard token={token} initial={payLater} />}
           <p className="mt-6 text-center text-xs text-muted-foreground">
             Powered by FixAm · Questions? Contact the garage directly.
           </p>
@@ -44,6 +50,8 @@ async function TokenView({ params, searchParams }: { params: Promise<{ token: st
 
   const invRes = await getPublicInvoiceByToken({ token })
   const inv = invRes.ok ? invRes.data : null
+
+  const invPayLater = inv ? await getPayLater({ token }).catch(() => null) : null
 
   if (inv) {
     return (
@@ -65,6 +73,7 @@ async function TokenView({ params, searchParams }: { params: Promise<{ token: st
               formatted: inv.formatted,
             }}
           />
+          {invPayLater && <PayLaterCard token={token} initial={invPayLater} />}
           <p className="mt-6 text-center text-xs text-muted-foreground">
             Powered by FixAm · Questions? Contact the garage directly.
           </p>

@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest"
 import { getTemplate, renderBody, renderTemplate, templateKeys } from "./templates"
 
 describe("message templates", () => {
-  it("loads all 42 spec templates", () => {
-    expect(templateKeys()).toHaveLength(42)
+  it("loads all 46 spec templates", () => {
+    expect(templateKeys()).toHaveLength(46)
     expect(templateKeys()).toContain("otp")
     expect(templateKeys()).toContain("oil_due")
   })

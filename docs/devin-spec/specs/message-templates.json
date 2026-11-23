@@ -23,7 +23,12 @@
     "checklist": "Short seasonal checklist",
     "offer_line": "Optional garage offer, starts with a space",
     "booking_link": "Garage booking page URL",
-    "stop_link": "One-tap opt-out URL for seasonal tips"
+    "stop_link": "One-tap opt-out URL for seasonal tips",
+    "reference": "Pay-later plan reference",
+    "monthly": "Monthly repayment amount",
+    "months": "Number of monthly repayments",
+    "first_due": "First repayment date",
+    "pay_link": "Where to pay a repayment"
   },
   "templates": [
     { "key": "otp", "category": "otp", "channels": {
@@ -191,6 +196,58 @@
         "push": {
           "title": "Rainy season car check",
           "body": "Get {{plate}} ready: {{checklist}}."
+        }
+      }
+    },
+    {
+      "key": "financing_approved",
+      "category": "reminder",
+      "channels": {
+        "sms": {
+          "body": "Hi {{customer_first_name}}, your pay-later plan {{reference}} is approved. {{garage_name}} has been paid {{amount}}. You'll pay {{monthly}} a month for {{months}} months, first on {{first_due}}."
+        },
+        "push": {
+          "title": "Pay-later approved",
+          "body": "Hi {{customer_first_name}}, your pay-later plan {{reference}} is approved. {{garage_name}} has been paid {{amount}}. You"
+        }
+      }
+    },
+    {
+      "key": "financing_due_soon",
+      "category": "reminder",
+      "channels": {
+        "sms": {
+          "body": "Hi {{customer_first_name}}, your pay-later repayment of {{amount}} ({{reference}}) is due on {{due_date}}. Pay here: {{pay_link}}"
+        },
+        "push": {
+          "title": "Repayment due soon",
+          "body": "Hi {{customer_first_name}}, your pay-later repayment of {{amount}} ({{reference}}) is due on {{due_date}}. Pay here: {{p"
+        }
+      }
+    },
+    {
+      "key": "financing_due_today",
+      "category": "reminder",
+      "channels": {
+        "sms": {
+          "body": "Hi {{customer_first_name}}, your pay-later repayment of {{amount}} ({{reference}}) is due today. Pay here: {{pay_link}}"
+        },
+        "push": {
+          "title": "Repayment due today",
+          "body": "Hi {{customer_first_name}}, your pay-later repayment of {{amount}} ({{reference}}) is due today. Pay here: {{pay_link}}"
+        }
+      }
+    },
+    {
+      "key": "financing_overdue",
+      "category": "reminder",
+      "channels": {
+        "sms": {
+          "body": "Hi {{customer_first_name}}, your pay-later repayment of {{amount}} ({{reference}}) was due on {{due_date}}. Please pay to avoid lender charges: {{pay_link}}"
+        },
+        "push": {
+          "title": "Repayment overdue",
+          "body": "Hi {{customer_first_name}}, your pay-later repayment of {{amount}} ({{reference}}) was due on {{due_date}}. Please pay t"
         }
       }
     }

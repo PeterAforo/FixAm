@@ -319,6 +319,7 @@ export const paymentMethodEnum = pgEnum("payment_method", [
   "cheque",
   "credit_account",
   "other",
+  "financing", // P8-14: paid up-front by the pay-later lender
 ])
 
 export const paymentStatusEnum = pgEnum("payment_status", [

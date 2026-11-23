@@ -2045,21 +2045,39 @@
       }
     },
     "financing_applications": {
-      "status": "planned (P8)",
-      "tenant": false,
+      "status": "built (P8-14)",
+      "tenant": true,
+      "note": "Ghana Card number is passed to the lender only, never stored.",
       "columns": {
         "id": "uuid pk",
-        "invoice_id": "uuid",
+        "reference": "text unique (PL-…)",
+        "garage_id": "uuid req fk",
+        "customer_id": "uuid fk",
+        "job_id": "uuid fk",
         "estimate_id": "uuid",
-        "garage_id": "uuid req",
-        "user_id": "uuid req",
-        "amount": "money req",
-        "months": "int req",
-        "provider": "text req",
+        "invoice_id": "uuid fk",
+        "applicant_name": "text",
+        "applicant_phone": "text",
+        "provider": "text",
         "provider_ref": "text",
-        "status": "text (submitted|approved|declined|disbursed|repaying|completed|defaulted)",
-        "created_at": "timestamptz req default:now()",
-        "updated_at": "timestamptz req default:now()"
+        "status": "text (pending|approved|disbursing|disbursed|completed|declined|cancelled)",
+        "decline_reason": "text",
+        "amount_requested": "bigint",
+        "amount_financed": "bigint",
+        "months": "int 1–6",
+        "max_months": "int",
+        "monthly_rate_bp": "int",
+        "rate_label": "text",
+        "total_repayable": "bigint",
+        "monthly_payment": "bigint",
+        "payment_id": "uuid fk payments",
+        "disbursement_ref": "text",
+        "consent_at": "timestamptz req",
+        "decided_at": "timestamptz",
+        "disbursed_at": "timestamptz",
+        "completed_at": "timestamptz",
+        "created_at": "timestamptz",
+        "updated_at": "timestamptz"
       }
     },
     "tow_operators": {
@@ -2379,6 +2397,27 @@
         "chosen_at": "timestamptz",
         "created_at": "timestamptz"
       }
+    },
+    "financing_repayments": {
+      "status": "built (P8-14)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "application_id": "uuid req fk",
+        "sequence": "int",
+        "due_date": "date",
+        "amount": "bigint",
+        "paid_amount": "bigint",
+        "paid_at": "timestamptz",
+        "reminder_stage": "int 0–4",
+        "last_reminded_at": "timestamptz"
+      },
+      "unique": [
+        [
+          "application_id",
+          "sequence"
+        ]
+      ]
     }
   },
   "domain_rules": {

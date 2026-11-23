@@ -21,6 +21,7 @@ async function DriverShell({ children }: { children: ReactNode }) {
         { label: "Buy parts", href: "/portal/parts", icon: "bag", exact: true },
         { label: "My orders", href: "/portal/parts/orders", icon: "package" },
         { label: "Price check", href: "/portal/price-check", icon: "scale" },
+        { label: "Pay later", href: "/portal/financing", icon: "calendarClock" },
         { label: "Renewals", href: "/portal/renewals", icon: "shield" },
         { label: "Profile", href: "/portal/settings", icon: "user" },
       ]}

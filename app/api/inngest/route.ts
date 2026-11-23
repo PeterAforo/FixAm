@@ -12,9 +12,10 @@ import { billingSweep } from "@/lib/inngest/functions/billing"
 import { mechanicStatsNightly } from "@/lib/inngest/functions/mechanic-stats"
 import { fairQuoteBackfill } from "@/lib/inngest/functions/fair-quote"
 import { seasonalPlanDaily, seasonalSendHourly } from "@/lib/inngest/functions/seasonal"
+import { financingRemindersDaily, financingSyncHourly } from "@/lib/inngest/functions/financing"
 import { escrowAutoRelease, paymentsPendingPoller, payoutOnQueued, payoutsSweep } from "@/lib/inngest/functions/escrow"
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
-  functions: [sendMessageFn, recalcMileageOnReading, recalcMileageNightly, bookingTomorrowReminders, instalmentSweep, creditStatementSweep, dailyReportSnapshots, monthlyReportSnapshots, autoReorderNightly, autoReorderOnMovement, reminderScan, mileageNudgeDaily, billingSweep, mechanicStatsNightly, paymentsPendingPoller, payoutOnQueued, payoutsSweep, escrowAutoRelease, fairQuoteBackfill, seasonalPlanDaily, seasonalSendHourly],
+  functions: [sendMessageFn, recalcMileageOnReading, recalcMileageNightly, bookingTomorrowReminders, instalmentSweep, creditStatementSweep, dailyReportSnapshots, monthlyReportSnapshots, autoReorderNightly, autoReorderOnMovement, reminderScan, mileageNudgeDaily, billingSweep, mechanicStatsNightly, paymentsPendingPoller, payoutOnQueued, payoutsSweep, escrowAutoRelease, fairQuoteBackfill, seasonalPlanDaily, seasonalSendHourly, financingSyncHourly, financingRemindersDaily],
 })
