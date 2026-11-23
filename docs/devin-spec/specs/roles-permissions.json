@@ -97,8 +97,7 @@
     "inspector": {
       "label": "Inspector",
       "principal": "staff",
-      "scope": "garage",
-      "status": "planned"
+      "scope": "garage"
     }
   },
   "permissions": {

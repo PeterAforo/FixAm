@@ -1,7 +1,7 @@
 import "server-only"
 import { and, eq, inArray, isNotNull, lte, or, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { escrowHolds, garages, ledgerEntries, payments, payouts, riders, sosRequests, towOperators, vendorOrderEvents, vendorOrders, vendors } from "@/lib/db/schema"
+import { escrowHolds, garages, inspections, ledgerEntries, payments, payouts, riders, sosRequests, towOperators, vendorOrderEvents, vendorOrders, vendors } from "@/lib/db/schema"
 import { paymentProvider, payoutProvider } from "@/lib/integrations/payments"
 import { messagingProvider } from "@/lib/integrations"
 import { writeAuditLog } from "@/lib/actions"
@@ -524,7 +524,19 @@ export async function reconcileReference(reference: string): Promise<ReconcileSt
     return v.status
   }
 
-  // 3. Vendor orders (one reference may cover several vendors' orders).
+  // 3. Pre-purchase inspections (P8-20).
+  const [insp] = await db().select({ id: inspections.id, paymentStatus: inspections.paymentStatus }).from(inspections).where(eq(inspections.paymentReference, reference)).limit(1)
+  if (insp) {
+    if (insp.paymentStatus === "paid") return "success"
+    const v = await paymentProvider().verify(reference)
+    if (v.status === "pending") return "pending"
+    const { markInspectionPaid } = await import("@/lib/inspections/service")
+    if (v.status === "success") await markInspectionPaid(insp.id, reference, v.amountPesewas)
+    else await db().update(inspections).set({ paymentStatus: "failed", updatedAt: new Date() }).where(and(eq(inspections.id, insp.id), sql`${inspections.paymentStatus} is distinct from 'paid'`))
+    return v.status
+  }
+
+  // 4. Vendor orders (one reference may cover several vendors' orders).
   const orders = await db().select().from(vendorOrders).where(eq(vendorOrders.paystackReference, reference))
   if (orders.length === 0) return "unknown"
   if (orders.every((o) => o.paymentStatus === "paid")) return "success"

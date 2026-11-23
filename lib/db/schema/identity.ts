@@ -106,6 +106,10 @@ export const garageSettings = pgTable("garage_settings", {
   whatsappPhoneNumberId: text("whatsapp_phone_number_id"),
   /** P8-19: AI assistant answers inbound WhatsApp for this garage. */
   whatsappAiEnabled: boolean("whatsapp_ai_enabled").notNull().default(false),
+  /** P8-20: garage offers pre-purchase inspections. */
+  offersInspections: boolean("offers_inspections").notNull().default(false),
+  /** P8-20: inspection fee in pesewas. */
+  inspectionPrice: bigint("inspection_price", { mode: "bigint" }).notNull().default(sql`0`),
   currency: text("currency").notNull().default("GHS"),
   ...timestamps,
 })

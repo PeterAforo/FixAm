@@ -246,6 +246,13 @@
       "when": 1795457112549,
       "tag": "0034_whatsapp",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1795458648755,
+      "tag": "0035_inspections",
+      "breakpoints": true
     }
   ]
 }

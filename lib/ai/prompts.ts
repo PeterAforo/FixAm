@@ -301,3 +301,61 @@ export const whatsappReplyPrompt = definePrompt({
   mock: (i) => ({ reply: i.facts.slice(0, 300) || "Thanks â€” the team will get back to you." }),
   maxTokens: 300,
 })
+
+const inspectionReportOut = z.object({
+  summary: z.string().min(20).max(3000),
+  costs: z.array(z.object({
+    item: z.string().min(2).max(120),
+    estimatePesewas: z.number().int().min(0).max(50_000_000),
+    note: z.string().max(300).optional(),
+  })).max(15),
+})
+
+/** P8-20: pre-purchase inspection report — plain-language summary + repair cost estimates. */
+export const inspectionReportPrompt = definePrompt({
+  key: "inspection_report",
+  version: 1,
+  system:
+    "You write pre-purchase vehicle inspection reports for FixAm, a Ghana garage app. " +
+    "The buyer is deciding whether to buy a used car. From the checklist results, OBD data and test-drive notes:\n" +
+    "1) summary: plain language, 3-6 short paragraphs. Lead with the overall verdict (buy / buy with repairs / walk away), " +
+    "then the important findings grouped by severity. Mention flood/accident signs prominently if found. Ghanaian context (harmattan dust, trotro use, flooded roads).\n" +
+    "2) costs: estimated repair costs in GHANA CEDI PESEWAS (1 cedi = 100 pesewas) for each item needing attention or failed — " +
+    "only items that plausibly need money spent. Ground each estimate in the garage's own recent price list when a similar line exists; " +
+    "otherwise use typical Ghana market prices. These are ESTIMATES, not quotes — say so implicitly by keeping them itemised.\n" +
+    "Never invent checklist results. If a section is mostly unanswered, say coverage was partial.",
+  render: (i: {
+    vehicle: Record<string, unknown>
+    sections: { section: string; pass: number; attention: number; fail: number; na: number }[]
+    flagged: { label: string; result: string; note: string | null }[]
+    obdSummary: string
+    priceHints: string[]
+    testDriveNotes: string
+  }) =>
+    `Vehicle: ${JSON.stringify(i.vehicle)}\n\nChecklist by section (pass/attention/fail/not-applicable):\n${i.sections.map((s) => `- ${s.section}: ${s.pass}/${s.attention}/${s.fail}/${s.na}`).join("\n")}\n\nFlagged items:\n${i.flagged.map((f) => `- [${f.result}] ${f.label}${f.note ? ` — ${f.note}` : ""}`).join("\n") || "none"}\n\nOBD: ${i.obdSummary}\n\nTest drive notes: ${i.testDriveNotes || "none"}\n\nGarage recent price hints (avg prices, pesewas):\n${i.priceHints.join("\n") || "none"}`,
+  output: inspectionReportOut,
+  jsonSchema: {
+    type: "object",
+    properties: {
+      summary: { type: "string" },
+      costs: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            item: { type: "string" },
+            estimatePesewas: { type: "integer" },
+            note: { type: "string" },
+          },
+          required: ["item", "estimatePesewas"],
+        },
+      },
+    },
+    required: ["summary", "costs"],
+  },
+  mock: (i) => ({
+    summary: `Inspection complete. ${i.flagged.length} item(s) need attention out of the checklist. Overall condition assessment pending full review.`,
+    costs: i.flagged.slice(0, 5).map((f) => ({ item: f.label, estimatePesewas: 50_000 })),
+  }),
+  maxTokens: 1200,
+})

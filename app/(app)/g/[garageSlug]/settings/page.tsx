@@ -19,6 +19,7 @@ import { WorkshopRulesPanel } from "./workshop-rules-panel"
 import { SeasonalPanel } from "./seasonal-panel"
 import { PickupPanel } from "./pickup-panel"
 import { WhatsAppPanel } from "./whatsapp-panel"
+import { InspectionSettingsPanel } from "./inspection-panel"
 import { getPickupSettings } from "@/lib/pickups/actions"
 import { getSeasonalOverview } from "@/lib/seasonal/actions"
 import { garageSettings } from "@/lib/db/schema"
@@ -53,7 +54,7 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
   ])
   const pickup = canManageSettings ? await getPickupSettings(garage.id).catch(() => null) : null
   const [settingsRow] = canManageSettings
-    ? await db().select({ specialties: garageSettings.specialties, requireOldPartProof: garageSettings.requireOldPartProof, whatsappNumber: garageSettings.whatsappNumber, whatsappPhoneNumberId: garageSettings.whatsappPhoneNumberId, whatsappAiEnabled: garageSettings.whatsappAiEnabled }).from(garageSettings).where(eq(garageSettings.garageId, garage.id)).limit(1)
+    ? await db().select({ specialties: garageSettings.specialties, requireOldPartProof: garageSettings.requireOldPartProof, whatsappNumber: garageSettings.whatsappNumber, whatsappPhoneNumberId: garageSettings.whatsappPhoneNumberId, whatsappAiEnabled: garageSettings.whatsappAiEnabled, offersInspections: garageSettings.offersInspections, inspectionPrice: garageSettings.inspectionPrice }).from(garageSettings).where(eq(garageSettings.garageId, garage.id)).limit(1)
     : []
   const reviews = canManageSettings
     ? await db()
@@ -127,6 +128,18 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
             whatsappNumber={settingsRow?.whatsappNumber ?? null}
             phoneNumberId={settingsRow?.whatsappPhoneNumberId ?? null}
             aiEnabled={settingsRow?.whatsappAiEnabled ?? false}
+          />
+        </section>
+      )}
+
+      {canManageSettings && (
+        <section>
+          <h2 className="text-[15px] font-semibold">Pre-purchase inspections</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Drivers booking a used car pay upfront; your inspectors run the checklist from the Inspections screen.</p>
+          <InspectionSettingsPanel
+            garageId={garage.id}
+            offers={settingsRow?.offersInspections ?? false}
+            pricePesewas={Number(settingsRow?.inspectionPrice ?? 0)}
           />
         </section>
       )}

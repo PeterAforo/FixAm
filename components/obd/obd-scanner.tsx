@@ -14,6 +14,8 @@ import type { LiveData } from "@/lib/obd/protocol"
 
 type GarageCtx = { kind: "garage"; garageId: string; jobId: string; canClear: boolean; canAddFindings: boolean; canOrderParts: boolean }
 type DriverCtx = { kind: "driver"; vehicleId: string }
+/** P8-20: attach a scan to a pre-purchase inspection. */
+type InspectionCtx = { kind: "inspection"; garageId: string; inspectionId: string }
 
 const SEV: Record<string, { label: string; cls: string }> = {
   stop: { label: "Stop driving", cls: "bg-red-50 text-red-800 border-red-200" },
@@ -66,7 +68,7 @@ const noSubscribe = () => () => {}
  * stored/pending/permanent codes, freeze frame and live data; explains each
  * code with likely parts and offers. Garage staff can clear codes (audited).
  */
-export function ObdScanner({ ctx, onSaved }: { ctx: GarageCtx | DriverCtx; onSaved?: (s: SavedScan) => void }) {
+export function ObdScanner({ ctx, onSaved }: { ctx: GarageCtx | DriverCtx | InspectionCtx; onSaved?: (s: SavedScan) => void }) {
   const support = useSyncExternalStore(noSubscribe, getSupport, () => null)
   const [adapter, setAdapter] = useState<string | null>(null)
   const [step, setStep] = useState<string | null>(null)
@@ -118,7 +120,7 @@ export function ObdScanner({ ctx, onSaved }: { ctx: GarageCtx | DriverCtx; onSav
         const res = await saveObdScan({
           adapterName: transport.current?.name ?? null, protocol: r.protocol, vin: r.vin, milOn: r.milOn,
           dtcs: r.dtcs, freezeFrame: r.freezeFrame, live: r.live,
-          ...(ctx.kind === "garage" ? { garageId: ctx.garageId, jobId: ctx.jobId } : { vehicleId: ctx.vehicleId }),
+          ...(ctx.kind === "garage" ? { garageId: ctx.garageId, jobId: ctx.jobId } : ctx.kind === "inspection" ? { garageId: ctx.garageId, inspectionId: ctx.inspectionId } : { vehicleId: ctx.vehicleId }),
         })
         if (res.ok) { setSaved(res.data); onSaved?.(res.data) } else setErr(res.error)
       } catch (e) {

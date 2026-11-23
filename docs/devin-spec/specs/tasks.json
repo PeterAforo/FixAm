@@ -1035,7 +1035,8 @@
             "Driver books and pays for an inspection",
             "Report includes checklist, photos, OBD codes and repair estimate",
             "Report shareable by link and downloadable as PDF"
-          ]
+          ],
+          "status": "done"
         }
       ]
     }

@@ -1,10 +1,11 @@
 import "server-only"
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm"
+import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
 import {
   customers,
   dvlaRecords,
   garages,
+  inspections,
   insurancePolicies,
   jobItems,
   jobs,
@@ -116,6 +117,8 @@ export type PublicPassport = {
   mileageTimeline: { km: number; month: string }[]
   papers: PaperStatus[]
   firstSeen: string | null
+  /** P8-20: completed pre-purchase inspections for this car (plate or linked vehicle). */
+  inspectionReports: { number: string; garageName: string; completedAt: string | null }[]
 }
 
 /** The public page data for a token, or null if it doesn't exist or is switched off. */
@@ -196,6 +199,29 @@ export async function loadPublicPassport(token: string, opts: { countView?: bool
     new Date().toISOString().slice(0, 10),
   )
 
+  const [inspectionRows] = await Promise.all([
+    db()
+      .select({
+        id: inspections.id,
+        number: inspections.number,
+        garageName: garages.name,
+        completedAt: inspections.completedAt,
+        score: sql<number | null>`(${inspections.aiReport}->>'scorePct')::int`,
+      })
+      .from(inspections)
+      .innerJoin(garages, eq(garages.id, inspections.garageId))
+      .where(and(
+        eq(inspections.status, "completed"),
+        isNull(inspections.deletedAt),
+        or(
+          inArray(inspections.vehicleId, ids),
+          sql`upper(regexp_replace(coalesce(${inspections.vehicleDetails}->>'plate',''), '[^A-Za-z0-9]', '', 'g')) = ${p.plateSearch}`,
+        ),
+      ))
+      .orderBy(desc(inspections.completedAt))
+      .limit(10),
+  ])
+
   if (opts.countView) {
     await db().update(vehiclePassports)
       .set({ viewCount: sql`${vehiclePassports.viewCount} + 1`, lastViewedAt: new Date() })
@@ -215,5 +241,10 @@ export async function loadPublicPassport(token: string, opts: { countView?: bool
     mileageTimeline: timeline,
     papers,
     firstSeen,
+    inspectionReports: inspectionRows.map((r) => ({
+      number: r.number,
+      garageName: r.garageName,
+      completedAt: r.completedAt?.toISOString().slice(0, 10) ?? null,
+    })),
   }
 }

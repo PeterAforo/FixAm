@@ -380,6 +380,21 @@
       }
     },
     {
+      "key": "inspection_report_ready",
+      "category": "transactional",
+      "channels": {
+        "sms": {
+          "body": "FixAm: your inspection {{number}} at {{garage}} is done. View the report: {{link}}"
+        },
+        "whatsapp": {
+          "template_name": "inspection_report_ready",
+          "category": "UTILITY",
+          "whatsapp_params": ["number", "garage", "link"],
+          "body": "FixAm: your inspection {{number}} at {{garage}} is done. View the report: {{link}}"
+        }
+      }
+    },
+    {
       "key": "fixam_assistant_reply",
       "category": "transactional",
       "channels": {

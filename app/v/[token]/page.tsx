@@ -116,6 +116,21 @@ function Passport({ p }: { p: PublicPassport }) {
         )}
       </section>
 
+      {p.inspectionReports.length > 0 && (
+        <section className="mt-6 rounded-2xl border border-border bg-card p-4">
+          <h2 className="font-display text-lg font-semibold">Pre-purchase inspections</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Independent checks done before this car was bought.</p>
+          <ul className="mt-2 space-y-1.5 text-sm">
+            {p.inspectionReports.map((r) => (
+              <li key={r.number} className="flex items-center justify-between gap-2">
+                <span className="font-medium">{r.number}</span>
+                <span className="text-xs text-muted-foreground">{[r.garageName, r.completedAt ? dayLabel(r.completedAt) : null].filter(Boolean).join(" · ")}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <footer className="mt-8 text-center text-xs text-muted-foreground">
         <p>Shared by the car&apos;s owner. Only work done at FixAm garages is shown; the owner&apos;s details and prices are private.</p>
         {p.firstSeen && <p className="mt-1">On FixAm since {monthLabel(p.firstSeen.slice(0, 7))}</p>}

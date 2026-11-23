@@ -85,6 +85,17 @@
         ]
       },
       {
+        "label": "Inspections",
+        "icon": "clipboard-check",
+        "route": "/g/[garageSlug]/inspections",
+        "roles": [
+          "owner",
+          "manager",
+          "mechanic",
+          "inspector"
+        ]
+      },
+      {
         "label": "Vehicles",
         "icon": "car",
         "route": "/g/[garageSlug]/vehicles",

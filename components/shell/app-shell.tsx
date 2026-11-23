@@ -21,6 +21,7 @@ import {
   BellRing,
   Calendar,
   Car,
+  ClipboardCheck,
   Gauge,
   Inbox,
   MessageCircle,
@@ -44,6 +45,7 @@ const ICONS: Record<string, LucideIcon> = {
   "kanban-square": KanbanSquare,
   inbox: Inbox,
   "message-circle": MessageCircle,
+  "clipboard-check": ClipboardCheck,
   truck: Truck,
   wrench: Wrench,
   calendar: Calendar,
@@ -62,7 +64,7 @@ const ICONS: Record<string, LucideIcon> = {
 
 /** Sidebar grouping (by spec nav label). Anything not listed falls into the first group. */
 const GROUPS: { title: string | null; labels: string[] }[] = [
-  { title: null, labels: ["Dashboard", "Job board", "My jobs", "Bookings", "Leads", "Claims", "Inbox"] },
+  { title: null, labels: ["Dashboard", "Job board", "My jobs", "Bookings", "Leads", "Claims", "Inbox", "Inspections"] },
   { title: "Customers", labels: ["Vehicles", "Customers", "Reminders", "Renewals"] },
   { title: "Inventory", labels: ["Parts & stock", "POS", "Marketplace"] },
   { title: "Business", labels: ["Money", "Reports", "My stats"] },

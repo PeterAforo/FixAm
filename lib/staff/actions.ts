@@ -16,6 +16,7 @@ const STAFF_ROLES = [
   "storekeeper",
   "accountant",
   "garage_driver",
+  "inspector",
 ] as const
 
 const roleSchema = z.enum(STAFF_ROLES)

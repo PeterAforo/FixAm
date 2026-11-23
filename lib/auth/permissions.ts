@@ -14,6 +14,7 @@ export type StaffRole =
   | "storekeeper"
   | "accountant"
   | "garage_driver"
+  | "inspector"
 
 export type Principal =
   | { kind: "staff"; role: StaffRole; garageId: string; branchId?: string | null }

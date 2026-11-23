@@ -2,6 +2,38 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-20 Pre-purchase inspections ✅
+- **Garage settings**: `offers_inspections` + `inspection_price` (pesewas) on
+  `garage_settings`, edited in Settings → "Pre-purchase inspections".
+- **Driver booking** (`/portal/inspections`): pick a garage, describe the car
+  (make/model/year/plate/VIN/mileage), choose **at the garage** or **the
+  seller's location** (seller name/phone/address captured), preferred time —
+  then pay upfront via theTeller (MoMo charge or hosted card checkout).
+  Payment reconciles through `reconcileReference` → status `booked`.
+- **`inspector` staff role** (`inspections.perform`): new hireable role in
+  staff settings; nav entry "Inspections" for owner/manager/mechanic/inspector.
+- **~120-point checklist** in `lib/inspections/core.ts` as data across 10
+  sections (body & paint, flood/accident signs, engine, transmission,
+  suspension, brakes, electrics, interior, tyres, test drive). Each item:
+  pass / attention / fail / n-a, optional note and photo (≤3.5 MB, storage
+  provider). Unit-tested.
+- **Garage runner** (`/g/<slug>/inspections/<id>`): start inspection → work
+  through sections → attach an **OBD scan** via the existing Bluetooth
+  scanner (`obd_scans.inspection_id`, new `inspection` ctx) → test-drive
+  notes → **complete**.
+- **AI report**: `runPrompt` (`inspection_report`) writes a plain-language
+  verdict + itemised **estimated repair costs in pesewas**, grounded in the
+  garage's own recent invoice-line prices (`garagePriceHints`) and labelled
+  as estimates.
+- **Share & print**: completion issues a hashed share token → public report
+  at `/i/<token>` (stores only the sha256) and an SMS to the driver. Printable
+  report at `/print/inspection/<id>`.
+- **Passport**: completed inspections matching the car's plate (or linked
+  `vehicle_id` after purchase via "Attach to passport" in the portal) appear
+  on the public vehicle passport `/v/<token>`.
+- Migration `0035_inspections` (`inspections`, `inspection_items`,
+  `garage_settings.offers_inspections/inspection_price`).
+
 ### P8-19 Garage WhatsApp AI assistant ✅
 - **Webhook**: `GET/POST /api/webhooks/whatsapp` — Meta verification
   challenge (`WHATSAPP_VERIFY_TOKEN`) and `X-Hub-Signature-256` verification

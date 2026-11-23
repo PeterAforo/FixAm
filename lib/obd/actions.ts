@@ -34,6 +34,7 @@ const scanSchema = z.object({
   garageId: z.string().uuid().optional(),
   jobId: z.string().uuid().optional(),
   vehicleId: z.string().uuid().optional(),
+  inspectionId: z.string().uuid().optional(),
 })
 
 export type SavedScan = { scanId: string; explanation: ScanExplanation; vinMismatch: boolean }
@@ -52,6 +53,7 @@ export async function saveObdScan(raw: unknown): Promise<{ ok: true; data: Saved
   let jobId: string | null = null
   let vehicleId: string | null = null
   let customerId: string | null = null
+  let inspectionId: string | null = null
   let vehicleLabel: string | null = null
   let knownVin: string | null = null
 
@@ -59,7 +61,17 @@ export async function saveObdScan(raw: unknown): Promise<{ ok: true; data: Saved
     const m = await resolveMembership(userId, d.garageId)
     if (!m) return { ok: false, error: "No permission" }
     garageId = d.garageId
-    if (d.jobId) {
+    if (d.inspectionId) {
+      const { inspections } = await import("@/lib/db/schema")
+      const [insp] = await db().select({ id: inspections.id, status: inspections.status, details: inspections.vehicleDetails })
+        .from(inspections)
+        .where(and(eq(inspections.id, d.inspectionId), eq(inspections.garageId, d.garageId), isNull(inspections.deletedAt))).limit(1)
+      if (!insp || !["booked", "in_progress", "completed"].includes(insp.status)) return { ok: false, error: "Inspection not found or closed" }
+      inspectionId = insp.id
+      const det = insp.details as { make?: string; model?: string; year?: string; vin?: string } | null
+      vehicleLabel = det ? [det.year, det.make, det.model].filter(Boolean).join(" ") || null : null
+      knownVin = det?.vin ?? null
+    } else if (d.jobId) {
       const [j] = await db()
         .select({ id: jobs.id, vehicleId: jobs.vehicleId, customerId: jobs.customerId, make: vehicles.make, model: vehicles.model, year: vehicles.year, vin: vehicles.vin })
         .from(jobs).innerJoin(vehicles, eq(vehicles.id, jobs.vehicleId))
@@ -92,7 +104,7 @@ export async function saveObdScan(raw: unknown): Promise<{ ok: true; data: Saved
   })
 
   const [row] = await db().insert(obdScans).values({
-    garageId, userId, customerId, vehicleId, jobId,
+    garageId, userId, customerId, vehicleId, jobId, inspectionId,
     source: garageId ? "garage" : "driver",
     adapterName: d.adapterName ?? null,
     protocol: d.protocol ?? null,

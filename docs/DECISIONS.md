@@ -150,3 +150,11 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
   (P8-12 â†’ P8-20). New workspaces: **tow operator** and **rider** (same
   one-account model). OBD uses Web Bluetooth (Android/Chrome); iOS support
   needs a native app.
+
+## P8-20 pre-purchase inspections
+
+- **Checklist items are rows, not jsonb.** The spec sketched `checklist: jsonb` on `inspections`; we store one `inspection_items` row per checklist key so inspectors can update incrementally, attach photos per item, and the public report can query flagged items without parsing JSON.
+- **Share token stores only sha256.** Same pattern as invoices/passports — the raw `/i/<token>` is returned once at completion and sent by SMS; only `share_token_hash` persists.
+- **Cost estimates grounded in garage invoice history.** `garagePriceHints` feeds the garage's recent invoice-line averages into the `inspection_report` prompt; output is labelled estimates, never quotes.
+- **Payment via existing theTeller reconcile.** Inspections store `payment_reference`; `reconcileReference` gained a third lookup before vendor orders — no new webhook needed.
+
