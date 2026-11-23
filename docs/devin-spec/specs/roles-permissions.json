@@ -92,8 +92,7 @@
     "garage_driver": {
       "label": "Garage Driver (pickup/drop-off)",
       "principal": "staff",
-      "scope": "garage",
-      "status": "planned"
+      "scope": "garage"
     },
     "inspector": {
       "label": "Inspector",
@@ -520,6 +519,11 @@
     ],
     "handovers.perform": [
       "garage_driver",
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "pickups.manage": [
       "owner",
       "manager",
       "service_advisor"

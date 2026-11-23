@@ -9,6 +9,9 @@ import { InvoicePayPanel } from "./invoice-pay-panel"
 import { ReminderPanel } from "./reminder-panel"
 import { PayLaterCard } from "@/components/financing/pay-later-card"
 import { getPayLater } from "@/lib/financing/actions"
+import { HandoverView } from "@/components/pickups/handover-view"
+import { AutoRefresh } from "@/components/pickups/auto-refresh"
+import { runsForJobToken } from "@/lib/pickups/service"
 
 async function TokenView({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ payment?: string }> }) {
   const { token } = await params
@@ -129,7 +132,20 @@ async function TokenView({ params, searchParams }: { params: Promise<{ token: st
     )
   }
 
-  return <TrackerPanel token={token} initial={trk} />
+  // P8-16: pickup / return runs and handover reports on the job tracker.
+  const handover = await runsForJobToken(token).catch(() => ({ runs: [], comparison: null }))
+  return (
+    <>
+      <TrackerPanel token={token} initial={trk} />
+      {handover.runs.length > 0 && (
+        <div className="mx-auto max-w-lg px-4 pb-10">
+          <AutoRefresh active={handover.runs.some((r) => ["scheduled", "assigned", "en_route", "arrived"].includes(r.status))} />
+          <h2 className="mb-3 font-display text-lg font-semibold">Pickup &amp; drop-off</h2>
+          <HandoverView runs={handover.runs} comparison={handover.comparison} />
+        </div>
+      )}
+    </>
+  )
 }
 
 export default function MagicLinkPage({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ payment?: string }> }) {

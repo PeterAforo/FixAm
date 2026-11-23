@@ -7,6 +7,7 @@ export const membershipRoleEnum = pgEnum("membership_role", [
   "mechanic",
   "storekeeper",
   "accountant",
+  "garage_driver", // P8-16: pickup & drop-off runs
 ])
 
 export const membershipStatusEnum = pgEnum("membership_status", [

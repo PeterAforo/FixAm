@@ -3,7 +3,8 @@ import { createHash, randomInt, randomBytes } from "crypto"
 import { z } from "zod"
 import { and, eq, gte, isNull, lt, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { bays, bookings, branches, customers, garages, jobTemplates, vehicles } from "@/lib/db/schema"
+import { bays, bookings, branches, customers, garageSettings, garages, jobTemplates, vehicles } from "@/lib/db/schema"
+import { normalizeGhPhone } from "@/lib/phone"
 import { writeAuditLog, resolveMembership, type ActionResult } from "@/lib/actions"
 import { getSessionUserId } from "@/lib/auth/ensure-user"
 import { can, type StaffRole } from "@/lib/auth/permissions"
@@ -238,6 +239,8 @@ export async function getPublicBookingInfo(rawInput: unknown): Promise<
     garageBrandColor: string | null; garageLogoUrl: string | null;
     branches: { id: string; name: string; bayCount: number }[];
     services: { id: string; name: string; description: string | null; estimatedMinutes: number | null }[];
+    /** P8-16: pickup & drop-off offer. */
+    pickup: { enabled: boolean; fee: number; radiusKm: number };
   } | null>
 > {
   const parsed = z.object({ garageSlug: z.string().min(1).max(80) }).safeParse(rawInput)
@@ -254,6 +257,8 @@ export async function getPublicBookingInfo(rawInput: unknown): Promise<
       .where(and(eq(bays.garageId, garage.id), eq(bays.isActive, true))).groupBy(bays.branchId),
   ])
   const bayByBranch = new Map(bayRows.map((b) => [b.branchId, b.n]))
+  const [ps] = await db().select({ enabled: garageSettings.pickupEnabled, fee: garageSettings.pickupFee, radius: garageSettings.pickupRadiusKm })
+    .from(garageSettings).where(eq(garageSettings.garageId, garage.id)).limit(1)
 
   return {
     ok: true,
@@ -266,6 +271,7 @@ export async function getPublicBookingInfo(rawInput: unknown): Promise<
       garageLogoUrl: garage.logoUrl ?? null,
       branches: branchRows.map((b) => ({ id: b.id, name: b.name, bayCount: bayByBranch.get(b.id) ?? 0 })),
       services: tplRows.map((t) => ({ id: t.id, name: t.name, description: t.description, estimatedMinutes: t.estimatedMinutes })),
+      pickup: { enabled: ps?.enabled ?? false, fee: Number(ps?.fee ?? 0n), radiusKm: ps?.radius ?? 10 },
     },
   }
 }
@@ -337,6 +343,11 @@ const publicBookingSchema = z.object({
   notes: z.string().max(1000).optional(),
   startsAt: z.string().datetime({ offset: true }),
   endsAt: z.string().datetime({ offset: true }),
+  /** P8-16: collect the car (and optionally bring it back). */
+  pickupAddress: z.string().trim().min(5).max(300).optional(),
+  pickupLat: z.number().min(-90).max(90).optional(),
+  pickupLng: z.number().min(-180).max(180).optional(),
+  wantsReturn: z.boolean().optional(),
 })
 
 /** Public booking request — capacity-checked, OTP sent by SMS. */
@@ -397,6 +408,22 @@ export async function requestPublicBooking(rawInput: unknown): Promise<ActionRes
     otpExpiresAt: new Date(Date.now() + 15 * 60_000),
   })
 
+  // P8-16: pickup (and return) runs, waiting for the SMS code like the booking.
+  if (d.pickupAddress) {
+    const [ps] = await db().select({ enabled: garageSettings.pickupEnabled, fee: garageSettings.pickupFee }).from(garageSettings).where(eq(garageSettings.garageId, d.garageId)).limit(1)
+    const phone = normalizeGhPhone(d.guestPhone)
+    if (ps?.enabled && phone) {
+      const { createRun } = await import("@/lib/pickups/service")
+      const common = {
+        garageId: d.garageId, branchId: d.branchId, bookingId, contactName: d.guestName, contactPhone: phone,
+        vehicleLabel: null, plate: d.guestPlate ?? null, address: d.pickupAddress, lat: d.pickupLat ?? null, lng: d.pickupLng ?? null,
+        fee: ps.fee, status: "unconfirmed" as const,
+      }
+      await createRun({ ...common, kind: "pickup", scheduledAt: new Date(new Date(d.startsAt).getTime() - 45 * 60_000) }).catch(() => undefined)
+      if (d.wantsReturn) await createRun({ ...common, kind: "dropoff", scheduledAt: new Date(d.endsAt), notes: "Return time to be confirmed when the car is ready" }).catch(() => undefined)
+    }
+  }
+
   // P8-11: count bookings that follow a seasonal reminder (best-effort).
   try {
     const { attributeSeasonalBooking } = await import("@/lib/seasonal/service")
@@ -456,6 +483,14 @@ export async function confirmPublicBooking(rawInput: unknown): Promise<ActionRes
     otpExpiresAt: null,
     updatedAt: new Date(),
   }).where(eq(bookings.id, b.id))
+
+  // P8-16: confirmed booking → its pickup/return runs become real (customer gets a tracking link).
+  try {
+    const { confirmRunsForBooking } = await import("@/lib/pickups/service")
+    await confirmRunsForBooking(b.id)
+  } catch {
+    // never block the confirmation
+  }
 
   // confirmation message
   try {

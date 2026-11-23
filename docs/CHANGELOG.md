@@ -2,6 +2,30 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-16 Car pickup & drop-off ✅
+- **Garage setting** (Settings → Pickup & drop-off): on/off, fee per run
+  (each way) and distance. **New staff role `garage_driver`** (Staff →
+  invite) with a "Pickups" screen; owners, managers and advisors can drive
+  too (`handovers.perform`), and manage runs (`pickups.manage`).
+- **Customers book it**: the public booking page (`/b/<garage>`) offers
+  "Collect my car" (+ "Bring it back when it's ready") with address and
+  location. Runs wait for the booking's SMS code, then the customer gets a
+  tracking link. Staff can also create pickup/return runs for a booking or a
+  job, assign a driver and reschedule (Pickups screen).
+- **Driver run**: directions, call, "on my way" → "arrived" (live location
+  shared every ~15 s) → **condition report**: photos of front, back, both
+  sides, inside and dashboard, fuel level, mileage, warning lights, notes,
+  and the **customer's finger signature** with name. The run can't finish
+  without every part. Same report at return.
+- **Customer sees** both reports and live status at `/p/<token>` (and on the
+  job tracker `/t/<token>`), auto-refreshing while the run is moving, with a
+  pickup-vs-return comparison (km driven, fuel, warning lights).
+- Run fees become approved "Car pickup" / "Car return" lines on the job
+  (added when the booking is checked in, or when a return is created for a
+  job).
+- Migration `0031_pickup-dropoff` (adds `garage_driver` to
+  `membership_role`).
+
 ### P8-15 Breakdown & towing (SOS) ✅
 - **New workspace: tow operators** — `/signup/tow-operator` →
   `/onboarding/tow-operator` → `/tow` (in the workspace switcher). Setup:

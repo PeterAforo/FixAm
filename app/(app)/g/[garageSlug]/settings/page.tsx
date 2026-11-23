@@ -17,6 +17,8 @@ import { CustomerPartsPanel } from "./customer-parts-panel"
 import { SpecialtiesPanel } from "./specialties-panel"
 import { WorkshopRulesPanel } from "./workshop-rules-panel"
 import { SeasonalPanel } from "./seasonal-panel"
+import { PickupPanel } from "./pickup-panel"
+import { getPickupSettings } from "@/lib/pickups/actions"
 import { getSeasonalOverview } from "@/lib/seasonal/actions"
 import { garageSettings } from "@/lib/db/schema"
 import { getCustomerPartsSettings } from "@/lib/parts-shop/garage-actions"
@@ -48,6 +50,7 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
     canManageSettings ? getCustomerPartsSettings(garage.id) : Promise.resolve(null),
     canManageSettings ? getSeasonalOverview(garage.id).catch(() => null) : Promise.resolve(null),
   ])
+  const pickup = canManageSettings ? await getPickupSettings(garage.id).catch(() => null) : null
   const [settingsRow] = canManageSettings
     ? await db().select({ specialties: garageSettings.specialties, requireOldPartProof: garageSettings.requireOldPartProof }).from(garageSettings).where(eq(garageSettings.garageId, garage.id)).limit(1)
     : []
@@ -104,6 +107,13 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
         <section>
           <h2 className="text-[15px] font-semibold">Workshop rules</h2>
           <WorkshopRulesPanel garageId={garage.id} requireOldPartProof={settingsRow?.requireOldPartProof ?? true} />
+        </section>
+      )}
+
+      {pickup && (
+        <section>
+          <h2 className="text-[15px] font-semibold">Pickup &amp; drop-off</h2>
+          <PickupPanel garageId={garage.id} initial={pickup} />
         </section>
       )}
 

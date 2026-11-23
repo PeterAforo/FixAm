@@ -312,6 +312,19 @@
           "body": "FixAm: {{vehicle}} {{plate}} has been towed to your garage ({{number}}). See the request in Leads: {{link}}"
         }
       }
+    },
+    {
+      "key": "pickup_status",
+      "category": "transactional",
+      "channels": {
+        "sms": {
+          "body": "{{garage_name}}: {{status}} Follow it here: {{link}}"
+        },
+        "push": {
+          "title": "Pickup & drop-off",
+          "body": "{{status}}"
+        }
+      }
     }
   ],
   "inbound_whatsapp_sms": {

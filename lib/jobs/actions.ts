@@ -202,6 +202,9 @@ export async function checkInJob(rawInput: unknown): Promise<ActionResult<{ jobI
     // P8-06: a booking that came from a driver's repair request carries the complaint, media and triage onto the job card.
     const { attachRepairRequestToJob } = await import("@/lib/repair-requests/service")
     await attachRepairRequestToJob({ bookingId: d.bookingId, jobId, garageId: d.garageId }).catch(() => undefined)
+    // P8-16: pickup/drop-off runs follow the booking onto the job (fees become job lines).
+    const { linkRunsToJob } = await import("@/lib/pickups/service")
+    await linkRunsToJob(d.bookingId, jobId, d.garageId).catch(() => undefined)
   }
 
   // status event (creation → checked_in)

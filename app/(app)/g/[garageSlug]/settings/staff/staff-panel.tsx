@@ -28,6 +28,7 @@ const ROLES = [
   "mechanic",
   "storekeeper",
   "accountant",
+  "garage_driver",
 ] as const
 
 const inputCls =

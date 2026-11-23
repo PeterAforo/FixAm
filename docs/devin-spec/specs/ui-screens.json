@@ -44,6 +44,17 @@
         ]
       },
       {
+        "label": "Pickups",
+        "icon": "truck",
+        "route": "/g/[garageSlug]/pickups",
+        "roles": [
+          "owner",
+          "manager",
+          "service_advisor",
+          "garage_driver"
+        ]
+      },
+      {
         "label": "Leads",
         "icon": "inbox",
         "route": "/g/[garageSlug]/leads",
@@ -177,6 +188,9 @@
       }
     ],
     "mobile_bottom_bar": {
+      "garage_driver": [
+        "Pickups"
+      ],
       "service_advisor": [
         "Job board",
         "Bookings",

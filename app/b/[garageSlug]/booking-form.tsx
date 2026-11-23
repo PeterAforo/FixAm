@@ -17,8 +17,14 @@ export function BookingForm(props: {
   garagePhone: string
   branches: Branch[]
   services: Service[]
+  pickup?: { enabled: boolean; fee: number; radiusKm: number }
 }) {
   const { garageId, garageName, garagePhone, branches, services } = props
+  const pickupOffer = props.pickup?.enabled ? props.pickup : null
+  const [wantPickup, setWantPickup] = useState(false)
+  const [wantReturn, setWantReturn] = useState(true)
+  const [pickupAddress, setPickupAddress] = useState("")
+  const [pickupLoc, setPickupLoc] = useState<{ lat: number; lng: number } | null>(null)
   const [pending, startTransition] = useTransition()
   const [step, setStep] = useState<"form" | "otp" | "done">("form")
   const [err, setErr] = useState<string | null>(null)
@@ -62,6 +68,9 @@ export function BookingForm(props: {
         guestPhone: phone.trim(),
         guestPlate: plate.trim() || undefined,
         notes: notes.trim() || undefined,
+        ...(wantPickup && pickupAddress.trim().length >= 5
+          ? { pickupAddress: pickupAddress.trim(), pickupLat: pickupLoc?.lat, pickupLng: pickupLoc?.lng, wantsReturn: wantReturn }
+          : {}),
         startsAt: slot!.start,
         endsAt: slot!.end,
       })
@@ -189,6 +198,29 @@ export function BookingForm(props: {
           <input className={`${inputCls} mt-1`} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="e.g. grinding noise when braking" />
         </div>
       </div>
+
+      {pickupOffer && (
+        <div className="rounded-xl border border-border p-3">
+          <label className="flex items-start gap-2 text-sm">
+            <input type="checkbox" className="mt-1" checked={wantPickup} onChange={(e) => setWantPickup(e.target.checked)} />
+            <span>
+              <span className="font-semibold">Collect my car</span>{" "}
+              <span className="text-muted-foreground">— our driver picks it up{pickupOffer.fee > 0 ? ` (GH₵${(pickupOffer.fee / 100).toFixed(0)} each way)` : ""}, within {pickupOffer.radiusKm} km. You&apos;ll get photos of the car and sign on handover.</span>
+            </span>
+          </label>
+          {wantPickup && (
+            <div className="mt-2 space-y-2">
+              <input className={inputCls} value={pickupAddress} onChange={(e) => setPickupAddress(e.target.value)} placeholder="Pickup address or landmark" />
+              <button type="button" className="text-xs underline" onClick={() => navigator.geolocation?.getCurrentPosition((p) => setPickupLoc({ lat: p.coords.latitude, lng: p.coords.longitude }))}>
+                {pickupLoc ? "Location added ✓" : "Use my current location"}
+              </button>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={wantReturn} onChange={(e) => setWantReturn(e.target.checked)} /> Bring it back when it&apos;s ready
+              </label>
+            </div>
+          )}
+        </div>
+      )}
 
       {err && <p className="text-sm text-red-600">{err}</p>}
       <Button onClick={submit} disabled={pending} className="min-h-[48px] w-full">

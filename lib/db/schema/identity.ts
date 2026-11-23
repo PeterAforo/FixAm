@@ -95,6 +95,10 @@ export const garageSettings = pgTable("garage_settings", {
   requireOldPartProof: boolean("require_old_part_proof").notNull().default(true),
   /** P8-11: send harmattan and rainy-season car-care reminders. */
   seasonalCampaigns: boolean("seasonal_campaigns").notNull().default(true),
+  /** P8-16: pickup & drop-off service. Fee is per run (pickup or return), pesewas. */
+  pickupEnabled: boolean("pickup_enabled").notNull().default(false),
+  pickupFee: bigint("pickup_fee", { mode: "bigint" }).notNull().default(sql`0`),
+  pickupRadiusKm: integer("pickup_radius_km").notNull().default(10),
   specialties: text("specialties").array().notNull().default(sql`'{}'::text[]`),
   currency: text("currency").notNull().default("GHS"),
   ...timestamps,

@@ -389,7 +389,10 @@
         "customer_part_fitting_fee": "money req default:0",
         "specialties": "text[] req default:{} (repair-lead matching)",
         "require_old_part_proof": "bool req default:true",
-        "seasonal_campaigns": "bool default true (P8-11)"
+        "seasonal_campaigns": "bool default true (P8-11)",
+        "pickup_enabled": "bool (P8-16)",
+        "pickup_fee": "bigint (P8-16)",
+        "pickup_radius_km": "int (P8-16)"
       },
       "planned_columns": {
         "accepts_customer_parts": "bool req default:true",
@@ -2449,6 +2452,53 @@
         "note": "text",
         "actor_user_id": "uuid",
         "created_at": "timestamptz"
+      }
+    },
+    "pickup_runs": {
+      "status": "built (P8-16)",
+      "tenant": true,
+      "note": "status unconfirmed→scheduled→assigned→en_route→arrived→done | cancelled",
+      "columns": {
+        "id": "uuid pk",
+        "garage_id": "uuid fk",
+        "branch_id": "uuid fk",
+        "booking_id": "uuid fk",
+        "job_id": "uuid fk",
+        "customer_id": "uuid fk",
+        "kind": "pickup|dropoff",
+        "contact_name": "text",
+        "contact_phone": "text",
+        "vehicle_label": "text",
+        "plate": "text",
+        "address": "text",
+        "lat/lng": "numeric",
+        "scheduled_at": "timestamptz",
+        "status": "text",
+        "driver_user_id": "uuid fk users",
+        "driver_lat/lng/location_at": "live",
+        "fee": "bigint",
+        "fee_job_item_id": "uuid",
+        "tracker_token_hash": "text",
+        "notes": "text"
+      }
+    },
+    "condition_reports": {
+      "status": "built (P8-16)",
+      "tenant": true,
+      "columns": {
+        "id": "uuid pk",
+        "garage_id": "uuid fk",
+        "run_id": "uuid fk",
+        "stage": "pickup|dropoff",
+        "photos": "jsonb {front,rear,left,right,interior,dashboard}",
+        "fuel_level": "int 0–100",
+        "odometer_km": "int",
+        "warning_lights": "text[]",
+        "damage_notes": "text",
+        "signature_path": "text",
+        "signed_by_name": "text",
+        "signed_at": "timestamptz",
+        "recorded_by": "uuid fk users"
       }
     }
   },

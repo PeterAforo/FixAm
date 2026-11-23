@@ -980,7 +980,8 @@
             "Customer books pickup with a booking",
             "Driver completes a photo condition report at pickup and drop-off",
             "Customer sees both reports and live status"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-17",
