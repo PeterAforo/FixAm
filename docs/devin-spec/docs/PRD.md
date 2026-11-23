@@ -468,3 +468,125 @@ Run phases 3 and 4 in parallel if more than one developer is available.
 | Comeback | A vehicle returning for the same fault (warranty work) |
 | MoMo | Mobile Money |
 | RLS | Postgres row-level security, used to isolate each garage's data |
+
+## 15. Unified accounts & brokers (P7 — built Nov 2026)
+
+One FixAm account per person; roles are workspaces (garage, parts shop, broker,
+My cars) with a switcher. Clean auth URLs: `/login`, `/signup`,
+`/signup/<role>`, `/onboarding/<role>`, `/account`. Insurance brokers and DVLA
+agents have their own workspace (`/broker`); drivers request quotes at
+`/portal/renewals`; garages can hand a renewal to a broker or process it
+themselves. Phone sign-in uses FixAm's own SMS code (Arkesel/Hubtel). See
+`docs/DECISIONS.md` → "Unified accounts & routing".
+
+## 16. Smart repair marketplace & AI (P8 — next)
+
+### 16.1 Goals
+1. A driver can describe a problem **before** choosing a garage, in English,
+   Twi, Ga, Ewe or Hausa — typed, voice, photo or video — and get an instant AI
+   triage.
+2. The moment a diagnosis says "replace part X", the garage and the customer
+   see who has that part for that car — own stock first, then vendor offers.
+3. A customer can buy a part from a vendor and have it **delivered to their
+   garage**, with FixAm holding the money until the garage confirms receipt.
+4. Trust by default: old-part proof, before/after media, fair-price checks,
+   a portable vehicle passport.
+
+### 16.2 Confirmed product decisions (Peter, 23 Nov 2026)
+| # | Decision |
+|---|---|
+| 1 | Customer-supplied parts are allowed; each garage can **refuse** them or set a **fitting fee** (garage setting, shown to the customer before they buy). |
+| 2 | Delivery = **vendors' own riders** first; a **partner courier** (e.g. Bolt Send / local dispatch) as backup. |
+| 3 | Payments via **PaySwitch theTeller** (theteller.net). FixAm collects, **holds** marketplace money, and **pays out** vendors after the garage confirms receipt. |
+| 4 | FixAm maintains a **standard parts list** (part types + synonyms) mapped to Ghana's common makes/models; vendors list against it. |
+| 5 | AI = **Claude API** for reasoning; **Khaya AI** (GhanaNLP) for speech in **Twi, Ga, Ewe, Hausa** (+ Ghanaian English). |
+
+### 16.3 Complaint-first repair requests
+- Entry points: portal home ("What's wrong with my car?"), public site, and
+  the garage profile page ("Tell this garage what's wrong").
+- Input: text, voice note (≤ 2 min), up to 6 photos, 1 short video, warning-light
+  photo. Language auto-detected or chosen; voice → Khaya ASR → transcript →
+  English translation (Claude fallback where Khaya has no translation pair).
+- **AI triage** (Claude, structured JSON): likely causes (ranked, plain
+  language), urgency (`safe_to_drive` | `drive_carefully` | `do_not_drive`),
+  rough cost range (GH₵, from platform price data when available), specialty
+  (electrical, AC, gearbox, suspension, body, engine, tyres…), likely parts,
+  up to 3 follow-up questions. Always labelled "AI estimate — a mechanic must
+  confirm".
+- Destination: (a) the driver's preferred garage, or (b) **broadcast** to
+  matching garages within a radius (specialty + make coverage + rating).
+- Garages see a **Leads** inbox and reply with an offer: earliest slot, "from"
+  price, message. Driver accepts → booking created.
+- At check-in the request (text, media, transcript, triage) is attached to the
+  job card automatically.
+
+### 16.4 Parts taxonomy & fitment
+- `part_types`: standard names (e.g. "Front brake pads"), category, synonyms
+  (English + Twi/Ga/Ewe/Hausa street names), typical labour hours.
+- `vendor_products` gain: `part_type_id`, `condition`
+  (`genuine` | `aftermarket` | `home_used`), fitment (make, model, year from/to),
+  OEM number, warranty days.
+- Free-text findings ("pads finished", "mpa no asɛe") are mapped to a part type
+  by Claude with confidence; low confidence → mechanic picks from a list.
+
+### 16.5 Diagnosis → instant part offers
+- Trigger: a job finding or estimate line of type "replace" with a part type.
+- Shown inline: **own stock** (qty, price) → **vendor offers** ranked by fit
+  match, price, delivery ETA to the garage, rating, distance; condition badges.
+- Garage actions: add to estimate (with markup) or **order to garage** now.
+- Customer, on the estimate approval page, chooses per part line:
+  **Garage supplies** or **I'll buy it** (pick a vendor offer) — only if the
+  garage accepts customer parts; the fitting fee is shown.
+
+### 16.6 Customer parts marketplace + delivery to garage
+- Portal "Parts for my car": only compatible products for the selected car.
+- Checkout destinations: **my garage** (garage on an open job, or any directory
+  garage), home, or vendor pickup.
+- Payment: theTeller checkout (MoMo / card). Funds are **held** in FixAm's
+  ledger (`escrow_holds`).
+- Fulfilment: vendor accepts → rider assigned (vendor rider, or partner courier
+  fallback) → out for delivery → **garage confirms receipt with a photo** (or
+  the customer, for home delivery) → hold released → vendor payout.
+- Auto-release after 72 h without a dispute; disputes go to platform admin.
+- Garage dashboard shows **Incoming parts** linked to the job.
+
+### 16.7 Payments — theTeller
+- Collections: hosted checkout (`/checkout/initiate`) or MoMo direct debit
+  (`/v1.1/transaction/process`, `processing_code 000200`). Amount = 12-char
+  zero-padded minor units; `transaction_id` = 12-digit unique numeric.
+- theTeller has **no webhook**: results come back on `redirect_url`; FixAm
+  must confirm with the status endpoint and run an Inngest poller for pending
+  transactions.
+- Payouts: float-account transfers — MoMo (`404000`, `r-switch FLT`,
+  `account_issuer`) and bank (`404020` → name check → `/bank/ftc/authorize`).
+- No native split payments: FixAm's commission and fitting fees are computed in
+  the ledger; vendor payouts are net of commission.
+- Compliance: holding customer funds before payout may need Bank of Ghana
+  payment-service guidance — confirm with PaySwitch / a lawyer before launch.
+
+### 16.8 Trust features
+- **Old-part proof**: replacement lines need an old-part photo (or "customer
+  took old part") before the invoice can be issued (garage setting, default on).
+- **Before/after photos + short video updates** in the live tracker.
+- **Fair-quote check**: compares a quote with completed-job prices for the same
+  job type, car class and city (min. 5 data points; otherwise hidden).
+- **Vehicle passport**: QR sticker → owner-controlled public service history
+  page; shareable when selling.
+
+### 16.9 More AI
+- **Voice job notes**: mechanic speaks (any of the 5 languages) → findings,
+  tasks and parts on the job card, for review before saving.
+- **Seasonal reminders**: harmattan (air/cabin filters, Nov–Feb) and rainy
+  season (wipers, tyres, brakes, Apr–Jul / Sep–Oct).
+
+### 16.10 Later (P9)
+OBD-II Bluetooth scanner support, part recognition from photos, fix-now-pay-later
+financing, breakdown/towing button, car pickup & drop-off, accident/insurance
+claims via brokers, FixAm rider network, garage WhatsApp AI assistant,
+pre-purchase inspections.
+
+### 16.11 Success metrics (P8)
+- ≥ 40% of new jobs at the pilot garage start from a complaint-first request.
+- ≥ 30% of "replace" findings show at least one vendor offer within 2 s.
+- Median part delivery to garage < 24 h in Accra; disputes < 3% of orders.
+- AI triage rated "helpful" by ≥ 70% of drivers who answer the prompt.

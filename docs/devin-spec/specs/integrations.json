@@ -77,7 +77,23 @@
       },
       "reference_format": "{doc_type}_{garageShort}_{uuidv7} e.g. inv_ab12_01HX...",
       "currency": "GHS",
-      "metadata": "Always include garage_id, branch_id, entity_type (invoice|estimate_deposit|instalment|credit_account|vendor_order|subscription|message_bundle), entity_id"
+      "metadata": "Always include garage_id, branch_id, entity_type (invoice|estimate_deposit|instalment|credit_account|vendor_order|subscription|message_bundle), entity_id",
+      "implementations": {
+        "theteller": {
+          "status": "GET /v1.1/users/transactions/{transaction_id}/status — no webhooks: confirm after redirect AND poll pending txns via Inngest.",
+          "env": [
+            "THETELLER_ENV=test|live",
+            "THETELLER_MERCHANT_ID",
+            "THETELLER_API_USER",
+            "THETELLER_API_KEY",
+            "THETELLER_PASS_CODE (float account, payouts)"
+          ],
+          "auth": "HTTP Basic base64(apiuser:apikey); status call uses Merchant-Id header",
+          "collect": "Hosted checkout POST checkout.theteller.net/initiate (test: test.theteller.net/checkout/initiate) or MoMo direct debit POST /v1.1/transaction/process processing_code 000200, r-switch MTN|VDF|ATL. amount = 12-char zero-padded minor units; transaction_id = 12-digit unique numeric.",
+          "payout": "Float transfer: MoMo processing_code 404000, r-switch FLT, account_issuer MTN|VDF|ATL|…; bank 404020 (account_issuer GIP, account_bank code) → confirm name → POST /v1.1/transaction/bank/ftc/authorize.",
+          "notes": "No split payments — commission/fees handled in FixAm ledger (escrow_holds, payouts)."
+        }
+      }
     },
     "StorageProvider": {
       "implementation": {
@@ -169,6 +185,45 @@
         "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
       ],
       "dev": "With no SMS provider in non-production, the code is shown on screen."
+    },
+    "AiProvider": {
+      "status": "planned (P8-05)",
+      "env": [
+        "AI_PROVIDER=claude|mock",
+        "ANTHROPIC_API_KEY"
+      ],
+      "interface": "generateJson<T>({purpose, system, input, schema}) → T; logs ai_calls (tokens, cost).",
+      "uses": [
+        "repair triage",
+        "free-text finding → part type",
+        "voice transcript → job card draft",
+        "fair-quote explanation",
+        "translation fallback"
+      ]
+    },
+    "SpeechProvider": {
+      "status": "planned (P8-05)",
+      "env": [
+        "SPEECH_PROVIDER=khaya|mock",
+        "KHAYA_API_KEY"
+      ],
+      "interface": "transcribe(audio, lang) → {text}; translate(text, from, to) → {text}",
+      "languages": {
+        "tw": "Asante Twi",
+        "gaa": "Ga",
+        "ee": "Ewe",
+        "ha": "Hausa",
+        "en_gh": "Ghanaian English"
+      },
+      "notes": "Khaya AI (GhanaNLP). Where Khaya lacks a translation pair, fall back to AiProvider."
+    },
+    "DeliveryProvider": {
+      "status": "planned (P8-03)",
+      "interface": "book({pickup, dropoff, parcel}) → {ref, eta}; status(ref)",
+      "implementations": {
+        "vendor": "vendor's own rider (default) — name/phone/status entered by vendor",
+        "manual_partner": "admin/vendor books a partner courier and enters the reference"
+      }
     }
   },
   "inngest_functions": [
@@ -246,6 +301,26 @@
     {
       "id": "bookings.day-before",
       "trigger": "cron '0 17 * * *' TZ=Africa/Accra"
+    },
+    {
+      "id": "payments.theteller.poll",
+      "trigger": "cron */1 * * * * (pending txns < 30 min old)",
+      "retries": 2
+    },
+    {
+      "id": "escrow.auto_release",
+      "trigger": "cron 0 * * * *",
+      "retries": 3
+    },
+    {
+      "id": "payouts.send",
+      "trigger": "event escrow/released",
+      "retries": 4
+    },
+    {
+      "id": "repair_requests.broadcast",
+      "trigger": "event repair_request/created",
+      "retries": 3
     }
   ],
   "domain_events": [

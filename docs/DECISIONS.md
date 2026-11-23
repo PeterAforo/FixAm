@@ -125,3 +125,22 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
   customer messaging still goes through `sendMessage()`.
 - **Photos** are hot-linked from the Unsplash CDN (free licence only, no
   Unsplash+), rendered with `<img>` via `PhotoImg`; swap ids in `lib/images.ts`.
+
+## Smart repair marketplace & AI — product decisions (23 Nov 2026, planned P8)
+
+- **Customer-supplied parts allowed**, but each garage can refuse them or set a
+  fitting fee (`garage_settings.accepts_customer_parts`,
+  `customer_part_fitting_fee`), shown before the customer pays.
+- **Delivery**: vendors' own riders first; partner courier as fallback
+  (`DeliveryProvider`, manual booking to start).
+- **Payments: PaySwitch theTeller** is the gateway. No split payments and no
+  webhooks: FixAm collects, records holds in its own ledger, confirms status by
+  polling, and pays vendors via float transfers after the garage confirms
+  receipt (72 h auto-release). Paystack stays behind the adapter until migrated.
+  Check Bank of Ghana rules on holding funds with PaySwitch before launch.
+- **Standard parts list** (`part_types` + synonyms in local languages) is the
+  backbone of matching; vendors list against it.
+- **AI**: Claude API for reasoning (structured JSON, every call logged in
+  `ai_calls`); **Khaya AI** for speech in Twi, Ga, Ewe, Hausa (+ Ghanaian
+  English). AI output is always labelled as an estimate; nothing is saved to a
+  job without a human confirming.

@@ -721,6 +721,252 @@
           ]
         }
       ]
+    },
+    {
+      "id": "P7",
+      "name": "Unified accounts and brokers",
+      "status": "done",
+      "goal": "One account per person with role workspaces; insurance/DVLA brokers as a new workspace.",
+      "tasks": [
+        {
+          "id": "P7-01",
+          "title": "Unified accounts + phone sign-in",
+          "status": "done",
+          "description": "Single Supabase account for every role; FixAm SMS code mints a session (lib/auth/phone-auth.ts); workspaces + switcher (lib/accounts).",
+          "acceptance_criteria": [
+            "Drivers, staff, vendors and brokers sign in on /login",
+            "One person can hold several workspaces and switch"
+          ]
+        },
+        {
+          "id": "P7-02",
+          "title": "Clean auth routes",
+          "status": "done",
+          "description": "/login, /signup, /signup/<role>, /onboarding, /onboarding/<role>, /account; proxy.ts + fixam_next cookie; no query strings.",
+          "acceptance_criteria": [
+            "No ?next= or ?role= in any auth URL",
+            "Guests return to the page they wanted after sign-in"
+          ]
+        },
+        {
+          "id": "P7-03",
+          "title": "Brokers",
+          "status": "done",
+          "description": "brokers, broker_members, broker_requests, broker_request_events; /broker workspace; driver quotes at /portal/renewals; garage 'Send to broker'; admin verify/suspend.",
+          "acceptance_criteria": [
+            "Request → quote → accept → complete with SMS at each step",
+            "Garages can still process renewals themselves"
+          ]
+        },
+        {
+          "id": "P7-04",
+          "title": "Ghana SMS adapters",
+          "status": "done",
+          "description": "Arkesel + Hubtel MessagingProvider; lib/messaging/direct.ts for platform SMS.",
+          "acceptance_criteria": [
+            "MESSAGING_SMS_PROVIDER=arkesel|hubtel sends real SMS"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P8",
+      "name": "Smart repair marketplace and AI",
+      "goal": "Complaint-first repairs with AI triage, instant part offers from vendors, customer parts delivered to garages with held payments, and trust-by-default features.",
+      "tasks": [
+        {
+          "id": "P8-01",
+          "title": "Parts taxonomy and fitment",
+          "depends_on": [],
+          "description": "part_types (≈150 seeded common parts with category, synonyms incl. Twi/Ga/Ewe/Hausa street names, typical labour hours); vendor_products gain part_type_id, condition (genuine|aftermarket|home_used), make/model/year-from/year-to fitment, oem_number, warranty_days; vendor catalogue UI + CSV import updated.",
+          "acceptance_criteria": [
+            "Vendors list products against a part type with fitment and condition",
+            "Search 'brake pads Corolla 2014' returns only fitting products",
+            "Synonyms match (e.g. Twi street names) in search"
+          ]
+        },
+        {
+          "id": "P8-02",
+          "title": "theTeller payments, escrow ledger and payouts",
+          "depends_on": [
+            "P8-01"
+          ],
+          "description": "PaymentProvider 'theteller' (checkout initiate, MoMo direct debit 000200, status check, card reversal); 12-digit numeric transaction ids; redirect_url handler + Inngest poller (no webhook); escrow_holds + payouts tables; vendor payouts via float transfer (MoMo 404000 / bank 404020 + authorize); commission + fitting fee in ledger; admin disputes & manual release/refund. Paystack stays behind the adapter until migrated.",
+          "acceptance_criteria": [
+            "Customer pays by MoMo through theTeller test env and the hold shows 'held'",
+            "Pending transactions resolve via the poller without the redirect",
+            "Release triggers a vendor MoMo payout net of commission; failed payouts retry and alert admin",
+            "Every money movement is audit-logged and idempotent"
+          ]
+        },
+        {
+          "id": "P8-03",
+          "title": "Customer parts marketplace with delivery to garage",
+          "depends_on": [
+            "P8-01",
+            "P8-02"
+          ],
+          "description": "Portal 'Parts for my car' (compatible products only), cart, checkout destinations (my garage / any directory garage / home / pickup), vendor_orders gain buyer_user_id, destination_type, destination_garage_id, job_id, escrow_hold_id, rider fields; vendor assigns own rider or partner courier fallback (DeliveryProvider adapter, manual booking first); garage 'Incoming parts' list; receipt confirmation with photo releases the hold; 72 h auto-release; dispute flow.",
+          "acceptance_criteria": [
+            "Customer buys a part delivered to their garage and the garage sees it on the job",
+            "Garage receipt photo releases funds to the vendor",
+            "Garages that refuse customer parts are not offered as destinations; fitting fee shown before payment"
+          ]
+        },
+        {
+          "id": "P8-04",
+          "title": "Diagnosis → instant part offers",
+          "depends_on": [
+            "P8-01",
+            "P8-03"
+          ],
+          "description": "Replace-type findings/estimate lines carry part_type_id (Claude maps free text with confidence; picker fallback); matcher returns own stock then vendor offers ranked by fit, price, ETA to garage, rating, distance; one-tap 'order to garage'; estimate approval page lets the customer choose 'garage supplies' vs 'I'll buy it' per line; garage settings accepts_customer_parts + customer_part_fitting_fee.",
+          "acceptance_criteria": [
+            "Offers appear within 2 s of saving a replace finding",
+            "Customer choosing 'I'll buy it' creates a vendor order delivered to the garage, linked to the job",
+            "Garage markup applies only to garage-supplied lines"
+          ]
+        },
+        {
+          "id": "P8-05",
+          "title": "AI + speech providers",
+          "depends_on": [],
+          "description": "AiProvider (Claude API: structured JSON outputs, prompt registry, cost logging, PII minimisation) and SpeechProvider (Khaya AI ASR for tw, gaa, ee, ha, en_gh + translation; Claude fallback translation for pairs Khaya lacks), both with mocks and env selection.",
+          "acceptance_criteria": [
+            "Mock providers used when keys are absent",
+            "Voice note in Twi/Ga/Ewe/Hausa returns transcript + English text",
+            "Each AI call logs model, tokens and cost per garage/user"
+          ]
+        },
+        {
+          "id": "P8-06",
+          "title": "Complaint-first repair requests + AI triage",
+          "depends_on": [
+            "P8-05"
+          ],
+          "description": "repair_requests (+ media) and repair_request_offers; portal + public intake (text, voice, photos, video, warning light); AI triage JSON (causes, urgency, cost range, specialty, likely parts, follow-ups); send to preferred garage or broadcast by radius/specialty/make; garage Leads inbox with offers; accepting an offer books; check-in attaches the request to the job.",
+          "acceptance_criteria": [
+            "Driver submits a voice complaint in Twi and sees triage in under 10 s",
+            "Broadcast reaches only matching garages within the radius",
+            "The job card shows the original complaint, media and triage"
+          ]
+        },
+        {
+          "id": "P8-07",
+          "title": "Old-part proof and before/after media",
+          "depends_on": [],
+          "description": "Replacement lines require old-part photo or 'customer took old part' before invoice issue (garage setting, default on); before/after photos and short video updates in /t tracker.",
+          "acceptance_criteria": [
+            "Invoice issue blocked until proof exists when the setting is on",
+            "Customer sees before/after media on the tracker"
+          ]
+        },
+        {
+          "id": "P8-08",
+          "title": "Voice job notes → structured job card",
+          "depends_on": [
+            "P8-05"
+          ],
+          "description": "Mechanic records voice in any of the 5 languages; AI drafts findings, tasks and parts for review; accepted items saved to the job.",
+          "acceptance_criteria": [
+            "Mechanic reviews and edits the draft before saving",
+            "Nothing is saved without confirmation"
+          ]
+        },
+        {
+          "id": "P8-09",
+          "title": "Fair-quote check",
+          "depends_on": [
+            "P8-04"
+          ],
+          "description": "price_observations from issued invoices (job type, part type, car class, city); quote comparison widget for customers and garages; hidden below 5 observations.",
+          "acceptance_criteria": [
+            "Customer sees 'within typical range / above typical range' with sample size",
+            "No garage-identifying data exposed"
+          ]
+        },
+        {
+          "id": "P8-10",
+          "title": "Vehicle passport",
+          "depends_on": [],
+          "description": "Per-vehicle QR token, owner-controlled public history page /v/[token], printable sticker, share link on sale.",
+          "acceptance_criteria": [
+            "Owner can enable/disable and regenerate the QR",
+            "Page shows service history without personal data"
+          ]
+        },
+        {
+          "id": "P8-11",
+          "title": "Seasonal reminders",
+          "depends_on": [],
+          "description": "reminder-rules: harmattan (filters) and rainy-season (wipers, tyres, brakes) campaigns per region.",
+          "acceptance_criteria": [
+            "Campaigns respect opt-outs and quiet hours"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "P9",
+      "name": "Later",
+      "status": "backlog",
+      "goal": "Extend the platform once P8 is live.",
+      "tasks": [
+        {
+          "id": "P9-01",
+          "title": "OBD-II Bluetooth scanner support",
+          "description": "OBD-II Bluetooth scanner support",
+          "acceptance_criteria": []
+        },
+        {
+          "id": "P9-02",
+          "title": "Part recognition from photos",
+          "description": "Part recognition from photos",
+          "acceptance_criteria": []
+        },
+        {
+          "id": "P9-03",
+          "title": "Fix-now-pay-later financing partner",
+          "description": "Fix-now-pay-later financing partner",
+          "acceptance_criteria": []
+        },
+        {
+          "id": "P9-04",
+          "title": "Breakdown / towing button",
+          "description": "Breakdown / towing button",
+          "acceptance_criteria": []
+        },
+        {
+          "id": "P9-05",
+          "title": "Car pickup and drop-off",
+          "description": "Car pickup and drop-off",
+          "acceptance_criteria": []
+        },
+        {
+          "id": "P9-06",
+          "title": "Accident & insurance claims via brokers",
+          "description": "Accident & insurance claims via brokers",
+          "acceptance_criteria": []
+        },
+        {
+          "id": "P9-07",
+          "title": "FixAm rider network",
+          "description": "FixAm rider network",
+          "acceptance_criteria": []
+        },
+        {
+          "id": "P9-08",
+          "title": "Garage WhatsApp AI assistant",
+          "description": "Garage WhatsApp AI assistant",
+          "acceptance_criteria": []
+        },
+        {
+          "id": "P9-09",
+          "title": "Pre-purchase inspections",
+          "description": "Pre-purchase inspections",
+          "acceptance_criteria": []
+        }
+      ]
     }
   ]
 }

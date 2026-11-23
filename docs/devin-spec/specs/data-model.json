@@ -380,6 +380,11 @@
         "auto_reorder_spend_limit": "money default:0",
         "late_fee_rule": "jsonb",
         "currency": "text req default:'GHS'"
+      },
+      "planned_columns": {
+        "accepts_customer_parts": "bool req default:true",
+        "customer_part_fitting_fee": "money",
+        "require_old_part_proof": "bool req default:true"
       }
     },
     "branches": {
@@ -1009,7 +1014,17 @@
       "indexes": [
         "category",
         "name (trigram)"
-      ]
+      ],
+      "planned_columns": {
+        "part_type_id": "uuid fk:part_types",
+        "condition": "text (genuine|aftermarket|home_used)",
+        "fit_make": "text",
+        "fit_model": "text",
+        "fit_year_from": "int",
+        "fit_year_to": "int",
+        "oem_number": "text",
+        "warranty_days": "int"
+      }
     },
     "vendor_orders": {
       "tenant": false,
@@ -1036,7 +1051,19 @@
         "delivered_at": "timestamptz",
         "notes": "text"
       },
-      "rls_note": "Visible to: members of garage_id, members of vendor_id, the ordering customer, platform admin."
+      "rls_note": "Visible to: members of garage_id, members of vendor_id, the ordering customer, platform admin.",
+      "planned_columns": {
+        "buyer_user_id": "uuid fk:users (customer purchases)",
+        "destination_type": "text (garage|home|pickup)",
+        "destination_garage_id": "uuid fk:garages",
+        "job_id": "uuid fk:jobs",
+        "escrow_hold_id": "uuid fk:escrow_holds",
+        "rider_name": "text",
+        "rider_phone": "text",
+        "courier": "text (vendor|partner)",
+        "received_photo_path": "text",
+        "received_at": "timestamptz"
+      }
     },
     "vendor_order_items": {
       "tenant": false,
@@ -1752,6 +1779,138 @@
         "actor": "text req (broker|driver|garage|system)",
         "actor_user_id": "uuid",
         "note": "text",
+        "created_at": "timestamptz req default:now()"
+      }
+    },
+    "part_types": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "name": "text req uniq",
+        "category": "text req",
+        "synonyms": "text[] req default:{} (incl. tw/gaa/ee/ha street names)",
+        "typical_labour_hours": "numeric(4,2)",
+        "created_at": "timestamptz req default:now()"
+      }
+    },
+    "repair_requests": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "number": "text req uniq",
+        "user_id": "uuid req fk:users",
+        "phone": "text req",
+        "portal_vehicle_id": "uuid",
+        "vehicle_label": "text",
+        "description": "text",
+        "language": "text (en|tw|gaa|ee|ha)",
+        "transcript": "text",
+        "translation_en": "text",
+        "media": "jsonb (photos, video, voice, warning_light)",
+        "triage": "jsonb {causes[], urgency, cost_min, cost_max, specialty, likely_part_type_ids[], follow_ups[], model}",
+        "target": "text (garage|broadcast)",
+        "garage_id": "uuid fk:garages",
+        "radius_km": "int",
+        "lat": "numeric",
+        "lng": "numeric",
+        "status": "text (open|offered|booked|closed|cancelled)",
+        "booking_id": "uuid",
+        "job_id": "uuid",
+        "created_at": "timestamptz req default:now()",
+        "updated_at": "timestamptz req default:now()"
+      }
+    },
+    "repair_request_offers": {
+      "status": "planned (P8)",
+      "tenant": "garage",
+      "columns": {
+        "id": "uuid pk",
+        "request_id": "uuid req fk:repair_requests",
+        "garage_id": "uuid req fk:garages",
+        "earliest_slot": "timestamptz",
+        "price_from": "money",
+        "message": "text",
+        "status": "text (sent|accepted|declined|expired)",
+        "created_at": "timestamptz req default:now()"
+      }
+    },
+    "escrow_holds": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "vendor_order_id": "uuid req fk:vendor_orders",
+        "payer_user_id": "uuid fk:users",
+        "amount": "money req",
+        "commission": "money req",
+        "fitting_fee": "money",
+        "provider": "text req default:'theteller'",
+        "provider_txn_id": "text req uniq (12 digits)",
+        "status": "text (pending|held|released|refunded|disputed)",
+        "release_after": "timestamptz",
+        "released_at": "timestamptz",
+        "created_at": "timestamptz req default:now()",
+        "updated_at": "timestamptz req default:now()"
+      }
+    },
+    "payouts": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "vendor_id": "uuid req fk:vendors",
+        "escrow_hold_id": "uuid fk:escrow_holds",
+        "amount": "money req",
+        "method": "text (momo|bank)",
+        "account_issuer": "text (MTN|VDF|ATL|GIP…)",
+        "account_number": "text req",
+        "provider_txn_id": "text uniq",
+        "status": "text (queued|sent|failed|reversed)",
+        "failure_reason": "text",
+        "attempts": "int req default:0",
+        "created_at": "timestamptz req default:now()",
+        "updated_at": "timestamptz req default:now()"
+      }
+    },
+    "price_observations": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "job_type": "text",
+        "part_type_id": "uuid fk:part_types",
+        "car_class": "text",
+        "city": "text",
+        "amount": "money req",
+        "observed_at": "date req"
+      }
+    },
+    "vehicle_passports": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "portal_vehicle_id": "uuid req",
+        "token": "text req uniq",
+        "enabled": "bool req default:true",
+        "created_at": "timestamptz req default:now()"
+      }
+    },
+    "ai_calls": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "purpose": "text req (triage|part_match|voice_jobcard|fair_quote|translate)",
+        "provider": "text req",
+        "model": "text req",
+        "input_tokens": "int",
+        "output_tokens": "int",
+        "cost_usd_micros": "bigint",
+        "garage_id": "uuid",
+        "user_id": "uuid",
         "created_at": "timestamptz req default:now()"
       }
     }

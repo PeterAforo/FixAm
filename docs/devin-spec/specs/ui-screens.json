@@ -709,6 +709,106 @@
         "Request a quote: insurance|DVLA, service type, vehicle, current expiry, choose broker",
         "Request cards: accept/decline quote, call/WhatsApp broker, status"
       ]
+    },
+    {
+      "id": "repair_request_new",
+      "route": "/portal/requests/new (+ public /fix)",
+      "audience": "customer",
+      "task": "P8-06",
+      "status": "planned",
+      "content": [
+        "Text / voice / photos / video / warning light",
+        "Language picker (en, tw, gaa, ee, ha)",
+        "AI triage card: causes, urgency, cost range, specialty",
+        "Send to my garage or find garages near me"
+      ]
+    },
+    {
+      "id": "repair_request_detail",
+      "route": "/portal/requests/[id]",
+      "audience": "customer",
+      "task": "P8-06",
+      "status": "planned",
+      "content": [
+        "Triage",
+        "Garage offers (slot, from-price) → accept to book"
+      ]
+    },
+    {
+      "id": "garage_leads",
+      "route": "/g/[garageSlug]/leads",
+      "audience": "owner,manager,service_advisor",
+      "task": "P8-06",
+      "status": "planned",
+      "content": [
+        "Incoming repair requests with media + triage",
+        "Reply with slot and from-price"
+      ]
+    },
+    {
+      "id": "part_offers_panel",
+      "route": "/g/[garageSlug]/jobs/[jobId] (inline)",
+      "audience": "owner,manager,service_advisor,mechanic",
+      "task": "P8-04",
+      "status": "planned",
+      "content": [
+        "Own stock first, then vendor offers with condition badges",
+        "Add to estimate / order to garage"
+      ]
+    },
+    {
+      "id": "portal_parts",
+      "route": "/portal/parts",
+      "audience": "customer",
+      "task": "P8-03",
+      "status": "planned",
+      "content": [
+        "Compatible parts for the selected car",
+        "Delivery: my garage / home / pickup",
+        "theTeller checkout"
+      ]
+    },
+    {
+      "id": "garage_incoming_parts",
+      "route": "/g/[garageSlug]/parts/incoming",
+      "audience": "owner,manager,storekeeper",
+      "task": "P8-03",
+      "status": "planned",
+      "content": [
+        "Parts on the way, linked to jobs",
+        "Confirm receipt with photo (releases payment)"
+      ]
+    },
+    {
+      "id": "vendor_payouts",
+      "route": "/vendor (Payouts tab)",
+      "audience": "vendor",
+      "task": "P8-02",
+      "status": "planned",
+      "content": [
+        "Held / released / paid out",
+        "Payout account (MoMo or bank)"
+      ]
+    },
+    {
+      "id": "admin_escrow",
+      "route": "/admin (Escrow & disputes)",
+      "audience": "platform_admin",
+      "task": "P8-02",
+      "status": "planned",
+      "content": [
+        "Holds, disputes, manual release/refund, failed payouts"
+      ]
+    },
+    {
+      "id": "vehicle_passport",
+      "route": "/v/[token]",
+      "audience": "public",
+      "task": "P8-10",
+      "status": "planned",
+      "content": [
+        "Owner-shared service history"
+      ]
     }
   ]
 }
