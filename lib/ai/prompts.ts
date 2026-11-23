@@ -311,7 +311,7 @@ const inspectionReportOut = z.object({
   })).max(15),
 })
 
-/** P8-20: pre-purchase inspection report — plain-language summary + repair cost estimates. */
+/** P8-20: pre-purchase inspection report â€” plain-language summary + repair cost estimates. */
 export const inspectionReportPrompt = definePrompt({
   key: "inspection_report",
   version: 1,
@@ -320,9 +320,9 @@ export const inspectionReportPrompt = definePrompt({
     "The buyer is deciding whether to buy a used car. From the checklist results, OBD data and test-drive notes:\n" +
     "1) summary: plain language, 3-6 short paragraphs. Lead with the overall verdict (buy / buy with repairs / walk away), " +
     "then the important findings grouped by severity. Mention flood/accident signs prominently if found. Ghanaian context (harmattan dust, trotro use, flooded roads).\n" +
-    "2) costs: estimated repair costs in GHANA CEDI PESEWAS (1 cedi = 100 pesewas) for each item needing attention or failed — " +
+    "2) costs: estimated repair costs in GHANA CEDI PESEWAS (1 cedi = 100 pesewas) for each item needing attention or failed â€” " +
     "only items that plausibly need money spent. Ground each estimate in the garage's own recent price list when a similar line exists; " +
-    "otherwise use typical Ghana market prices. These are ESTIMATES, not quotes — say so implicitly by keeping them itemised.\n" +
+    "otherwise use typical Ghana market prices. These are ESTIMATES, not quotes â€” say so implicitly by keeping them itemised.\n" +
     "Never invent checklist results. If a section is mostly unanswered, say coverage was partial.",
   render: (i: {
     vehicle: Record<string, unknown>
@@ -332,7 +332,7 @@ export const inspectionReportPrompt = definePrompt({
     priceHints: string[]
     testDriveNotes: string
   }) =>
-    `Vehicle: ${JSON.stringify(i.vehicle)}\n\nChecklist by section (pass/attention/fail/not-applicable):\n${i.sections.map((s) => `- ${s.section}: ${s.pass}/${s.attention}/${s.fail}/${s.na}`).join("\n")}\n\nFlagged items:\n${i.flagged.map((f) => `- [${f.result}] ${f.label}${f.note ? ` — ${f.note}` : ""}`).join("\n") || "none"}\n\nOBD: ${i.obdSummary}\n\nTest drive notes: ${i.testDriveNotes || "none"}\n\nGarage recent price hints (avg prices, pesewas):\n${i.priceHints.join("\n") || "none"}`,
+    `Vehicle: ${JSON.stringify(i.vehicle)}\n\nChecklist by section (pass/attention/fail/not-applicable):\n${i.sections.map((s) => `- ${s.section}: ${s.pass}/${s.attention}/${s.fail}/${s.na}`).join("\n")}\n\nFlagged items:\n${i.flagged.map((f) => `- [${f.result}] ${f.label}${f.note ? ` â€” ${f.note}` : ""}`).join("\n") || "none"}\n\nOBD: ${i.obdSummary}\n\nTest drive notes: ${i.testDriveNotes || "none"}\n\nGarage recent price hints (avg prices, pesewas):\n${i.priceHints.join("\n") || "none"}`,
   output: inspectionReportOut,
   jsonSchema: {
     type: "object",
