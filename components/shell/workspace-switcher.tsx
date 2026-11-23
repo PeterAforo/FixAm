@@ -3,12 +3,13 @@
 import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Car, Check, ChevronsUpDown, Loader2, Plus, ShieldCheck, Store, Wrench, type LucideIcon } from "lucide-react"
+import { Car, Check, ChevronsUpDown, Loader2, Plus, ShieldCheck, Store, Wrench, LayoutDashboard, type LucideIcon } from "lucide-react"
 import { switchWorkspace } from "@/lib/accounts/actions"
 import type { Workspace, WorkspaceType } from "@/lib/accounts/workspaces"
 import { cn } from "@/lib/utils"
 
 export const WORKSPACE_ICON: Record<WorkspaceType, LucideIcon> = {
+  admin: LayoutDashboard,
   driver: Car,
   garage: Wrench,
   vendor: Store,
@@ -16,6 +17,7 @@ export const WORKSPACE_ICON: Record<WorkspaceType, LucideIcon> = {
 }
 
 export const WORKSPACE_TINT: Record<WorkspaceType, string> = {
+  admin: "bg-[#F1F5F9] text-[#334155] dark:bg-[#334155]/30 dark:text-[#CBD5E1]",
   driver: "bg-[#E6F4FF] text-[#0B5CAD] dark:bg-[#0B5CAD]/20 dark:text-[#8CC4FF]",
   garage: "bg-[#FFEDE4] text-[#B8390A] dark:bg-[#D4430F]/20 dark:text-[#FF8A57]",
   vendor: "bg-[#EEF8D6] text-[#4E6B07] dark:bg-[#C6F432]/15 dark:text-[#C6F432]",

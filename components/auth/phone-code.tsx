@@ -129,9 +129,12 @@ export function OtpBoxes({
 export function useCountdown(deadline: number) {
   const [now, setNow] = useState<number | null>(null)
   useEffect(() => {
-    setNow(Date.now())
+    const kick = setTimeout(() => setNow(Date.now()), 0)
     const t = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(t)
+    return () => {
+      clearTimeout(kick)
+      clearInterval(t)
+    }
   }, [deadline])
   if (now === null) return 0
   return Math.max(0, Math.ceil((deadline - now) / 1000))

@@ -14,7 +14,7 @@ import {
   vendors,
 } from "@/lib/db/schema"
 
-export type WorkspaceType = "driver" | "garage" | "vendor" | "broker"
+export type WorkspaceType = "admin" | "driver" | "garage" | "vendor" | "broker"
 
 export type Workspace = {
   key: string // e.g. garage:pitstop-motors
@@ -27,6 +27,7 @@ export type Workspace = {
 export const WORKSPACE_COOKIE = "fixam_ws"
 
 export const WORKSPACE_LABEL: Record<WorkspaceType, string> = {
+  admin: "Platform",
   driver: "My cars",
   garage: "Garage",
   vendor: "Parts shop",
@@ -38,7 +39,7 @@ const PLATFORM_SLUG = "fixam-platform"
 /** Every workspace the user can open, in a stable order. */
 export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
   const [me] = await db()
-    .select({ phone: users.phone, fullName: users.fullName })
+    .select({ phone: users.phone, fullName: users.fullName, isPlatformAdmin: users.isPlatformAdmin })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1)
@@ -77,6 +78,15 @@ export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
   ])
 
   const out: Workspace[] = []
+  if (me?.isPlatformAdmin) {
+    out.push({
+      key: "platform",
+      type: "admin",
+      name: "FixAm Admin",
+      subtitle: "Platform administration",
+      href: "/admin",
+    })
+  }
   for (const g of garageRows) {
     // A user can hold several roles in one garage — show the garage once.
     if (out.some((w) => w.key === `garage:${g.slug}`)) continue
