@@ -771,8 +771,8 @@
     },
     {
       "id": "P8",
-      "name": "Smart repair marketplace and AI",
-      "goal": "Complaint-first repairs with AI triage, instant part offers from vendors, customer parts delivered to garages with held payments, and trust-by-default features.",
+      "name": "Smart repair marketplace, AI and on-road services",
+      "goal": "Complaint-first repairs with AI triage, instant part offers from vendors, customer parts delivered to garages with held payments, and trust-by-default features. Plus OBD diagnostics, photo part recognition, financing, breakdown/towing, pickup & drop-off, accident claims, a FixAm rider network, a garage WhatsApp AI assistant and pre-purchase inspections — all in scope now.",
       "tasks": [
         {
           "id": "P8-01",
@@ -903,68 +903,120 @@
           "acceptance_criteria": [
             "Campaigns respect opt-outs and quiet hours"
           ]
-        }
-      ]
-    },
-    {
-      "id": "P9",
-      "name": "Later",
-      "status": "backlog",
-      "goal": "Extend the platform once P8 is live.",
-      "tasks": [
-        {
-          "id": "P9-01",
-          "title": "OBD-II Bluetooth scanner support",
-          "description": "OBD-II Bluetooth scanner support",
-          "acceptance_criteria": []
         },
         {
-          "id": "P9-02",
+          "id": "P8-12",
           "title": "Part recognition from photos",
-          "description": "Part recognition from photos",
-          "acceptance_criteria": []
+          "depends_on": [
+            "P8-01",
+            "P8-05"
+          ],
+          "description": "Customer or mechanic snaps a part; AiProvider vision returns part type, likely fitment, condition and confidence; result feeds the part-offers matcher and repair requests. Low confidence → pick from top 5.",
+          "acceptance_criteria": [
+            "Photo of a common part returns the right part type ≥ 80% on the seeded test set",
+            "Offers for that part appear immediately"
+          ]
         },
         {
-          "id": "P9-03",
-          "title": "Fix-now-pay-later financing partner",
-          "description": "Fix-now-pay-later financing partner",
-          "acceptance_criteria": []
+          "id": "P8-13",
+          "title": "OBD-II scanner diagnostics",
+          "depends_on": [
+            "P8-05"
+          ],
+          "description": "Web Bluetooth (Chrome on Android/desktop) to ELM327-compatible BLE dongles: read VIN, fault codes (stored/pending/permanent), freeze frame and live data (RPM, coolant, speed, voltage); clear codes (staff only, audited). DTC library + AI plain-language explanation with likely parts. Scans attach to repair requests, jobs and inspections. iOS: show 'use Android/Chrome' until a native app exists.",
+          "acceptance_criteria": [
+            "Mechanic pairs a dongle and reads codes on Android Chrome",
+            "Each code shows meaning, severity and likely parts with vendor offers",
+            "Clearing codes requires staff role and writes an audit row"
+          ]
         },
         {
-          "id": "P9-04",
-          "title": "Breakdown / towing button",
-          "description": "Breakdown / towing button",
-          "acceptance_criteria": []
+          "id": "P8-14",
+          "title": "Fix now, pay later",
+          "depends_on": [
+            "P8-02"
+          ],
+          "description": "FinancingProvider adapter (partner lender, mock first). At estimate approval/invoice the customer can apply to pay over 1–6 months; partner decides; garage is paid up-front by the partner; repayments tracked and reminded. Existing garage-run instalments remain as an option.",
+          "acceptance_criteria": [
+            "Customer applies from the approval page and gets a decision",
+            "Approved financing marks the invoice paid for the garage",
+            "Repayment reminders follow messaging quiet hours"
+          ]
         },
         {
-          "id": "P9-05",
-          "title": "Car pickup and drop-off",
-          "description": "Car pickup and drop-off",
-          "acceptance_criteria": []
+          "id": "P8-15",
+          "title": "Breakdown & towing (SOS)",
+          "depends_on": [
+            "P8-02"
+          ],
+          "description": "New workspace/role: tow operators (/signup/tow-operator, /tow). Driver SOS button: GPS, problem type, photos → nearest available tow operators and garages notified; first to accept is assigned; live location sharing, ETA, price quote, Teller payment; destination = chosen garage (creates a booking/repair request).",
+          "acceptance_criteria": [
+            "SOS reaches tow operators within the radius in < 10 s",
+            "Driver sees the assigned operator, ETA and price",
+            "Tow completion creates a repair request at the destination garage"
+          ]
         },
         {
-          "id": "P9-06",
-          "title": "Accident & insurance claims via brokers",
-          "description": "Accident & insurance claims via brokers",
-          "acceptance_criteria": []
+          "id": "P8-16",
+          "title": "Car pickup & drop-off",
+          "depends_on": [],
+          "description": "Garages offer pickup/drop-off with a fee and service area; booking option; staff role 'driver' (garage driver) gets pickup jobs; handover condition report (photos all sides, fuel, mileage, warning lights, customer signature) at pickup and return; live status on the tracker.",
+          "acceptance_criteria": [
+            "Customer books pickup with a booking",
+            "Driver completes a photo condition report at pickup and drop-off",
+            "Customer sees both reports and live status"
+          ]
         },
         {
-          "id": "P9-07",
+          "id": "P8-17",
+          "title": "Accident & insurance claims",
+          "depends_on": [],
+          "description": "Claim wizard for drivers: accident photos, location/time, police report number + upload, other party details, injuries yes/no, preferred garage. Garage adds a repair estimate. Claim sent to the driver's broker (broker workspace 'Claims' tab) or insurer contact; statuses: draft → submitted → assessing → approved/partially approved/rejected → repair authorised → settled. Documents and timeline shared between driver, garage and broker.",
+          "acceptance_criteria": [
+            "Driver files a claim with photos and police report in under 5 minutes",
+            "Broker sees and updates the claim; driver and garage are notified",
+            "Approved claims authorise the linked garage job"
+          ]
+        },
+        {
+          "id": "P8-18",
           "title": "FixAm rider network",
-          "description": "FixAm rider network",
-          "acceptance_criteria": []
+          "depends_on": [
+            "P8-02",
+            "P8-03"
+          ],
+          "description": "New workspace/role: riders (/signup/rider, /rider). Onboarding: Ghana Card number (verification by admin, not stored in memory/logs), motorbike + licence photos, MoMo payout number. Delivery jobs (parts to garages/homes, documents for brokers) offered by proximity; accept, pickup PIN, drop-off photo/PIN; live tracking; per-job earnings; payouts via theTeller float. Vendors choose own rider, FixAm rider, or partner courier.",
+          "acceptance_criteria": [
+            "Vendor order can be dispatched to a FixAm rider",
+            "Rider completes pickup/drop-off with PIN + photo",
+            "Rider earnings paid out to MoMo after delivery confirmation"
+          ]
         },
         {
-          "id": "P9-08",
+          "id": "P8-19",
           "title": "Garage WhatsApp AI assistant",
-          "description": "Garage WhatsApp AI assistant",
-          "acceptance_criteria": []
+          "depends_on": [
+            "P8-05"
+          ],
+          "description": "WhatsApp Business Platform (Cloud API) number per garage or shared FixAm number with garage routing. AI agent (AiProvider with tools) answers 'is my car ready?', job status, opening hours and directions, books/reschedules, sends estimates, approval links and payment links, takes repair requests (incl. voice notes in tw/gaa/ee/ha via SpeechProvider). Human handoff + garage inbox; every outbound uses approved templates outside the 24 h window.",
+          "acceptance_criteria": [
+            "Customer asks job status on WhatsApp and gets the live status",
+            "Booking via WhatsApp appears in the garage's bookings",
+            "Staff can take over any conversation"
+          ]
         },
         {
-          "id": "P9-09",
+          "id": "P8-20",
           "title": "Pre-purchase inspections",
-          "description": "Pre-purchase inspections",
-          "acceptance_criteria": []
+          "depends_on": [
+            "P8-13"
+          ],
+          "description": "Driver books an inspection for a car they plan to buy (seller location or garage); inspector (garage staff) runs a ~120-point checklist with photos, OBD scan, test drive notes, body/paint and flood/accident signs; AI summary + estimated repair costs; PDF report + share link; price paid via theTeller.",
+          "acceptance_criteria": [
+            "Driver books and pays for an inspection",
+            "Report includes checklist, photos, OBD codes and repair estimate",
+            "Report shareable by link and downloadable as PDF"
+          ]
         }
       ]
     }

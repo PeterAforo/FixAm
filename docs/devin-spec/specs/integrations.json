@@ -198,7 +198,11 @@
         "free-text finding → part type",
         "voice transcript → job card draft",
         "fair-quote explanation",
-        "translation fallback"
+        "translation fallback",
+        "part recognition from photos (vision)",
+        "OBD code explanations",
+        "WhatsApp assistant (tool use)",
+        "inspection report summary"
       ]
     },
     "SpeechProvider": {
@@ -224,6 +228,37 @@
         "vendor": "vendor's own rider (default) — name/phone/status entered by vendor",
         "manual_partner": "admin/vendor books a partner courier and enters the reference"
       }
+    },
+    "FinancingProvider": {
+      "status": "planned (P8-14)",
+      "env": [
+        "FINANCING_PROVIDER=mock|<partner>"
+      ],
+      "interface": "apply({amount, months, customer, invoice}) → {ref, status}; status(ref); webhook(req)",
+      "notes": "Partner lender to be chosen; garage paid up-front by partner."
+    },
+    "WhatsAppProvider": {
+      "status": "planned (P8-19)",
+      "env": [
+        "WHATSAPP_PROVIDER=meta|mock",
+        "WHATSAPP_TOKEN",
+        "WHATSAPP_PHONE_NUMBER_ID",
+        "WHATSAPP_VERIFY_TOKEN"
+      ],
+      "notes": "WhatsApp Business Platform Cloud API; inbound webhook /api/webhooks/whatsapp (exists); templates required outside the 24 h customer-service window."
+    },
+    "ObdBridge": {
+      "status": "planned (P8-13)",
+      "notes": "Client-side Web Bluetooth to ELM327-compatible BLE OBD-II dongles (AT/PID commands). Supported in Chromium browsers (Android, desktop); not in iOS Safari — native app later.",
+      "no_server_env": true
+    },
+    "MapsProvider": {
+      "status": "planned (P8-15/18)",
+      "env": [
+        "MAPS_PROVIDER=osm|google",
+        "GOOGLE_MAPS_API_KEY (optional)"
+      ],
+      "notes": "Distance/ETA for SOS, riders, pickup; live location via Supabase Realtime channels."
     }
   },
   "inngest_functions": [
@@ -338,6 +373,13 @@
     "vendor_order/status.changed",
     "booking/created",
     "message/send.requested",
-    "message/logged"
+    "message/logged",
+    "sos/created",
+    "sos/accepted",
+    "delivery/offered",
+    "delivery/delivered",
+    "claim/status.changed",
+    "inspection/completed",
+    "whatsapp/message.received"
   ]
 }

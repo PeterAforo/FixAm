@@ -579,11 +579,29 @@ themselves. Phone sign-in uses FixAm's own SMS code (Arkesel/Hubtel). See
 - **Seasonal reminders**: harmattan (air/cabin filters, Nov–Feb) and rainy
   season (wipers, tyres, brakes, Apr–Jul / Sep–Oct).
 
-### 16.10 Later (P9)
-OBD-II Bluetooth scanner support, part recognition from photos, fix-now-pay-later
-financing, breakdown/towing button, car pickup & drop-off, accident/insurance
-claims via brokers, FixAm rider network, garage WhatsApp AI assistant,
-pre-purchase inspections.
+### 16.10 On-road services & more AI (in scope now — P8-12 → P8-20)
+Peter's call (23 Nov 2026): build these now, not later.
+- **Part recognition from photos** — snap a part; AI identifies type, fitment
+  and condition and shows offers.
+- **OBD-II diagnostics** — Web Bluetooth to cheap ELM327 BLE dongles on
+  Android/Chrome: fault codes, freeze frame, live data, AI explanations with
+  likely parts; staff-only code clearing. iOS needs a native app later.
+- **Fix now, pay later** — partner lender via a FinancingProvider; garage paid
+  up-front; customer repays over 1–6 months.
+- **Breakdown & towing (SOS)** — new **tow operator** workspace; driver SOS with
+  GPS → nearest operators; live ETA, quote, theTeller payment; tow ends at a
+  garage with a repair request ready.
+- **Car pickup & drop-off** — garage drivers with photo condition reports at
+  both handovers and live status.
+- **Accident & insurance claims** — claim wizard (photos, police report, other
+  party) → garage estimate → broker "Claims" tab → approval authorises repair.
+- **FixAm rider network** — new **rider** workspace; parts/document deliveries
+  by proximity, PIN + photo proof, MoMo payouts via theTeller float.
+- **Garage WhatsApp AI assistant** — WhatsApp Business Cloud API; answers job
+  status, books, sends estimates/payment links, takes voice notes in local
+  languages; staff take-over inbox.
+- **Pre-purchase inspections** — book, pay, ~120-point checklist with photos +
+  OBD scan, AI summary, PDF/share link.
 
 ### 16.11 Success metrics (P8)
 - ≥ 40% of new jobs at the pilot garage start from a complaint-first request.

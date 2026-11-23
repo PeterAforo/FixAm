@@ -73,6 +73,33 @@
       "label": "Broker Agent",
       "principal": "broker",
       "scope": "own"
+    },
+    "tow_operator_owner": {
+      "label": "Tow Operator Owner",
+      "principal": "tow_operator",
+      "scope": "own"
+    },
+    "tow_operator_driver": {
+      "label": "Tow Truck Driver",
+      "principal": "tow_operator",
+      "scope": "own"
+    },
+    "rider": {
+      "label": "FixAm Rider",
+      "principal": "rider",
+      "scope": "own"
+    },
+    "garage_driver": {
+      "label": "Garage Driver (pickup/drop-off)",
+      "principal": "staff",
+      "scope": "garage",
+      "status": "planned"
+    },
+    "inspector": {
+      "label": "Inspector",
+      "principal": "staff",
+      "scope": "garage",
+      "status": "planned"
     }
   },
   "permissions": {
@@ -483,6 +510,49 @@
     ],
     "admin.brokers.manage": [
       "platform_admin"
+    ],
+    "sos.respond": [
+      "tow_operator_owner",
+      "tow_operator_driver"
+    ],
+    "deliveries.accept": [
+      "rider"
+    ],
+    "handovers.perform": [
+      "garage_driver",
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "inspections.perform": [
+      "inspector",
+      "owner",
+      "manager",
+      "mechanic"
+    ],
+    "claims.manage": [
+      "broker_owner",
+      "broker_agent"
+    ],
+    "claims.estimate": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "obd.clear_codes": [
+      "owner",
+      "manager",
+      "mechanic"
+    ],
+    "whatsapp.inbox": [
+      "owner",
+      "manager",
+      "service_advisor"
+    ],
+    "financing.offer": [
+      "owner",
+      "manager",
+      "accountant"
     ]
   },
   "field_level_rules": [

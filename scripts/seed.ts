@@ -548,6 +548,72 @@ async function main() {
       values (${garageId}::uuid, ${jobId}::uuid, ${sj.status}, ${advisorId}::uuid, 'Seeded demo job')`
   }
 
+  // ── Brokers (insurance / DVLA renewal agents) ────────────────────────
+  const brokersSpec = [
+    {
+      business_name: "GhanaSure Brokers",
+      slug: "ghanasure",
+      kind: "both",
+      phone: "+233200000020",
+      email: "hello@ghanasure.test",
+      city: "Accra",
+      region: "Greater Accra",
+      nic_licence_number: "NIC-DEMO-001",
+      dvla_agent_number: "DVLA-AGT-DEMO-001",
+      insurers: ["Demo Insurance Co.", "Enterprise Assurance"],
+      default_service_fee: ghs(50),
+      members: [
+        { email: "owner@ghanasure.test", name: "Yaw Frimpong", role: "owner" },
+        { email: "agent@ghanasure.test", name: "Efia Mensah", role: "agent" },
+      ],
+    },
+  ]
+  for (const b of brokersSpec) {
+    const [br] = await sql`
+      insert into public.brokers (business_name, slug, kind, phone, email, city, region,
+        nic_licence_number, dvla_agent_number, insurers, default_service_fee, status, is_verified)
+      values (${b.business_name}, ${b.slug}, ${b.kind}, ${b.phone}, ${b.email}, ${b.city}, ${b.region},
+        ${b.nic_licence_number}, ${b.dvla_agent_number}, ${b.insurers}, ${b.default_service_fee}, 'active', true)
+      on conflict (slug) do update set business_name = excluded.business_name
+      returning id`
+    const brokerId = br.id as string
+    log("broker", b.business_name)
+    for (const mem of b.members) {
+      const uid = await ensureAuthUser(mem.email, mem.name)
+      await ensurePublicUser(uid, mem.name, mem.email, null)
+      const ex = await one(sql`select id from public.broker_members where broker_id=${brokerId}::uuid and user_id=${uid}::uuid`)
+      if (!ex) {
+        await sql`insert into public.broker_members (broker_id, user_id, role) values (${brokerId}::uuid, ${uid}::uuid, ${mem.role})`
+        log("broker member", `${mem.email} (${mem.role})`)
+      }
+    }
+    // one sample request so the broker dashboard isn't empty
+    const veh = await one(sql`
+      select v.id, v.plate_number as plate, v.make, v.model, v.year, c.full_name, c.phone
+      from public.vehicles v join public.customers c on c.id = v.current_owner_id
+      where v.garage_id=${garageId}::uuid limit 1`)
+    if (veh) {
+      const exReq = await one(sql`select id from public.broker_requests where broker_id=${brokerId}::uuid and vehicle_plate=${veh.plate}`)
+      if (!exReq) {
+        const num = `BRQ-${String(Math.floor(100000 + Math.random() * 900000))}`
+        const [req] = await sql`
+          insert into public.broker_requests (number, broker_id, kind, service_type, source,
+            requester_phone, requester_name, garage_id, vehicle_plate, vehicle_make, vehicle_model,
+            vehicle_year, status, official_fee, service_fee, total, quote_note, insurer_name, quoted_at)
+          values (${num}, ${brokerId}::uuid, 'insurance', 'comprehensive', 'driver',
+            ${veh.phone}, ${veh.full_name}, ${garageId}::uuid, ${veh.plate}, ${veh.make}, ${veh.model},
+            ${veh.year}, 'quoted', ${ghs(1200)}, ${b.default_service_fee}, ${ghs(1250)},
+            'Comprehensive cover, 1yr — broker quote', 'Demo Insurance Co.', now())
+          returning id`
+        await sql`
+          insert into public.broker_request_events (request_id, status, actor, note)
+          values (${req.id}::uuid, 'requested', 'driver', 'Seeded demo request'),
+                 (${req.id}::uuid, 'quoted', 'broker', 'Seeded demo quote')`
+        log("broker request", num)
+      }
+    }
+  }
+
   // ── Vehicle catalogue (platform reference data) ──────────────────────
   const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
   for (const make of VEHICLE_CATALOGUE) {
@@ -570,6 +636,7 @@ async function main() {
   console.log(`  admin@fixam.test (platform admin)`)
   for (const st of g.staff) console.log(`  ${st.email} (${st.role}${st.branch ? ` @ ${st.branch}` : ""})`)
   for (const v of seedData.vendors) if (v.owner?.email) console.log(`  ${v.owner.email} (vendor)`)
+  for (const b of brokersSpec) for (const mem of b.members) console.log(`  ${mem.email} (broker ${mem.role})`)
 }
 
 main()

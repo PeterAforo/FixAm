@@ -319,6 +319,10 @@
       "job_assigned",
       "qc_required",
       "system"
+    ],
+    "membership_role_planned": [
+      "driver (garage pickup/drop-off driver)",
+      "inspector"
     ]
   },
   "tables": {
@@ -384,7 +388,14 @@
       "planned_columns": {
         "accepts_customer_parts": "bool req default:true",
         "customer_part_fitting_fee": "money",
-        "require_old_part_proof": "bool req default:true"
+        "require_old_part_proof": "bool req default:true",
+        "offers_pickup_dropoff": "bool default:false",
+        "pickup_fee": "money",
+        "pickup_radius_km": "int",
+        "offers_inspections": "bool default:false",
+        "inspection_price": "money",
+        "whatsapp_number": "text",
+        "whatsapp_ai_enabled": "bool default:false"
       }
     },
     "branches": {
@@ -1911,6 +1922,241 @@
         "cost_usd_micros": "bigint",
         "garage_id": "uuid",
         "user_id": "uuid",
+        "created_at": "timestamptz req default:now()"
+      }
+    },
+    "obd_scans": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "vehicle_ref": "text",
+        "vin": "text",
+        "garage_id": "uuid",
+        "job_id": "uuid",
+        "repair_request_id": "uuid",
+        "inspection_id": "uuid",
+        "scanned_by": "uuid fk:users",
+        "dtcs": "jsonb [{code,type,description,severity}]",
+        "freeze_frame": "jsonb",
+        "live_data": "jsonb",
+        "cleared": "bool default:false",
+        "ai_summary": "text",
+        "created_at": "timestamptz req default:now()"
+      }
+    },
+    "financing_applications": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "invoice_id": "uuid",
+        "estimate_id": "uuid",
+        "garage_id": "uuid req",
+        "user_id": "uuid req",
+        "amount": "money req",
+        "months": "int req",
+        "provider": "text req",
+        "provider_ref": "text",
+        "status": "text (submitted|approved|declined|disbursed|repaying|completed|defaulted)",
+        "created_at": "timestamptz req default:now()",
+        "updated_at": "timestamptz req default:now()"
+      }
+    },
+    "tow_operators": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "business_name": "text req",
+        "phone": "text req",
+        "truck_types": "text[]",
+        "base_fee": "money",
+        "per_km_fee": "money",
+        "service_radius_km": "int",
+        "lat": "numeric",
+        "lng": "numeric",
+        "is_available": "bool default:false",
+        "is_verified": "bool default:false",
+        "status": "text default:'active'",
+        "created_at": "timestamptz req default:now()"
+      }
+    },
+    "tow_operator_members": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "tow_operator_id": "uuid req",
+        "user_id": "uuid req",
+        "role": "text (owner|driver)"
+      }
+    },
+    "sos_requests": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "user_id": "uuid req",
+        "phone": "text req",
+        "lat": "numeric req",
+        "lng": "numeric req",
+        "problem": "text (wont_start|accident|flat_tyre|overheating|other)",
+        "photos": "jsonb",
+        "destination_garage_id": "uuid",
+        "tow_operator_id": "uuid",
+        "quote": "money",
+        "status": "text (open|accepted|en_route|towing|delivered|cancelled)",
+        "escrow_hold_id": "uuid",
+        "created_at": "timestamptz req default:now()",
+        "updated_at": "timestamptz req default:now()"
+      }
+    },
+    "vehicle_handovers": {
+      "status": "planned (P8)",
+      "tenant": "garage",
+      "columns": {
+        "id": "uuid pk",
+        "garage_id": "uuid req",
+        "booking_id": "uuid",
+        "job_id": "uuid",
+        "type": "text (pickup|dropoff)",
+        "driver_user_id": "uuid",
+        "photos": "jsonb (front,back,left,right,interior,dashboard)",
+        "fuel_level": "text",
+        "mileage": "int",
+        "warning_lights": "text[]",
+        "notes": "text",
+        "customer_signature_path": "text",
+        "completed_at": "timestamptz"
+      }
+    },
+    "insurance_claims": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "number": "text uniq",
+        "user_id": "uuid req",
+        "vehicle_ref": "text req",
+        "broker_id": "uuid fk:brokers",
+        "garage_id": "uuid",
+        "job_id": "uuid",
+        "estimate_id": "uuid",
+        "occurred_at": "timestamptz",
+        "location": "text",
+        "police_report_no": "text",
+        "other_party": "jsonb",
+        "injuries": "bool",
+        "photos": "jsonb",
+        "documents": "jsonb",
+        "approved_amount": "money",
+        "status": "text (draft|submitted|assessing|approved|partially_approved|rejected|repair_authorised|settled)",
+        "created_at": "timestamptz req default:now()",
+        "updated_at": "timestamptz req default:now()"
+      }
+    },
+    "insurance_claim_events": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "claim_id": "uuid req",
+        "status": "text",
+        "actor": "text",
+        "note": "text",
+        "created_at": "timestamptz req default:now()"
+      }
+    },
+    "riders": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "user_id": "uuid req uniq",
+        "bike_plate": "text",
+        "licence_photo_path": "text",
+        "ghana_card_verified": "bool default:false (number checked by admin; do not log)",
+        "momo_number": "text",
+        "momo_issuer": "text",
+        "is_online": "bool default:false",
+        "lat": "numeric",
+        "lng": "numeric",
+        "rating_avg": "numeric(3,2)",
+        "status": "text (pending|active|suspended)",
+        "created_at": "timestamptz req default:now()"
+      }
+    },
+    "deliveries": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "vendor_order_id": "uuid",
+        "kind": "text (part|document|other)",
+        "courier": "text (vendor|fixam_rider|partner)",
+        "rider_id": "uuid",
+        "pickup": "jsonb",
+        "dropoff": "jsonb",
+        "pickup_pin": "text",
+        "dropoff_pin": "text",
+        "fee": "money",
+        "rider_earning": "money",
+        "status": "text (offered|assigned|picked_up|delivered|failed|cancelled)",
+        "proof_photo_path": "text",
+        "created_at": "timestamptz req default:now()",
+        "updated_at": "timestamptz req default:now()"
+      }
+    },
+    "whatsapp_conversations": {
+      "status": "planned (P8)",
+      "tenant": "garage",
+      "columns": {
+        "id": "uuid pk",
+        "garage_id": "uuid req",
+        "customer_phone": "text req",
+        "mode": "text (ai|human)",
+        "assigned_user_id": "uuid",
+        "last_message_at": "timestamptz",
+        "window_expires_at": "timestamptz"
+      }
+    },
+    "whatsapp_messages": {
+      "status": "planned (P8)",
+      "tenant": "garage",
+      "columns": {
+        "id": "uuid pk",
+        "conversation_id": "uuid req",
+        "direction": "text (in|out)",
+        "type": "text (text|audio|image|template|interactive)",
+        "body": "text",
+        "media_path": "text",
+        "transcript": "text",
+        "ai_tool_calls": "jsonb",
+        "provider_message_id": "text",
+        "created_at": "timestamptz req default:now()"
+      }
+    },
+    "inspections": {
+      "status": "planned (P8)",
+      "tenant": false,
+      "columns": {
+        "id": "uuid pk",
+        "number": "text uniq",
+        "user_id": "uuid req",
+        "garage_id": "uuid req",
+        "inspector_user_id": "uuid",
+        "vehicle": "jsonb (plate, make, model, year, vin)",
+        "location": "text",
+        "scheduled_at": "timestamptz",
+        "checklist": "jsonb",
+        "photos": "jsonb",
+        "obd_scan_id": "uuid",
+        "ai_summary": "text",
+        "estimated_repairs": "money",
+        "price": "money",
+        "status": "text (booked|paid|in_progress|completed|cancelled)",
+        "report_token": "text uniq",
         "created_at": "timestamptz req default:now()"
       }
     }

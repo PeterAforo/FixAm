@@ -144,3 +144,9 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
   `ai_calls`); **Khaya AI** for speech in Twi, Ga, Ewe, Hausa (+ Ghanaian
   English). AI output is always labelled as an estimate; nothing is saved to a
   job without a human confirming.
+- **No "later" bucket** (23 Nov 2026): OBD diagnostics, photo part recognition,
+  financing, breakdown/towing, pickup & drop-off, accident claims, rider
+  network, WhatsApp AI assistant and pre-purchase inspections are in P8 now
+  (P8-12 → P8-20). New workspaces: **tow operator** and **rider** (same
+  one-account model). OBD uses Web Bluetooth (Android/Chrome); iOS support
+  needs a native app.
