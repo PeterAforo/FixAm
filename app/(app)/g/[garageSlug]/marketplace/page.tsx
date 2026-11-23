@@ -8,7 +8,9 @@ import { getSessionUserId, ensureUser } from "@/lib/auth/ensure-user"
 import { resolveMembership } from "@/lib/actions"
 import { can, type StaffRole } from "@/lib/auth/permissions"
 import { browseMarketplace, listGarageVendorOrders } from "@/lib/marketplace/actions"
+import Link from "next/link"
 import { MarketplacePanel } from "./marketplace-panel"
+import { listIncomingParts } from "@/lib/parts-shop/garage-actions"
 
 async function Loader({ params, searchParams }: {
   params: Promise<{ garageSlug: string }>
@@ -30,17 +32,24 @@ async function Loader({ params, searchParams }: {
   const principal = { kind: "staff" as const, role: m.role as StaffRole, garageId: garage.id, branchId: m.branchId }
   if (!can(principal, "parts.view")) notFound()
 
-  const [browse, orders, branchRows] = await Promise.all([
+  const [browse, orders, branchRows, incoming] = await Promise.all([
     browseMarketplace({ garageId: garage.id, q: sp.q || undefined }),
     listGarageVendorOrders({ garageId: garage.id }),
     db().select({ id: branches.id, name: branches.name }).from(branches)
       .where(and(eq(branches.garageId, garage.id), isNull(branches.deletedAt))).orderBy(branches.name),
+    listIncomingParts(garage.id),
   ])
+  const waiting = incoming.filter((p) => p.status !== "received").length
 
   const canOrder = can(principal, "purchase_orders.create")
   const canReceive = can(principal, "purchase_orders.receive")
 
   return (
+    <>
+    <Link href={`/g/${garageSlug}/incoming-parts`} className="mb-4 flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-sm hover:bg-surface-muted">
+      <span><b>Incoming parts</b> — parts customers bought and sent to you{waiting ? ` · ${waiting} on the way` : ""}</span>
+      <span aria-hidden>→</span>
+    </Link>
     <MarketplacePanel
       garageId={garage.id}
       garageSlug={garageSlug}
@@ -54,6 +63,7 @@ async function Loader({ params, searchParams }: {
       initialTab={sp.tab === "orders" || sp.payment ? "orders" : "shop"}
       paymentNotice={sp.payment === "success" || sp.payment === "pending" || sp.payment === "failed" ? sp.payment : null}
     />
+    </>
   )
 }
 

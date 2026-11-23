@@ -141,6 +141,13 @@
       "when": 1795416967646,
       "tag": "0019_escrow-payouts",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1795418967266,
+      "tag": "0020_driver-parts-orders",
+      "breakpoints": true
     }
   ]
 }

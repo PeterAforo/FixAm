@@ -2,6 +2,28 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-03 Drivers buy parts, delivered to their garage ✅
+- Driver app → **Buy parts**: pick the car, search, see only parts that fit
+  (P8-01 fitment), basket, and choose **my garage / another garage / deliver to
+  me / pick up**. Delivery fee per vendor zone and the garage's fitting fee are
+  shown before paying; garages that don't fit customer parts can't be chosen.
+- Pays through theTeller into escrow; one reference covers the whole basket.
+  **My orders**: progress bar, rider details, "I've got it" (home/pickup),
+  "Report a problem", "Pay now" for unpaid baskets.
+- Vendors: destination + buyer phone on each order; "Out for delivery" asks
+  for the rider's name/phone or books a partner courier (`DeliveryProvider`,
+  manual first). Driver orders can't ship before payment confirms. Buyers get
+  SMS at each step.
+- Garages: **Incoming parts** page — "It's here — take photo" stores the photo
+  and releases the vendor's money plus the fitting fee. Settings → **Customer
+  parts & payouts**: accept toggle, fitting fee, encrypted payout account.
+- Garage payouts: fitting fees and **online invoice payments** (theTeller
+  collects into FixAm's account) are queued as payouts to the garage
+  (`queueGarageSettlement`, idempotent per payment).
+- Migration `0020_driver-parts-orders` (vendor_orders.garage_id now nullable,
+  new order/delivery columns, garage settings, payouts.idempotency_key,
+  `customer_direct` order origin).
+
 ### P8-02 theTeller payments, escrow & payouts ✅
 - `PAYMENT_PROVIDER=theteller`: hosted checkout, MoMo direct debit (000200),
   status check, card reversal, and float payouts to MoMo (404000) and bank

@@ -238,11 +238,15 @@
       }
     },
     "DeliveryProvider": {
-      "status": "planned (P8-03)",
-      "interface": "book({pickup, dropoff, parcel}) → {ref, eta}; status(ref)",
-      "implementations": {
-        "vendor": "vendor's own rider (default) — name/phone/status entered by vendor",
-        "manual_partner": "admin/vendor books a partner courier and enters the reference"
+      "implementation": {
+        "options": [
+          "manual",
+          "mock"
+        ],
+        "built": "P8-03 lib/integrations/delivery.ts"
+      },
+      "interface": {
+        "book({orderNumber, pickup, dropoff, notes}) -> {reference, status, riderName?, riderPhone?, trackingUrl?}": "Partner courier fallback; 'manual' SMSes DELIVERY_OPS_PHONE to book by hand"
       }
     },
     "FinancingProvider": {

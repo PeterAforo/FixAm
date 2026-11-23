@@ -74,6 +74,8 @@ export const payouts = pgTable(
     accountName: text("account_name"),
     amount: money("amount").notNull(),
     transactionId: text("transaction_id").notNull(), // 12-digit
+    /** Dedupe key for payouts not tied to a hold (e.g. invoice-payment:{paymentId}). */
+    idempotencyKey: text("idempotency_key"),
     providerReference: text("provider_reference"), // bank reference_id
     status: text("status").notNull().default("queued"),
     attempts: integer("attempts").notNull().default(0),
@@ -86,6 +88,7 @@ export const payouts = pgTable(
   (t) => [
     uniqueIndex("payouts_transaction_uniq").on(t.transactionId),
     uniqueIndex("payouts_hold_purpose_uniq").on(t.escrowHoldId, t.purpose),
+    uniqueIndex("payouts_idem_uniq").on(t.idempotencyKey),
     index("payouts_status_idx").on(t.status, t.nextAttemptAt),
     index("payouts_recipient_idx").on(t.recipientType, t.recipientId),
   ]

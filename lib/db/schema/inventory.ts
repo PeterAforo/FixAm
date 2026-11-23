@@ -36,6 +36,11 @@ const tenant = {
     .notNull()
     .references(() => garages.id),
 }
+/** Vendor orders: garage_id is the delivery garage — null when a driver has parts sent home or picks up. */
+const optionalTenant = {
+  id: uuid("id").primaryKey().defaultRandom(),
+  garageId: uuid("garage_id").references(() => garages.id),
+}
 
 /** parts — tenant catalogue */
 export const parts = pgTable(
@@ -220,7 +225,7 @@ export const vendorProducts = pgTable(
 export const vendorOrders = pgTable(
   "vendor_orders",
   {
-    ...tenant,
+    ...optionalTenant,
     number: text("number").notNull(), // VO-...
     vendorId: uuid("vendor_id")
       .notNull()
@@ -242,13 +247,32 @@ export const vendorOrders = pgTable(
     expectedDeliveryAt: timestamp("expected_delivery_at", { withTimezone: true }),
     deliveredAt: timestamp("delivered_at", { withTimezone: true }),
     notes: text("notes"),
+    // P8-03 — drivers buying parts
+    buyerUserId: uuid("buyer_user_id").references(() => users.id),
+    buyerPhone: text("buyer_phone"),
+    destinationType: text("destination_type").notNull().default("garage"), // garage|home|pickup
+    deliveryAddress: text("delivery_address"),
+    deliveryRegion: text("delivery_region"),
+    deliveryCity: text("delivery_city"),
+    fittingFee: money("fitting_fee").notNull().default(sql`0`),
+    courier: text("courier"), // vendor|partner
+    riderName: text("rider_name"),
+    riderPhone: text("rider_phone"),
+    courierReference: text("courier_reference"),
+    receivedPhotoPath: text("received_photo_path"),
+    receivedAt: timestamp("received_at", { withTimezone: true }),
+    receivedBy: uuid("received_by").references(() => users.id),
     ...timestamps,
   },
-  (t) => [index("vendor_orders_vendor_idx").on(t.vendorId, t.status)]
+  (t) => [
+    index("vendor_orders_vendor_idx").on(t.vendorId, t.status),
+    index("vendor_orders_buyer_idx").on(t.buyerUserId, t.createdAt),
+    index("vendor_orders_garage_idx").on(t.garageId, t.status),
+  ]
 )
 
 export const vendorOrderItems = pgTable("vendor_order_items", {
-  ...tenant,
+  ...optionalTenant,
   vendorOrderId: uuid("vendor_order_id")
     .notNull()
     .references(() => vendorOrders.id),
@@ -265,7 +289,7 @@ export const vendorOrderItems = pgTable("vendor_order_items", {
 })
 
 export const vendorOrderEvents = pgTable("vendor_order_events", {
-  ...tenant,
+  ...optionalTenant,
   vendorOrderId: uuid("vendor_order_id")
     .notNull()
     .references(() => vendorOrders.id),

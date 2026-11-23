@@ -813,7 +813,8 @@
             "Customer buys a part delivered to their garage and the garage sees it on the job",
             "Garage receipt photo releases funds to the vendor",
             "Garages that refuse customer parts are not offered as destinations; fitting fee shown before payment"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-04",

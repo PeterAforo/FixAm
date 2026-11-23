@@ -13,6 +13,8 @@ import { listCatalogueGrouped } from "@/lib/catalogue"
 import { BillingPanel } from "./billing-panel"
 import { CoveragePanel } from "./coverage-panel"
 import { ReviewsPanel } from "./reviews-panel"
+import { CustomerPartsPanel } from "./customer-parts-panel"
+import { getCustomerPartsSettings } from "@/lib/parts-shop/garage-actions"
 
 async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
   const { garageSlug } = await params
@@ -29,7 +31,7 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
   const canManageSettings = can(principal, "garage.settings.manage")
   if (!canManageSettings && !can(principal, "garage.subscription.manage")) notFound()
 
-  const [billing, coverageRows, catalogue] = await Promise.all([
+  const [billing, coverageRows, catalogue, partsSettings] = await Promise.all([
     getGarageBilling({ garageId: garage.id }),
     canManageSettings
       ? db()
@@ -38,6 +40,7 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
           .where(and(eq(garageVehicleCoverage.garageId, garage.id), eq(garageVehicleCoverage.isActive, true)))
       : Promise.resolve([]),
     canManageSettings ? listCatalogueGrouped() : Promise.resolve([]),
+    canManageSettings ? getCustomerPartsSettings(garage.id) : Promise.resolve(null),
   ])
   const reviews = canManageSettings
     ? await db()
@@ -85,6 +88,16 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
             garageId={garage.id}
             reviews={reviews.map((r) => ({ ...r, createdAt: r.createdAt.toISOString().slice(0, 10) }))}
           />
+        </section>
+      )}
+
+      {partsSettings && (
+        <section>
+          <h2 className="text-[15px] font-semibold">Customer parts &amp; payouts</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Customers can buy parts on FixAm and have them delivered to you for fitting. Their money is held until you confirm the part arrived.
+          </p>
+          <CustomerPartsPanel garageId={garage.id} settings={partsSettings} />
         </section>
       )}
 

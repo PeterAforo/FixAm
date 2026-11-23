@@ -1,7 +1,7 @@
 import "server-only"
 import { and, eq, inArray, isNotNull, lte, or, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { escrowHolds, ledgerEntries, payments, payouts, vendorOrderEvents, vendorOrders, vendors } from "@/lib/db/schema"
+import { escrowHolds, garages, ledgerEntries, payments, payouts, vendorOrderEvents, vendorOrders, vendors } from "@/lib/db/schema"
 import { paymentProvider, payoutProvider } from "@/lib/integrations/payments"
 import { messagingProvider } from "@/lib/integrations"
 import { writeAuditLog } from "@/lib/actions"
@@ -181,6 +181,7 @@ export async function releaseHold(holdId: string, opts: { actorUserId?: string |
   await audit("escrow.released", "escrow_hold", holdId, { net: Number(row.netAmount), commission: Number(row.commissionAmount), note: opts.note }, opts.actorUserId, row.garageId)
 
   if (row.netAmount > 0n) await queuePayout(row, "vendor_release", row.netAmount)
+  if (row.fittingFeeAmount > 0n && row.fittingGarageId) await queuePayout(row, "fitting_fee", row.fittingFeeAmount)
   return { ok: true }
 }
 
@@ -238,51 +239,76 @@ export async function autoReleaseDue(limit = 50): Promise<number> {
 // Payouts
 // ---------------------------------------------------------------------------
 
-async function recipientAccount(hold: Hold, purpose: string) {
-  if (purpose === "refund") {
-    return hold.payerPhone && hold.payerNetwork
-      ? { method: "momo" as const, phone: hold.payerPhone, network: hold.payerNetwork as "mtn" | "telecel" | "airteltigo", accountName: null as string | null }
-      : null
-  }
-  if (hold.payeeType === "vendor") {
-    const [v] = await db().select({ details: vendors.payoutDetailsEncrypted }).from(vendors).where(eq(vendors.id, hold.payeeId)).limit(1)
-    const acct = decryptPayoutAccount(v?.details)
-    if (!acct) return null
-    return acct.method === "momo"
-      ? { method: "momo" as const, phone: acct.phone, network: acct.network, accountName: acct.accountName }
-      : { method: "bank" as const, bankCode: acct.bankCode, accountNumber: acct.accountNumber, accountName: acct.accountName }
-  }
-  return null // garage payout accounts arrive with P8-03
+type PayoutTarget =
+  | { method: "momo"; phone: string; network: "mtn" | "telecel" | "airteltigo"; accountName: string | null }
+  | { method: "bank"; bankCode: string; accountNumber: string; accountName: string | null }
+
+async function accountFor(type: "vendor" | "garage", id: string): Promise<PayoutTarget | null> {
+  const [row] =
+    type === "vendor"
+      ? await db().select({ details: vendors.payoutDetailsEncrypted }).from(vendors).where(eq(vendors.id, id)).limit(1)
+      : await db().select({ details: garages.payoutDetailsEncrypted }).from(garages).where(eq(garages.id, id)).limit(1)
+  const acct = decryptPayoutAccount(row?.details)
+  if (!acct) return null
+  return acct.method === "momo"
+    ? { method: "momo", phone: acct.phone, network: acct.network, accountName: acct.accountName }
+    : { method: "bank", bankCode: acct.bankCode, accountNumber: acct.accountNumber, accountName: acct.accountName }
 }
 
-async function queuePayout(hold: Hold, purpose: "vendor_release" | "refund", amount: bigint) {
+async function recipientAccount(hold: Hold, purpose: string): Promise<PayoutTarget | null> {
+  if (purpose === "refund") {
+    return hold.payerPhone && hold.payerNetwork
+      ? { method: "momo", phone: hold.payerPhone, network: hold.payerNetwork as "mtn" | "telecel" | "airteltigo", accountName: null }
+      : null
+  }
+  if (purpose === "fitting_fee") return hold.fittingGarageId ? accountFor("garage", hold.fittingGarageId) : null
+  return accountFor(hold.payeeType === "vendor" ? "vendor" : "garage", hold.payeeId)
+}
+
+async function queuePayout(hold: Hold, purpose: "vendor_release" | "refund" | "fitting_fee", amount: bigint) {
   const acct = await recipientAccount(hold, purpose)
-  const recipientType = purpose === "refund" ? "customer" : hold.payeeType
-  const recipientId = purpose === "refund" ? hold.buyerUserId : hold.payeeId
+  const recipientType = purpose === "refund" ? "customer" : purpose === "fitting_fee" ? "garage" : hold.payeeType
+  const recipientId = purpose === "refund" ? hold.buyerUserId : purpose === "fitting_fee" ? hold.fittingGarageId : hold.payeeId
+  await insertPayout({ holdId: hold.id, purpose, recipientType, recipientId, acct, amount })
+}
+
+/** Queue a payout row (idempotent by hold+purpose or by key) and kick off sending. */
+async function insertPayout(input: {
+  holdId?: string | null
+  key?: string
+  purpose: string
+  recipientType: string
+  recipientId: string | null
+  acct: PayoutTarget | null
+  amount: bigint
+}) {
+  const { acct } = input
   const transactionId = await nextPaymentReference()
+  const lastError = acct ? null : input.recipientType === "customer" ? "No account to refund to" : `The ${input.recipientType} has no payout account`
   const [p] = await db()
     .insert(payouts)
     .values({
-      escrowHoldId: hold.id,
-      purpose,
-      recipientType,
-      recipientId,
+      escrowHoldId: input.holdId ?? null,
+      idempotencyKey: input.key ?? null,
+      purpose: input.purpose,
+      recipientType: input.recipientType,
+      recipientId: input.recipientId,
       method: acct?.method ?? "momo",
       network: acct && acct.method === "momo" ? acct.network : null,
       bankCode: acct && acct.method === "bank" ? acct.bankCode : null,
       accountNumber: acct ? (acct.method === "momo" ? acct.phone : acct.accountNumber) : "",
       accountName: acct?.accountName ?? null,
-      amount,
+      amount: input.amount,
       transactionId,
       status: acct ? "queued" : "needs_attention",
-      lastError: acct ? null : recipientType === "vendor" ? "Vendor has no payout account" : "No account to pay",
+      lastError,
     })
-    .onConflictDoNothing({ target: [payouts.escrowHoldId, payouts.purpose] })
+    .onConflictDoNothing()
     .returning()
   if (!p) return // already queued
-  await audit("payout.queued", "payout", p.id, { purpose, amount: Number(amount), status: p.status })
+  await audit("payout.queued", "payout", p.id, { purpose: input.purpose, amount: Number(input.amount), status: p.status })
   if (!acct) {
-    await alertAdmin("Payout blocked", `${p.lastError} (hold ${hold.id})`, { type: "payout", id: p.id })
+    await alertAdmin("Payout blocked", `${lastError} (${input.purpose})`, { type: "payout", id: p.id })
     return
   }
   try {
@@ -291,6 +317,18 @@ async function queuePayout(hold: Hold, purpose: "vendor_release" | "refund", amo
   } catch {
     // the payout cron picks it up
   }
+}
+
+/**
+ * Money a customer paid FixAm on a garage's behalf (online invoice payments —
+ * theTeller has no split payments). Books it to garage_payable and queues a
+ * payout to the garage. Idempotent per key.
+ */
+export async function queueGarageSettlement(input: { garageId: string; amount: bigint; key: string; memo: string }) {
+  if (input.amount <= 0n) return
+  await ledger({ debit: "customer_funds", credit: "garage_payable", amount: input.amount, key: `${input.key}:collected`, memo: input.memo, meta: { garageId: input.garageId } })
+  const acct = await accountFor("garage", input.garageId)
+  await insertPayout({ key: input.key, purpose: "invoice_settlement", recipientType: "garage", recipientId: input.garageId, acct, amount: input.amount })
 }
 
 /**
@@ -360,7 +398,7 @@ async function finishPayout(p: Payout, providerReference?: string) {
     .update(payouts)
     .set({ status: "succeeded", completedAt: new Date(), providerReference: providerReference ?? p.providerReference, lastError: null, updatedAt: new Date() })
     .where(eq(payouts.id, p.id))
-  const from = p.purpose === "refund" ? "refund" : p.recipientType === "vendor" ? "vendor_payable" : "garage_payable"
+  const from = p.purpose === "refund" ? "refund" : p.recipientType === "vendor" ? "vendor_payable" : "garage_payable" // fitting fees + invoice settlements
   await ledger({ holdId: p.escrowHoldId, payoutId: p.id, debit: from, credit: "payout_clearing", amount: p.amount, key: `payout:${p.id}:sent`, memo: `${p.method} ${p.transactionId}` })
   await audit("payout.succeeded", "payout", p.id, { amount: Number(p.amount), transactionId: p.transactionId })
   return "succeeded" as const
@@ -406,10 +444,15 @@ export async function retryPayout(payoutId: string, adminId: string): Promise<{ 
   const [p] = await db().select().from(payouts).where(eq(payouts.id, payoutId)).limit(1)
   if (!p || !["needs_attention", "queued"].includes(p.status)) return { ok: false, message: "Payout can't be retried" }
   let patch: Partial<typeof payouts.$inferInsert> = {}
-  if (p.escrowHoldId && p.purpose === "vendor_release") {
-    const [hold] = await db().select().from(escrowHolds).where(eq(escrowHolds.id, p.escrowHoldId)).limit(1)
-    const acct = hold ? await recipientAccount(hold, p.purpose) : null
-    if (!acct) return { ok: false, message: "The vendor still has no valid payout account" }
+  if (p.purpose !== "refund") {
+    let acct: PayoutTarget | null = null
+    if (p.escrowHoldId) {
+      const [hold] = await db().select().from(escrowHolds).where(eq(escrowHolds.id, p.escrowHoldId)).limit(1)
+      acct = hold ? await recipientAccount(hold, p.purpose) : null
+    } else if (p.recipientId && (p.recipientType === "garage" || p.recipientType === "vendor")) {
+      acct = await accountFor(p.recipientType, p.recipientId)
+    }
+    if (!acct) return { ok: false, message: `The ${p.recipientType} still has no valid payout account` }
     patch = {
       method: acct.method,
       network: acct.method === "momo" ? acct.network : null,
@@ -457,7 +500,7 @@ export async function reconcileReference(reference: string): Promise<ReconcileSt
 
   const v = await paymentProvider().verify(reference)
   if (v.status === "pending") return "pending"
-  const expected = orders.reduce((s, o) => s + o.total, 0n)
+  const expected = orders.reduce((s, o) => s + o.total + (o.fittingFee ?? 0n), 0n)
 
   if (v.status === "failed") {
     for (const o of orders) {
@@ -489,17 +532,24 @@ export async function reconcileReference(reference: string): Promise<ReconcileSt
         entityType: "vendor_order",
         entityId: o.id,
         garageId: o.garageId,
-        buyerUserId: o.orderedByUserId,
+        buyerUserId: o.buyerUserId ?? o.orderedByUserId,
         payeeType: "vendor",
         payeeId: o.vendorId,
-        gross: o.total,
+        gross: o.total + (o.fittingFee ?? 0n),
         commissionAmount: o.commissionAmount ?? 0n,
+        fittingFee: o.fittingFee ?? 0n,
+        fittingGarageId: o.fittingFee && o.fittingFee > 0n ? o.garageId : null,
         paymentReference: reference,
+        payerPhone: o.buyerPhone,
       }))
     // Already delivered/received before payment confirmed? Start the release clock now.
     const releaseAfter = ["delivered", "received"].includes(o.status) ? new Date(Date.now() + AUTO_RELEASE_HOURS * 3600_000) : null
     await markHoldPaid(hold.id, { releaseAfter })
     await audit("vendor_order.paid", "vendor_order", o.id, { reference, total: Number(o.total) }, null, o.garageId)
+    const { smsBuyer } = await import("@/lib/parts-shop/notify")
+    const [v] = await db().select({ phone: vendors.phone }).from(vendors).where(eq(vendors.id, o.vendorId)).limit(1)
+    await smsBuyer(v?.phone, `FixAm: new paid order ${o.number} (GH₵${(Number(o.total) / 100).toFixed(2)}). Accept it on your FixAm vendor page.`, `vo-paid-vendor:${o.id}`)
+    if (o.buyerPhone) await smsBuyer(o.buyerPhone, `FixAm: payment received for ${o.number}. We hold it safely until your part arrives.`, `vo-paid-buyer:${o.id}`)
   }
   return "success"
 }

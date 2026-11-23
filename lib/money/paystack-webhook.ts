@@ -99,6 +99,17 @@ export async function handlePaystackEvent(event: {
   })
 
   await sendPaymentReceipt(p.id).catch(() => undefined)
+
+  // theTeller (and the mock) collect into FixAm's account — pass the money on to the garage.
+  if (paymentProvider().name !== "paystack") {
+    const { queueGarageSettlement } = await import("@/lib/escrow/service")
+    await queueGarageSettlement({
+      garageId: p.garageId,
+      amount: p.amount,
+      key: `invoice-payment:${p.id}`,
+      memo: `Online payment ${reference}`,
+    }).catch((e) => console.error("[payments] garage settlement failed:", (e as Error).message))
+  }
 }
 
 /** Public receipt lookup by token (stored in payments.external_reference). */

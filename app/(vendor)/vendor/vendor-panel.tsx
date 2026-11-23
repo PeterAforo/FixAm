@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
+import { Fragment, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/brand/button"
 import { Card, CardContent } from "@/components/brand/card"
@@ -173,11 +173,13 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
     reader.readAsText(raw)
   }
 
-  function fulfil(orderId: string, action: string) {
+  const [dispatch, setDispatch] = useState<{ orderId: string; riderName: string; riderPhone: string } | null>(null)
+
+  function fulfil(orderId: string, action: string, extra?: { courier?: "vendor" | "partner"; riderName?: string; riderPhone?: string }) {
     startTransition(async () => {
-      const res = await fulfilVendorOrder({ orderId, action: action as never })
+      const res = await fulfilVendorOrder({ orderId, action: action as never, ...extra })
       if (!res.ok) { setMsg(res.error.message); return }
-      setMsg(null); router.refresh()
+      setMsg(null); setDispatch(null); router.refresh()
     })
   }
 
@@ -309,18 +311,32 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
                   <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">No orders yet</td></tr>
                 )}
                 {dashboard.orders.map((o) => {
-                  const next = NEXT_ACTION[o.status]
+                  const isPickup = o.destinationType === "pickup"
+                  const base = NEXT_ACTION[o.status]
+                  const next = base && isPickup && base.action === "out_for_delivery" ? { label: "Ready for pickup", action: "out_for_delivery" }
+                    : base && isPickup && base.action === "delivered" ? { label: "Picked up", action: "delivered" } : base
+                  const needsRider = next?.action === "out_for_delivery" && !isPickup
                   return (
-                    <tr key={o.id} className="border-b last:border-0">
+                    <Fragment key={o.id}>
+                    <tr className="border-b last:border-0">
                       <td className="px-4 py-3 font-mono text-xs font-semibold">{o.number}</td>
-                      <td className="px-4 py-3 capitalize">{o.origin.replace(/_/g, " ")}</td>
+                      <td className="px-4 py-3">
+                        <div className="capitalize">{o.origin.replace(/_/g, " ")}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {o.destinationType === "garage" ? `→ ${o.garageName ?? "garage"}` : o.destinationType === "home" ? `→ ${o.deliveryAddress ?? "customer"}${o.deliveryCity ? `, ${o.deliveryCity}` : ""}` : "Customer picks up"}
+                          {o.buyerPhone ? ` · ${o.buyerPhone}` : ""}
+                        </div>
+                        {(o.riderName || o.courierReference) && (
+                          <div className="text-xs text-muted-foreground">{o.courier === "partner" ? "Partner courier" : "Rider"}: {o.riderName ?? o.courierReference}{o.riderPhone ? ` · ${o.riderPhone}` : ""}</div>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-right tabular-nums">{formatGHS(o.total)}</td>
                       <td className="px-4 py-3 text-xs">{o.expectedDeliveryAt?.slice(0, 10) ?? "—"}</td>
                       <td className="px-4 py-3"><StatusPill status={o.status} tone={statusTone(o.status)} /></td>
                       <td className="px-4 py-3 text-right">
                         {dashboard.canFulfil && next && !pendingApproval && (
                           <Button variant="secondary" className="!min-h-8 px-3 text-xs" disabled={pending}
-                            onClick={() => fulfil(o.id, next.action)}>{next.label}</Button>
+                            onClick={() => needsRider ? setDispatch({ orderId: o.id, riderName: "", riderPhone: "" }) : fulfil(o.id, next.action)}>{next.label}</Button>
                         )}
                         {o.status === "placed" && dashboard.canFulfil && !pendingApproval && (
                           <Button variant="ghost" className="!min-h-8 px-2 text-xs text-danger" disabled={pending}
@@ -328,6 +344,28 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
                         )}
                       </td>
                     </tr>
+                    {dispatch?.orderId === o.id && (
+                      <tr className="border-b bg-surface-muted/40">
+                        <td colSpan={6} className="px-4 py-3">
+                          <div className="flex flex-wrap items-end gap-2">
+                            <label className="text-xs">
+                              <span className="mb-1 block font-semibold text-muted-foreground">Rider name</span>
+                              <input value={dispatch.riderName} onChange={(e) => setDispatch({ ...dispatch, riderName: e.target.value })} className={`${inputCls} !min-h-9 w-44`} placeholder="Kojo" />
+                            </label>
+                            <label className="text-xs">
+                              <span className="mb-1 block font-semibold text-muted-foreground">Rider phone</span>
+                              <input value={dispatch.riderPhone} onChange={(e) => setDispatch({ ...dispatch, riderPhone: e.target.value })} className={`${inputCls} !min-h-9 w-40`} placeholder="024 000 0000" inputMode="tel" />
+                            </label>
+                            <Button className="!min-h-9 px-3 text-xs" disabled={pending || !dispatch.riderName.trim() || !dispatch.riderPhone.trim()}
+                              onClick={() => fulfil(o.id, "out_for_delivery", { courier: "vendor", riderName: dispatch.riderName, riderPhone: dispatch.riderPhone })}>Send with my rider</Button>
+                            <Button variant="secondary" className="!min-h-9 px-3 text-xs" disabled={pending}
+                              onClick={() => fulfil(o.id, "out_for_delivery", { courier: "partner" })}>No rider free — book FixAm courier</Button>
+                            <Button variant="ghost" className="!min-h-9 px-2 text-xs" onClick={() => setDispatch(null)}>Cancel</Button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   )
                 })}
               </tbody>

@@ -362,7 +362,8 @@
         "paystack_subaccount_code": "text",
         "insurance_partner_id": "uuid fk:insurance_partners",
         "status": "text req default:'active'",
-        "onboarding_completed_at": "timestamptz"
+        "onboarding_completed_at": "timestamptz",
+        "payout_details_encrypted": "text (AES-GCM, lib/escrow/payout-account)"
       }
     },
     "garage_settings": {
@@ -383,7 +384,9 @@
         "auto_reorder_enabled": "bool default:false",
         "auto_reorder_spend_limit": "money default:0",
         "late_fee_rule": "jsonb",
-        "currency": "text req default:'GHS'"
+        "currency": "text req default:'GHS'",
+        "accepts_customer_parts": "bool req default:true",
+        "customer_part_fitting_fee": "money req default:0"
       },
       "planned_columns": {
         "accepts_customer_parts": "bool req default:true",
@@ -1041,7 +1044,7 @@
         "id": "uuid pk",
         "number": "text req uniq (VO-...)",
         "vendor_id": "uuid req fk:vendors",
-        "garage_id": "uuid req fk:garages (delivery destination)",
+        "garage_id": "uuid fk:garages (delivery garage; null when a driver has parts sent home or picks up)",
         "branch_id": "uuid fk:branches",
         "purchase_order_id": "uuid fk:purchase_orders",
         "origin": "enum:vendor_order_origin req",
@@ -1058,21 +1061,23 @@
         "paystack_reference": "text",
         "expected_delivery_at": "timestamptz",
         "delivered_at": "timestamptz",
-        "notes": "text"
-      },
-      "rls_note": "Visible to: members of garage_id, members of vendor_id, the ordering customer, platform admin.",
-      "planned_columns": {
-        "buyer_user_id": "uuid fk:users (customer purchases)",
-        "destination_type": "text (garage|home|pickup)",
-        "destination_garage_id": "uuid fk:garages",
-        "job_id": "uuid fk:jobs",
-        "escrow_hold_id": "uuid fk:escrow_holds",
+        "notes": "text",
+        "buyer_user_id": "uuid fk:users",
+        "buyer_phone": "text",
+        "destination_type": "text req default:garage (garage|home|pickup)",
+        "delivery_address": "text",
+        "delivery_region": "text",
+        "delivery_city": "text",
+        "fitting_fee": "money req default:0 (driver orders to a garage)",
+        "courier": "text (vendor|partner)",
         "rider_name": "text",
         "rider_phone": "text",
-        "courier": "text (vendor|partner)",
+        "courier_reference": "text",
         "received_photo_path": "text",
-        "received_at": "timestamptz"
-      }
+        "received_at": "timestamptz",
+        "received_by": "uuid fk:users"
+      },
+      "rls_note": "Visible to: members of garage_id, members of vendor_id, the ordering customer, platform admin."
     },
     "vendor_order_items": {
       "tenant": false,
@@ -1895,7 +1900,7 @@
       "columns": {
         "id": "uuid pk",
         "escrow_hold_id": "uuid fk:escrow_holds",
-        "purpose": "text req (vendor_release|fitting_fee|refund)",
+        "purpose": "text req (vendor_release|fitting_fee|refund|invoice_settlement)",
         "recipient_type": "text req (vendor|garage|customer)",
         "recipient_id": "uuid",
         "method": "text req (momo|bank)",
@@ -1912,7 +1917,8 @@
         "last_error": "text",
         "completed_at": "timestamptz",
         "created_at": "timestamptz",
-        "updated_at": "timestamptz"
+        "updated_at": "timestamptz",
+        "idempotency_key": "text uniq (e.g. invoice-payment:{paymentId})"
       },
       "unique": [
         [

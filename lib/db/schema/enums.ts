@@ -221,6 +221,7 @@ export const vendorOrderOriginEnum = pgEnum("vendor_order_origin", [
   "garage_auto_reorder",
   "job_linked",
   "customer_to_garage",
+  "customer_direct",
 ])
 
 export const insurancePolicyTypeEnum = pgEnum("insurance_policy_type", [

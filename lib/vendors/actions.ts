@@ -20,6 +20,9 @@ import { parseVendorProductsCsv, type VendorCsvIssue } from "./csv"
 import { uuidv7 } from "@/lib/id"
 import { encryptPayoutAccount, parseFreeTextMomo } from "@/lib/escrow/payout-account"
 import { getHoldForEntity, refundHold, scheduleAutoRelease } from "@/lib/escrow/service"
+import { deliveryProvider } from "@/lib/integrations/delivery"
+import { smsBuyer } from "@/lib/parts-shop/notify"
+import { garages } from "@/lib/db/schema"
 
 // ---------------------------------------------------------------------------
 // Membership resolution
@@ -177,8 +180,13 @@ export async function getVendorDashboard() {
         commissionAmount: vendorOrders.commissionAmount, paymentStatus: vendorOrders.paymentStatus,
         expectedDeliveryAt: vendorOrders.expectedDeliveryAt, createdAt: vendorOrders.createdAt,
         origin: vendorOrders.origin,
+        destinationType: vendorOrders.destinationType, deliveryAddress: vendorOrders.deliveryAddress,
+        deliveryCity: vendorOrders.deliveryCity, buyerPhone: vendorOrders.buyerPhone,
+        riderName: vendorOrders.riderName, riderPhone: vendorOrders.riderPhone, courier: vendorOrders.courier,
+        courierReference: vendorOrders.courierReference, garageName: garages.name,
       })
       .from(vendorOrders)
+      .leftJoin(garages, eq(garages.id, vendorOrders.garageId))
       .where(eq(vendorOrders.vendorId, vendor.id))
       .orderBy(desc(vendorOrders.createdAt))
       .limit(100),
@@ -389,6 +397,10 @@ export async function fulfilVendorOrder(rawInput: unknown): Promise<ActionResult
     orderId: z.string().uuid(),
     action: z.enum(["accept", "reject", "packed", "out_for_delivery", "delivered", "cancel"]),
     note: z.string().max(300).optional(),
+    // out_for_delivery: own rider or partner courier
+    courier: z.enum(["vendor", "partner"]).optional(),
+    riderName: z.string().trim().max(80).optional(),
+    riderPhone: z.string().trim().max(20).optional(),
   }).safeParse(rawInput)
   if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Invalid input" } }
   const d = parsed.data
@@ -415,11 +427,47 @@ export async function fulfilVendorOrder(rawInput: unknown): Promise<ActionResult
     nextStatus = d.action
   }
 
+  // Paid driver orders must be paid before they leave the shop.
+  if (order.buyerUserId && order.paymentStatus !== "paid" && ["packed", "out_for_delivery", "delivered"].includes(nextStatus)) {
+    return { ok: false, error: { code: "VALIDATION", message: "Wait for the payment to confirm before sending this order" } }
+  }
+
+  let courierPatch: Partial<typeof vendorOrders.$inferInsert> = {}
+  if (nextStatus === "out_for_delivery" && order.destinationType !== "pickup") {
+    if (d.courier === "partner") {
+      const [g] = order.garageId ? await db().select({ name: garages.name, phone: garages.phone, address: garages.address, city: garages.city }).from(garages).where(eq(garages.id, order.garageId)).limit(1) : [null]
+      const booking = await deliveryProvider().book({
+        orderNumber: order.number,
+        pickup: { name: ctx.vendor.businessName, phone: ctx.vendor.phone, address: ctx.vendor.address, city: ctx.vendor.city },
+        dropoff: g
+          ? { name: g.name, phone: g.phone, address: g.address, city: g.city }
+          : { name: "Customer", phone: order.buyerPhone, address: order.deliveryAddress, city: order.deliveryCity },
+      })
+      courierPatch = { courier: "partner", courierReference: booking.reference, riderName: booking.riderName ?? null, riderPhone: booking.riderPhone ?? null }
+    } else if (d.riderName || d.riderPhone) {
+      courierPatch = { courier: "vendor", riderName: d.riderName || null, riderPhone: d.riderPhone || null }
+    } else if (order.buyerUserId) {
+      return { ok: false, error: { code: "VALIDATION", message: "Add the rider's name and phone, or book a partner courier" } }
+    }
+  }
+
   await db().update(vendorOrders).set({
     status: nextStatus as never,
     ...(nextStatus === "delivered" ? { deliveredAt: new Date() } : {}),
+    ...courierPatch,
     updatedAt: new Date(),
   }).where(eq(vendorOrders.id, order.id))
+
+  if (order.buyerPhone) {
+    const rider = courierPatch.riderName ? ` Rider: ${courierPatch.riderName}${courierPatch.riderPhone ? ` ${courierPatch.riderPhone}` : ""}.` : courierPatch.courierReference ? ` Courier ref ${courierPatch.courierReference}.` : ""
+    const msg =
+      nextStatus === "accepted" ? `FixAm: ${ctx.vendor.businessName} accepted your order ${order.number}.`
+      : nextStatus === "out_for_delivery" ? `FixAm: your part ${order.number} is on the way.${rider}`
+      : nextStatus === "delivered" ? (order.destinationType === "garage" ? `FixAm: ${order.number} was delivered to your garage.` : `FixAm: ${order.number} delivered. Confirm you have it in FixAm so the seller is paid.`)
+      : nextStatus === "cancelled" ? `FixAm: ${ctx.vendor.businessName} couldn't fulfil ${order.number}. If you paid, your refund is on its way.`
+      : null
+    if (msg) await smsBuyer(order.buyerPhone, msg, `vo-${nextStatus}:${order.id}`)
+  }
 
   await db().insert(vendorOrderEvents).values({
     id: uuidv7(), vendorOrderId: order.id, garageId: order.garageId,
@@ -455,7 +503,7 @@ export async function listVendorOrderDetail(rawInput: unknown) {
       quantityDelivered: vendorOrderItems.quantityDelivered, quantityReceived: vendorOrderItems.quantityReceived,
     })
     .from(vendorOrderItems)
-    .where(and(eq(vendorOrderItems.vendorOrderId, order.id), eq(vendorOrderItems.garageId, order.garageId)))
+    .where(eq(vendorOrderItems.vendorOrderId, order.id))
 
   const events = await db().select().from(vendorOrderEvents)
     .where(eq(vendorOrderEvents.vendorOrderId, order.id))

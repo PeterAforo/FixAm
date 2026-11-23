@@ -57,6 +57,8 @@ export const garages = pgTable("garages", {
   terms: text("terms"),
   momoMerchantNumber: text("momo_merchant_number"),
   paystackSubaccountCode: text("paystack_subaccount_code"),
+  /** Encrypted MoMo/bank account FixAm pays this garage into (lib/escrow/payout-account). */
+  payoutDetailsEncrypted: text("payout_details_encrypted"),
   insurancePartnerId: uuid("insurance_partner_id"), // fk added when partners table lands
   status: text("status").notNull().default("active"),
   onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
@@ -84,6 +86,10 @@ export const garageSettings = pgTable("garage_settings", {
   autoReorderEnabled: boolean("auto_reorder_enabled").default(false),
   autoReorderSpendLimit: moneyCol("auto_reorder_spend_limit").default(sql`0`),
   lateFeeRule: jsonb("late_fee_rule"),
+  /** Drivers may buy their own parts and have them sent here (P8-03). */
+  acceptsCustomerParts: boolean("accepts_customer_parts").notNull().default(true),
+  /** Flat fee for fitting a part the driver bought, shown before they pay. */
+  customerPartFittingFee: moneyCol("customer_part_fitting_fee").notNull().default(sql`0`),
   currency: text("currency").notNull().default("GHS"),
   ...timestamps,
 })
