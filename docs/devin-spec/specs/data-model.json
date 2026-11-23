@@ -2351,6 +2351,26 @@
           "customer_id"
         ]
       ]
+    },
+    "part_photo_scans": {
+      "status": "built (P8-12)",
+      "tenant": false,
+      "note": "Photo itself not stored. Accuracy = chosen_part_type_id = top_part_type_id.",
+      "columns": {
+        "id": "uuid pk",
+        "source": "text (driver|garage|request)",
+        "user_id": "uuid",
+        "garage_id": "uuid fk",
+        "top_part_type_id": "uuid fk part_types",
+        "top_confidence": "numeric(3,2)",
+        "sure": "bool",
+        "not_a_part": "bool",
+        "condition": "text (good|worn|damaged|unclear)",
+        "provider": "text",
+        "chosen_part_type_id": "uuid fk part_types",
+        "chosen_at": "timestamptz",
+        "created_at": "timestamptz"
+      }
     }
   },
   "domain_rules": {

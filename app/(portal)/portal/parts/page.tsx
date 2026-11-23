@@ -4,6 +4,7 @@ import { connection } from "next/server"
 import { getPartsShopContext, searchPartsForCar } from "@/lib/parts-shop/actions"
 import { listPartTypes } from "@/lib/parts-catalog/actions"
 import { PartsShop } from "./parts-shop"
+import { PhotoFinder } from "./photo-finder"
 
 async function Loader({ searchParams }: { searchParams: Promise<{ q?: string; part?: string }> }) {
   await connection()
@@ -15,7 +16,13 @@ async function Loader({ searchParams }: { searchParams: Promise<{ q?: string; pa
       ? await searchPartsForCar({ make: car?.make, model: car?.model, year: car?.year ?? undefined, q: sp.q || undefined, partTypeId: sp.part || undefined })
       : null
   return (
+    <>
+    <PhotoFinder
+      vehicle={car ? [car.year, car.make, car.model].filter(Boolean).join(" ") : undefined}
+      allParts={partTypes.map((p) => ({ id: p.id, name: p.name }))}
+    />
     <PartsShop
+      key={`${sp.part ?? ""}|${sp.q ?? ""}`}
       cars={ctx.cars}
       myGarages={ctx.myGarages}
       partTypes={partTypes.map((p) => ({ id: p.id, name: p.name, category: p.category }))}
@@ -23,6 +30,7 @@ async function Loader({ searchParams }: { searchParams: Promise<{ q?: string; pa
       initialPartTypeId={sp.part ?? null}
       initialResults={initialResults}
     />
+    </>
   )
 }
 

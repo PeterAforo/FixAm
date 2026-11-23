@@ -2,6 +2,31 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### P8-12 Part recognition from photos ✅
+- **Snap the part**: Claude vision (`identify_part` prompt) looks at a photo
+  and picks from the standard parts list (numbered candidates, up to 5 with
+  confidence), judges the condition, reads any part number or brand on it,
+  and notes fitment clues (front/rear, engine). What the person types and a
+  readable part number are matched against the list too and boost agreeing
+  choices.
+- Sure (≥ 75% and 20 points ahead) → "This looks like X — Yes, that's it";
+  otherwise "Which one is it?" with the top 5 plus the full list.
+- **Driver app → Parts**: "Don't know what the part is called? Use a photo" —
+  picking the part shows fitting offers straight away.
+- **Job card → Findings**: "…or identify it from a photo" next to the part
+  picker; the car comes from the job, and offers open as soon as it's picked.
+- **Repair requests**: the first photo is also checked; a sure match is put
+  first in the request's parts (so offers show with the triage).
+- Photos are shrunk in the browser (≤ 1600 px JPEG) and checked by their
+  bytes; they are not stored. `part_photo_scans` keeps only what was
+  suggested and what the person confirmed. Admin → AI usage shows live
+  accuracy (target ≥ 80%). Offline evaluation:
+  `npx tsx scripts/eval-part-photos.ts` over `tests/fixtures/part-photos`
+  (add your own photos; see the README there).
+- Server-action body limit raised to 4 MB (`next.config.ts`) so photo
+  uploads (including repair-request photos) don't hit Next's 1 MB default.
+- Migration `0027_part-photo-scans`.
+
 ### P8-11 Seasonal reminders (harmattan & rains) ✅
 - Garages' customers get a short car-care message when the season turns,
   timed by the garage's region: **north** (harmattan mid-Nov, one rainy

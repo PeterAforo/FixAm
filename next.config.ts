@@ -7,6 +7,11 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
+  experimental: {
+    // Photo uploads (part photos, repair-request photos) go through server
+    // actions. Browsers shrink photos first; Vercel caps bodies at 4.5 MB.
+    serverActions: { bodySizeLimit: "4mb" },
+  },
   partialPrefetching: true,
   turbopack: {
     rules: {

@@ -46,7 +46,19 @@ export async function triageComplaint(input: {
     const m = (await matchPartTypeText(p))[0]
     if (m && m.score >= 0.5 && !matchedParts.some((x) => x.id === m.partType.id)) matchedParts.push({ id: m.partType.id, name: m.partType.name })
   }
-  return { ...t, matchedParts, by: r.ok ? r.provider : "rules" }
+  // P8-12: a photo of the part itself can name it more precisely than the words.
+  const first = input.photos[0]
+  if (first) {
+    try {
+      const { identifyPartPhoto } = await import("@/lib/part-photo/service")
+      const photo = await identifyPartPhoto({ image: first, note: input.complaint.slice(0, 300), vehicle: input.vehicle, source: "request", ctx: { userId: input.ctx.userId } })
+      const top = photo.candidates[0]
+      if (photo.sure && top && !matchedParts.some((x) => x.id === top.id)) matchedParts.unshift({ id: top.id, name: top.name })
+    } catch {
+      // photo recognition is a bonus, never a blocker
+    }
+  }
+  return { ...t, matchedParts: matchedParts.slice(0, 6), by: r.ok ? r.provider : "rules" }
 }
 
 /** Garages that should receive a broadcast request. */

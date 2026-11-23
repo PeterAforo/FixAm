@@ -4,6 +4,7 @@ import { getSessionUserId } from "@/lib/auth/ensure-user"
 import { db } from "@/lib/db"
 import { users } from "@/lib/db/schema"
 import { aiUsageByGarage, formatUsd } from "@/lib/ai/usage"
+import { photoScanAccuracy } from "@/lib/part-photo/service"
 
 export async function AdminAiUsageSection() {
   await connection()
@@ -11,7 +12,11 @@ export async function AdminAiUsageSection() {
   if (!userId) return null
   const [me] = await db().select({ a: users.isPlatformAdmin }).from(users).where(eq(users.id, userId)).limit(1)
   if (!me?.a) return null
-  const { rows, totals } = await aiUsageByGarage(30)
+  const [{ rows, totals }, photo] = await Promise.all([
+    aiUsageByGarage(30),
+    photoScanAccuracy(30).catch(() => null),
+  ])
+  const pct = (v: number | null) => (v == null ? "—" : `${Math.round(v * 100)}%`)
   return (
     <section className="mt-10">
       <h2 className="font-display text-xl font-bold">AI usage · last 30 days</h2>
@@ -25,6 +30,13 @@ export async function AdminAiUsageSection() {
         <Stat label="Voice minutes" value={(totals.audioSeconds / 60).toFixed(1)} />
         <Stat label="Cost" value={formatUsd(totals.costMicroUsd)} />
       </div>
+      {photo && photo.scans > 0 && (
+        <div className="mt-3 rounded-xl border border-border bg-card p-3 text-sm">
+          <span className="font-semibold">Part photos:</span> {photo.scans} scans · {photo.confirmed} confirmed by the person ·
+          top suggestion right <strong>{pct(photo.accuracy)}</strong> of the time · sure enough to skip the list {pct(photo.sureRate)}
+          <span className="block text-xs text-muted-foreground">Target: top suggestion right at least 80% of the time.</span>
+        </div>
+      )}
       {rows.length === 0 ? (
         <p className="mt-4 rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">No AI calls yet.</p>
       ) : (

@@ -138,3 +138,52 @@ export const jobNotesPrompt = definePrompt({
   mock: (i) => rulesJobNotes(i.notes),
   maxTokens: 1200,
 })
+
+/** Photo → part type (P8-12). Candidates are numbered so the model answers with small integers, not ids. */
+export const identifyPartPrompt = definePrompt({
+  key: "identify_part",
+  version: 1,
+  system:
+    "You are an experienced Ghanaian auto-parts dealer looking at a photo of a car part, sent by a driver or a mechanic. " +
+    "Identify which part it is, choosing ONLY from the numbered list. Give up to 5 choices, best first, each with a confidence " +
+    "from 0 to 1 (be honest: blurry or unusual photos get low confidence). Also judge the condition you can see, read any part " +
+    "number or brand printed on it, and say anything that helps fitment (position such as front/rear/left/right, engine or model " +
+    "clues). If the photo is not a car part, set notAPart true and return no choices.",
+  render: (i: { candidates: { n: number; name: string; category: string }[]; vehicle: string | null; note: string | null }) =>
+    `Vehicle: ${i.vehicle ?? "unknown"}\n` +
+    `What the person said: ${i.note?.trim() ? i.note.trim() : "nothing"}\n\n` +
+    `Parts list:\n${i.candidates.map((c) => `${c.n}. ${c.name} (${c.category})`).join("\n")}`,
+  output: z.object({
+    notAPart: z.boolean(),
+    choices: z.array(z.object({ n: z.number().int().min(1), confidence: z.number().min(0).max(1) })).max(5),
+    condition: z.enum(["good", "worn", "damaged", "unclear"]),
+    conditionNote: z.string().max(200).nullable(),
+    partNumber: z.string().max(60).nullable(),
+    fitmentHint: z.string().max(200).nullable(),
+  }),
+  jsonSchema: {
+    type: "object",
+    properties: {
+      notAPart: { type: "boolean" },
+      choices: {
+        type: "array",
+        items: { type: "object", properties: { n: { type: "integer" }, confidence: { type: "number", minimum: 0, maximum: 1 } }, required: ["n", "confidence"] },
+      },
+      condition: { type: "string", enum: ["good", "worn", "damaged", "unclear"] },
+      conditionNote: { type: ["string", "null"] },
+      partNumber: { type: ["string", "null"], description: "Part number or brand printed on the part, if readable" },
+      fitmentHint: { type: ["string", "null"], description: "Position/engine/model clues for fitment" },
+    },
+    required: ["notAPart", "choices", "condition", "conditionNote", "partNumber", "fitmentHint"],
+  },
+  // Keyless dev: the caller puts text matches first, so offer them as unsure choices.
+  mock: (i) => ({
+    notAPart: false,
+    choices: i.candidates.slice(0, 3).map((c, idx) => ({ n: c.n, confidence: idx === 0 && i.note ? 0.45 : 0.2 })),
+    condition: "unclear" as const,
+    conditionNote: null,
+    partNumber: null,
+    fitmentHint: null,
+  }),
+  maxTokens: 400,
+})

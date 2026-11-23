@@ -926,7 +926,8 @@
           "acceptance_criteria": [
             "Photo of a common part returns the right part type ≥ 80% on the seeded test set",
             "Offers for that part appear immediately"
-          ]
+          ],
+          "status": "done"
         },
         {
           "id": "P8-13",

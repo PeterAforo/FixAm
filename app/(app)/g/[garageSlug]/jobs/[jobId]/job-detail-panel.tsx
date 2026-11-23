@@ -24,6 +24,7 @@ import { createInvoiceFromJob } from "@/lib/money/actions"
 import type { JobStatus } from "@/lib/jobs/transitions"
 import { PartOffersPanel } from "@/components/part-offers/part-offers-panel"
 import { FairQuoteBadge } from "@/components/fair-quote/fair-quote-badge"
+import { PartPhotoScanner } from "@/components/part-photo/part-photo-scanner"
 import type { FairQuoteCheck } from "@/lib/fair-quote/core"
 import { setPartTypeOnJob } from "@/lib/part-offers/actions"
 import type { JobRepairRequest } from "@/lib/repair-requests/service"
@@ -561,12 +562,21 @@ export function JobDetailPanel(props: {
                           )}
                         </div>
                       ) : canUpdate ? (
-                        <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="mt-2">
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
                           Which part? <select className={`${inputCls} !min-h-8 max-w-xs`} defaultValue="" onChange={(e) => e.target.value && pickPartType({ findingId: f.id }, e.target.value)}>
                             <option value="">Pick a part to see offers…</option>
                             {props.partTypes.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                           </select>
-                        </label>
+                          </label>
+                          <details className="mt-1 text-xs">
+                            <summary className="cursor-pointer font-semibold text-muted-foreground underline">…or identify it from a photo</summary>
+                            <div className="mt-2">
+                              <PartPhotoScanner compact garageId={garageId} jobId={job.id} allParts={props.partTypes.map((p) => ({ id: p.id, name: p.name }))}
+                                onPicked={(p) => pickPartType({ findingId: f.id }, p.id)} />
+                            </div>
+                          </details>
+                        </div>
                       ) : null
                     )}
                   </li>
