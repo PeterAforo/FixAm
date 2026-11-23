@@ -2,6 +2,14 @@
 
 ## Unreleased — P8 Smart repair marketplace (in progress)
 
+### Hotfix — `/i/[token]` prerender failure
+- **Inspection share page** (`app/i/[token]/page.tsx`): moved `connection()`,
+  `params` and `loadPublicInspection()` into a `<Suspense>`-wrapped child,
+  matching `/v/[token]` and `/p/[token]`. Fixes the Next.js 16 Cache
+  Components error "uncached or runtime data during prerendering" that
+  failed the Vercel static-generation step. Route behaviour unchanged
+  (token → report → `notFound()` → `InspectionReportView`).
+
 ### P8-21 Launch readiness ✅
 - **Launch checklist updated** (`docs/LAUNCH-CHECKLIST.md`): all Paystack
   references replaced with theTeller, a full P8-01→P8-21 acceptance table
