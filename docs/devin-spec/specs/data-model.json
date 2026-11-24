@@ -1728,6 +1728,8 @@
         "address": "text",
         "city": "text",
         "region": "text",
+        "gps_lat": "numeric(9,6) — office pin set in /broker/settings; powers /brokers \"near me\"",
+        "gps_lng": "numeric(9,6)",
         "about": "text",
         "logo_url": "text",
         "nic_licence_number": "text (National Insurance Commission)",

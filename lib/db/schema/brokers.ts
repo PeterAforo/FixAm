@@ -37,6 +37,9 @@ export const brokers = pgTable(
     address: text("address"),
     city: text("city"),
     region: text("region"),
+    /** Office location the broker pins in Settings — powers "near me" search. */
+    gpsLat: numeric("gps_lat", { precision: 9, scale: 6 }),
+    gpsLng: numeric("gps_lng", { precision: 9, scale: 6 }),
     about: text("about"),
     logoUrl: text("logo_url"),
     nicLicenceNumber: text("nic_licence_number"), // National Insurance Commission

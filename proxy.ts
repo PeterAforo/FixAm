@@ -58,7 +58,8 @@ export async function proxy(request: NextRequest) {
       const slug = path.split("/")[2]
       return redirectTo(slug && ROLE_SLUGS.has(slug) ? `/signup/${slug}` : "/signup")
     }
-    if (PROTECTED.some((p) => isUnder(path, p))) return redirectTo("/login", path)
+    // Remember the query too (e.g. /portal/parts?q=brake+pads from the public parts finder).
+    if (PROTECTED.some((p) => isUnder(path, p))) return redirectTo("/login", `${path}${url.search}`)
     return response
   }
 
@@ -69,7 +70,8 @@ export async function proxy(request: NextRequest) {
     return redirectTo(slug && ROLE_SLUGS.has(slug) ? `/onboarding/${slug}` : "/onboarding")
   }
   // Arrived where we were heading → forget it
-  if (request.cookies.get(NEXT_COOKIE)?.value === path) response.cookies.delete(NEXT_COOKIE)
+  const remembered = request.cookies.get(NEXT_COOKIE)?.value
+  if (remembered && remembered.split("?")[0] === path) response.cookies.delete(NEXT_COOKIE)
   return response
 }
 

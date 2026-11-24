@@ -140,6 +140,9 @@ export async function updateVendorProfile(rawInput: unknown): Promise<ActionResu
     payoutMethod: z.enum(["momo", "bank"]).optional(),
     payoutDetails: z.string().max(500).optional(),
     logoUrl: z.string().url().optional().or(z.literal("")),
+    /** Shop pin for the public /parts "near me" finder (Ghana, roughly). */
+    gpsLat: z.number().min(4).max(11.5).optional(),
+    gpsLng: z.number().min(-3.5).max(1.5).optional(),
   }).safeParse(rawInput)
   if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Invalid input" } }
   const d = parsed.data
@@ -157,6 +160,7 @@ export async function updateVendorProfile(rawInput: unknown): Promise<ActionResu
       ? { payoutMethod: "momo", payoutDetailsEncrypted: legacyPayout(d.payoutMethod, d.payoutDetails) }
       : {}),
     ...(d.logoUrl !== undefined ? { logoUrl: d.logoUrl || null } : {}),
+    ...(d.gpsLat !== undefined && d.gpsLng !== undefined ? { gpsLat: d.gpsLat.toFixed(6), gpsLng: d.gpsLng.toFixed(6) } : {}),
     updatedAt: new Date(),
   }).where(eq(vendors.id, ctx.vendor.id))
 
@@ -212,6 +216,8 @@ export async function getVendorDashboard() {
       vendor: {
         id: vendor.id, businessName: vendor.businessName, status: vendor.status, isVerified: vendor.isVerified,
         phone: vendor.phone, email: vendor.email, city: vendor.city, region: vendor.region,
+        gpsLat: vendor.gpsLat != null ? Number(vendor.gpsLat) : null,
+        gpsLng: vendor.gpsLng != null ? Number(vendor.gpsLng) : null,
         categories: vendor.categories, deliveryZones: vendor.deliveryZones,
         payoutMethod: vendor.payoutMethod, ratingAvg: vendor.ratingAvg != null ? Number(vendor.ratingAvg) : null, ratingCount: vendor.ratingCount,
       },

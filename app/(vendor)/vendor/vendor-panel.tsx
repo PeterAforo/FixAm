@@ -2,6 +2,7 @@
 
 import { Fragment, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { PinLocation } from "@/components/discovery/pin-location"
 import { Button } from "@/components/brand/button"
 import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill, statusTone } from "@/components/brand/status-pill"
@@ -551,6 +552,12 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
                 <input value={profForm.city} onChange={(e) => setProfForm({ ...profForm, city: e.target.value })} placeholder="City" className={inputCls} />
                 <input value={profForm.region} onChange={(e) => setProfForm({ ...profForm, region: e.target.value })} placeholder="Region" className={inputCls} />
               </div>
+              <PinLocation
+                what="shop"
+                lat={dashboard?.vendor.gpsLat ?? null}
+                lng={dashboard?.vendor.gpsLng ?? null}
+                save={(p) => updateVendorProfile(p)}
+              />
               <input value={profForm.categories} onChange={(e) => setProfForm({ ...profForm, categories: e.target.value })} placeholder="Categories (comma separated)" className={inputCls} />
               <div>
                 <div className="mb-1 flex items-center justify-between">

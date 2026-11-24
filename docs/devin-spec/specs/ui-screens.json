@@ -713,6 +713,34 @@
       ]
     },
     {
+      "id": "parts_finder",
+      "route": "/parts",
+      "audience": "everyone",
+      "task": "FIND-01",
+      "content": [
+        "Public. Hero + search card: part name, make, model, year (datalists from the vehicle catalogue)",
+        "Location first: 'Use my location' (browser GPS, only sent as lat/lng in the URL, not stored) or pick a popular area; radius 5 / 10 / 25 km / All Ghana",
+        "Filters: Delivers, Verified sellers, Cheapest first",
+        "Results grouped by seller, nearest first: distance, town, rating, cheapest delivery or 'Pickup only', up to 4 matching parts with condition / fit / stock / warranty and price",
+        "Order → /portal/parts?q=<part> (sign-in keeps the query); Call seller; Directions (Google Maps) when the seller has a pin",
+        "'Around you' plot: you in the middle, sellers placed by real direction and distance (not a street map)",
+        "Sellers without a map pin only appear under 'All Ghana'"
+      ]
+    },
+    {
+      "id": "brokers_finder",
+      "route": "/brokers",
+      "audience": "everyone",
+      "task": "FIND-02",
+      "content": [
+        "Public. Tabs: Car insurance / DVLA renewals / Both; insurer filter; 'Licence verified only'",
+        "Same location bar as /parts",
+        "Broker cards nearest first: distance, town, verified badge (NIC / DVLA), what they handle, insurers, service fee; Call and 'Get a quote'",
+        "Tick up to 3 → 'Request N quotes' (sidebar on desktop, sticky bar on phones) → /portal/renewals/ask/<kind>/<id~id> (a path so it survives sign-in), which opens the renewal form with those brokers picked and sends one request per broker",
+        "'Not on the map yet' list for brokers without an office pin, same-town ones first"
+      ]
+    },
+    {
       "id": "account_hub",
       "route": "/account",
       "audience": "signed-in",

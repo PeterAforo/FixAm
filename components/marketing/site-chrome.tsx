@@ -5,6 +5,8 @@ import { Logo } from "./logo"
 const NAV = [
   { href: "/#product", label: "Product" },
   { href: "/garages", label: "Find a garage" },
+  { href: "/parts", label: "Find parts" },
+  { href: "/brokers", label: "Insurance & DVLA" },
   { href: "/pricing", label: "Pricing" },
   { href: "/support", label: "Support" },
   { href: "/about", label: "About" },
@@ -22,7 +24,7 @@ export function SiteHeader({ tone = "light", active }: { tone?: "light" | "dark"
     >
       <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-4 px-6 py-4 md:px-8">
         <Logo />
-        <nav className={cn("hidden items-center gap-7 text-sm md:flex", dark ? "text-[#B9BFD0]" : "text-muted-foreground")}>
+        <nav className={cn("hidden items-center gap-6 text-sm lg:flex", dark ? "text-[#B9BFD0]" : "text-muted-foreground")}>
           {NAV.map((n) => (
             <Link
               key={n.href}
@@ -53,13 +55,30 @@ export function SiteHeader({ tone = "light", active }: { tone?: "light" | "dark"
           </Link>
         </div>
       </div>
+      {/* Small screens: the same links as a scrollable row */}
+      <nav aria-label="Site" className={cn("flex gap-2 overflow-x-auto px-6 pb-3 text-sm lg:hidden", dark ? "text-[#B9BFD0]" : "text-muted-foreground")}>
+        {NAV.filter((n) => n.href !== "/#product").map((n) => (
+          <Link
+            key={n.href}
+            href={n.href}
+            aria-current={active === n.label ? "page" : undefined}
+            className={cn(
+              "shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5",
+              dark ? "border-white/15" : "border-border",
+              active === n.label && (dark ? "border-white/40 text-white" : "border-foreground font-semibold text-foreground")
+            )}
+          >
+            {n.label}
+          </Link>
+        ))}
+      </nav>
     </header>
   )
 }
 
 const FOOTER_COLS = [
   { title: "Product", links: [["/#product", "Workshop"], ["/#payments", "Payments"], ["/#reminders", "Reminders"], ["/pricing", "Pricing"]] },
-  { title: "Drivers", links: [["/garages", "Find a garage"], ["/portal", "My cars"], ["/portal/renewals", "Renew insurance & DVLA"], ["/support#drivers", "Driver help"]] },
+  { title: "Drivers", links: [["/garages", "Find a garage"], ["/parts", "Find parts near you"], ["/brokers", "Insurance & DVLA brokers"], ["/portal", "My cars"], ["/support#drivers", "Driver help"]] },
   { title: "Partners", links: [["/signup/parts-seller", "Sell parts on FixAm"], ["/signup/insurance-broker", "For insurance brokers"], ["/signup/dvla-agent", "For DVLA agents"], ["/signup/tow-operator", "For tow operators"]] },
   { title: "Company", links: [["/about", "About us"], ["/contact", "Contact"], ["/support", "Help centre"]] },
   { title: "Legal", links: [["/privacy", "Privacy policy"], ["/terms", "Terms of service"]] },

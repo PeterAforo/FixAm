@@ -32,11 +32,16 @@ export function DriverRenewalsPanel({
   city,
   vehicles,
   requests,
+  initialKind,
+  initialBrokerIds = [],
 }: {
   startOpen: boolean
   city: string
   vehicles: Vehicle[]
   requests: MyRequest[]
+  /** From /brokers: which service and which brokers the driver already picked. */
+  initialKind?: RequestKind
+  initialBrokerIds?: string[]
 }) {
   const [open, setOpen] = useState(startOpen)
   const active = requests.filter((r) => ["requested", "quoted", "accepted", "in_progress"].includes(r.status))
@@ -56,7 +61,7 @@ export function DriverRenewalsPanel({
         )}
       </div>
 
-      {open && <NewRequest city={city} vehicles={vehicles} onClose={requests.length ? () => setOpen(false) : undefined} />}
+      {open && <NewRequest initialKind={initialKind} initialBrokerIds={initialBrokerIds} city={city} vehicles={vehicles} onClose={requests.length ? () => setOpen(false) : undefined} />}
 
       {active.length > 0 && (
         <section className="space-y-3">
@@ -74,9 +79,17 @@ export function DriverRenewalsPanel({
   )
 }
 
-function NewRequest({ city, vehicles, onClose }: { city: string; vehicles: Vehicle[]; onClose?: () => void }) {
+const MAX_BROKERS = 3
+
+function NewRequest({ city, vehicles, onClose, initialKind, initialBrokerIds = [] }: {
+  city: string
+  vehicles: Vehicle[]
+  onClose?: () => void
+  initialKind?: RequestKind
+  initialBrokerIds?: string[]
+}) {
   const router = useRouter()
-  const [kind, setKind] = useState<RequestKind>("insurance")
+  const [kind, setKind] = useState<RequestKind>(initialKind ?? "insurance")
   const [serviceType, setServiceType] = useState(SERVICE_TYPES.insurance[0]!.value)
   const [vehicleId, setVehicleId] = useState(vehicles[0]?.id ?? "manual")
   const [plate, setPlate] = useState("")
@@ -85,7 +98,8 @@ function NewRequest({ city, vehicles, onClose }: { city: string; vehicles: Vehic
   const [expiry, setExpiry] = useState("")
   const [notes, setNotes] = useState("")
   const [brokers, setBrokers] = useState<BrokerView[] | null>(null)
-  const [brokerId, setBrokerId] = useState<string | null>(null)
+  const [brokerIds, setBrokerIds] = useState<string[]>([])
+  const [usedInitial, setUsedInitial] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, start] = useTransition()
 
@@ -94,30 +108,52 @@ function NewRequest({ city, vehicles, onClose }: { city: string; vehicles: Vehic
     listBrokersFor({ kind, city: city || undefined }).then((list) => {
       if (!alive) return
       setBrokers(list)
-      setBrokerId(list[0]?.id ?? null)
+      // Brokers picked on /brokers come first (once); otherwise suggest the top one.
+      const pre = usedInitial ? [] : initialBrokerIds.filter((id) => list.some((b) => b.id === id)).slice(0, MAX_BROKERS)
+      if (pre.length) {
+        const rest = list.filter((b) => !pre.includes(b.id))
+        setBrokers([...pre.map((id) => list.find((b) => b.id === id)!), ...rest])
+      }
+      setBrokerIds(pre.length ? pre : list[0] ? [list[0].id] : [])
+      setUsedInitial(true)
     })
     return () => { alive = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- initial picks apply to the first load only
   }, [kind, city])
+
+  function toggleBroker(id: string) {
+    setBrokerIds((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : cur.length >= MAX_BROKERS ? cur : [...cur, id]))
+  }
 
   const v = vehicles.find((x) => x.id === vehicleId)
   const finalPlate = v ? v.plate : plate
 
   function submit() {
-    if (!brokerId) return
+    if (!brokerIds.length) return
     setError(null)
     start(async () => {
-      const res = await createDriverBrokerRequest({
-        brokerId,
-        kind,
-        serviceType,
-        vehiclePlate: finalPlate,
-        vehicleMake: v?.make ?? make,
-        vehicleModel: v?.model ?? model,
-        vehicleYear: v?.year ?? null,
-        currentExpiry: expiry,
-        notes,
-      })
-      if (!res.ok) return setError(res.error.message)
+      // One request per broker — each replies with its own quote.
+      const failed: string[] = []
+      for (const brokerId of brokerIds) {
+        const res = await createDriverBrokerRequest({
+          brokerId,
+          kind,
+          serviceType,
+          vehiclePlate: finalPlate,
+          vehicleMake: v?.make ?? make,
+          vehicleModel: v?.model ?? model,
+          vehicleYear: v?.year ?? null,
+          currentExpiry: expiry,
+          notes,
+        })
+        if (!res.ok) failed.push(`${brokers?.find((b) => b.id === brokerId)?.businessName ?? "A broker"}: ${res.error.message}`)
+      }
+      if (failed.length) {
+        // Keep the form open so the driver sees which ones didn't go.
+        setError(failed.length === brokerIds.length ? failed.join(" · ") : `Sent to the others. Not sent — ${failed.join(" · ")}`)
+        router.refresh()
+        return
+      }
       onClose?.()
       router.replace("/portal/renewals")
       router.refresh()
@@ -129,7 +165,7 @@ function NewRequest({ city, vehicles, onClose }: { city: string; vehicles: Vehic
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="font-display text-xl font-semibold">Request a quote</h2>
-          <p className="mt-1 text-sm text-muted-foreground">The broker gets an SMS and replies with a price. Nothing is charged until you accept.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Each broker you pick gets an SMS and replies with a price. Nothing is charged until you accept one.</p>
         </div>
         {onClose && (
           <button type="button" onClick={onClose} aria-label="Close" className="flex size-9 items-center justify-center rounded-full hover:bg-surface-muted">
@@ -149,7 +185,7 @@ function NewRequest({ city, vehicles, onClose }: { city: string; vehicles: Vehic
                 onClick={() => {
                   if (k === kind) return
                   setBrokers(null)
-                  setBrokerId(null)
+                  setBrokerIds([])
                   setKind(k)
                   setServiceType(SERVICE_TYPES[k][0]!.value)
                 }}
@@ -192,7 +228,7 @@ function NewRequest({ city, vehicles, onClose }: { city: string; vehicles: Vehic
         </div>
 
         <div>
-          <p className="text-sm font-medium">Choose who handles it</p>
+          <p className="text-sm font-medium">Choose up to {MAX_BROKERS} — each sends you a quote</p>
           <div className="mt-2 max-h-[300px] space-y-2 overflow-y-auto pr-1">
             {brokers === null && [0, 1, 2].map((i) => <div key={i} className="h-[68px] animate-pulse rounded-2xl bg-muted" />)}
             {brokers?.length === 0 && (
@@ -201,15 +237,17 @@ function NewRequest({ city, vehicles, onClose }: { city: string; vehicles: Vehic
               </p>
             )}
             {brokers?.map((b) => {
-              const on = brokerId === b.id
+              const on = brokerIds.includes(b.id)
               return (
                 <button
                   key={b.id}
                   type="button"
-                  onClick={() => setBrokerId(b.id)}
+                  aria-pressed={on}
+                  disabled={!on && brokerIds.length >= MAX_BROKERS}
+                  onClick={() => toggleBroker(b.id)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition-all",
-                    on ? "border-foreground shadow-[0_0_0_4px_rgba(255,90,31,0.12)]" : "border-border hover:border-border-strong"
+                    on ? "border-foreground shadow-[0_0_0_4px_rgba(255,90,31,0.12)]" : "border-border hover:border-border-strong disabled:opacity-50"
                   )}
                 >
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#EFE9FF] font-display font-bold text-[#5B3CC4]">
@@ -236,8 +274,8 @@ function NewRequest({ city, vehicles, onClose }: { city: string; vehicles: Vehic
 
       {error && <p role="alert" className="mt-4 text-sm font-medium text-[#B3122F]">{error}</p>}
       <div className="mt-5 flex justify-end border-t border-border pt-4">
-        <Button type="button" loading={pending} disabled={!brokerId || finalPlate.trim().length < 3} onClick={submit}>
-          <ShieldCheck className="size-4" /> Send request
+        <Button type="button" loading={pending} disabled={!brokerIds.length || finalPlate.trim().length < 3} onClick={submit}>
+          <ShieldCheck className="size-4" /> {brokerIds.length > 1 ? `Send to ${brokerIds.length} brokers` : "Send request"}
         </Button>
       </div>
     </section>

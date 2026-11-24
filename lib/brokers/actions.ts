@@ -112,6 +112,8 @@ function serializeBroker(b: typeof brokers.$inferSelect) {
     address: b.address,
     city: b.city,
     region: b.region,
+    gpsLat: b.gpsLat != null ? Number(b.gpsLat) : null,
+    gpsLng: b.gpsLng != null ? Number(b.gpsLng) : null,
     about: b.about,
     nicLicenceNumber: b.nicLicenceNumber,
     dvlaAgentNumber: b.dvlaAgentNumber,
@@ -204,6 +206,21 @@ export async function brokerSignup(rawInput: unknown): Promise<ActionResult<{ br
     entityType: "broker", entityId: brokerId, after: { businessName: d.businessName, kind: d.kind },
   }).catch(() => {})
   return { ok: true, data: { brokerId } }
+}
+
+/** Save the office pin used by the public /brokers "near me" finder. Owner only. */
+export async function setBrokerLocation(rawInput: unknown): Promise<ActionResult<{ ok: true }>> {
+  const ctx = await requireBroker()
+  if (!ctx) return fail("UNAUTHENTICATED", "Sign in first")
+  if (ctx.role !== "owner") return fail("FORBIDDEN", "Only the owner can move the office pin")
+  const parsed = z.object({ gpsLat: z.number().min(4).max(11.5), gpsLng: z.number().min(-3.5).max(1.5) }).safeParse(rawInput)
+  if (!parsed.success) return fail("VALIDATION", "That location isn't in Ghana")
+  await db().update(brokers).set({
+    gpsLat: parsed.data.gpsLat.toFixed(6),
+    gpsLng: parsed.data.gpsLng.toFixed(6),
+    updatedAt: new Date(),
+  }).where(eq(brokers.id, ctx.broker.id))
+  return { ok: true, data: { ok: true as const } }
 }
 
 export async function updateBrokerProfile(rawInput: unknown): Promise<ActionResult<{ ok: true }>> {

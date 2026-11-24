@@ -2,6 +2,35 @@
 
 ## Unreleased — subscriptions for every workspace (in progress)
 
+### Find parts and brokers near you (public pages)
+- **`/parts` — Find parts near you.** Search a part for your car; results
+  are grouped by seller, nearest first, using your phone's GPS ("Use my
+  location") or a popular area (Abossey Okai, Suame, Tema…). Radius 5 / 10 /
+  25 km / All Ghana; filters for delivery, verified sellers and cheapest
+  first. Each seller shows distance, rating, delivery and up to four
+  matching parts with an Order button (→ sign in → the driver parts shop
+  with the search filled in), Call and Directions.
+- **`/brokers` — Insurance & DVLA near you.** Tabs for insurance / DVLA /
+  both, insurer and "licence verified" filters, the same location bar.
+  Tick up to three brokers and ask them all for a quote in one go.
+- **Multi-broker quote requests.** The driver renewal form now lets you pick
+  up to 3 brokers and sends one request to each. `/portal/renewals/ask/
+  <insurance|dvla>/<ids>` opens it with the brokers picked on `/brokers`.
+- **Sellers and brokers pin their location** with one tap ("Pin my shop
+  here" in the seller's Business profile, "Pin my office here" in
+  `/broker/settings`; `components/discovery/pin-location.tsx`). Sellers
+  already had `gps_lat/gps_lng` but no way to set them; brokers get new
+  columns — migration `0037_broker-location`. Unpinned sellers only show
+  under "All Ghana"; unpinned brokers are listed under "Not on the map yet".
+- Shared pieces: `lib/discovery/near-me.ts` (areas, radius, distance,
+  grouping — unit-tested), `lib/discovery/finders.ts`,
+  `components/discovery/location-bar.tsx` (location bar + "around you"
+  plot).
+- Site header: "Find parts" and "Insurance & DVLA" added; on small screens
+  the header links now show as a scrollable row (there was no mobile nav).
+- Sign-in now keeps the page's query string when it sends you back (e.g.
+  `/portal/parts?q=brake+pads`).
+
 ### Paid plans for all workspace roles, managed by platform admins
 - **`plans` now has an `audience`** (`garage | driver | vendor | broker |
   tow | rider`) and a `tagline`. New `account_subscriptions` table holds one

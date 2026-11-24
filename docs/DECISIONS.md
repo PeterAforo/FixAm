@@ -206,3 +206,18 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
 - **Platform admins can still "View as owner"** a suspended garage (the
   impersonation check runs before the status check) so support can
   investigate before reactivating.
+
+## Public "near me" finders (24 Nov 2026)
+
+- **Location stays in the URL, not the database.** `/parts` and `/brokers`
+  take `lat`/`lng` from the browser (or a preset area) and only use them to
+  sort; nothing is stored. Points outside Ghana's rough bounding box are
+  ignored.
+- **No map library.** The "around you" plot places results by real
+  direction and distance around the searcher. It is honest about not being
+  a street map and adds no dependency or API key; "Directions" hands off to
+  Google Maps.
+- **Brokers pin their own office.** Until they do, they're listed
+  separately ("Not on the map yet") rather than guessed from the city.
+- **Hand-off to sign-in uses a path for brokers** (`/portal/renewals/ask/
+  <kind>/<ids>`) and the proxy now remembers the query string for the rest.

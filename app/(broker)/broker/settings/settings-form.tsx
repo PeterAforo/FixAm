@@ -3,8 +3,9 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { BadgeCheck } from "lucide-react"
+import { PinLocation } from "@/components/discovery/pin-location"
 import { Button } from "@/components/brand/button"
-import { updateBrokerProfile, type BrokerView } from "@/lib/brokers/actions"
+import { setBrokerLocation, updateBrokerProfile, type BrokerView } from "@/lib/brokers/actions"
 import { INSURERS } from "@/lib/brokers/catalog"
 import { Chips, Segmented } from "@/app/(auth)/onboarding/chips"
 import { GH_REGIONS } from "@/app/(auth)/onboarding/options"
@@ -85,6 +86,7 @@ export function BrokerSettingsForm({ broker: b, canEdit }: { broker: BrokerView;
                   {GH_REGIONS.map((r) => <option key={r}>{r}</option>)}
                 </select></label>
             </div>
+            <PinLocation what="office" lat={b.gpsLat as number | null} lng={b.gpsLng as number | null} save={(p) => setBrokerLocation(p)} />
             <label className="block space-y-1.5"><span className="text-sm font-medium">About</span>
               <textarea className={`${inputCls} h-24 resize-none py-2.5`} value={f.about} onChange={(e) => set("about", e.target.value)} /></label>
           </div>
