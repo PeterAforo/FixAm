@@ -2,6 +2,13 @@
 
 ## Unreleased — subscriptions for every workspace (in progress)
 
+### Admin overview survives cold database connections
+- `adminAttention()` (`lib/admin/overview.ts`) ran eight count queries in
+  parallel; on a cold serverless instance the Supabase pooler can exceed the
+  statement timeout ("canceling statement due to statement timeout",
+  React #441 on `/admin`). Counts now run sequentially on one warm
+  connection and retry once on a statement timeout.
+
 ### Find parts and brokers near you (public pages)
 - **`/parts` — Find parts near you.** Search a part for your car; results
   are grouped by seller, nearest first, using your phone's GPS ("Use my

@@ -23,6 +23,24 @@ export type AdminAttention = {
 const count = sql<number>`count(*)::int`
 
 /**
+ * The Supabase pooler can take >8s to establish a cold connection, which trips
+ * statement_timeout on the first query of a serverless instance. Run the
+ * counts sequentially (one warm connection instead of eight cold handshakes)
+ * and retry once — by then the pool is warm.
+ */
+async function countWithRetry(q: () => PromiseLike<{ n: number }[]>) {
+  try {
+    return await q()
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    const cause = e instanceof Error ? String((e as { cause?: unknown }).cause ?? "") : ""
+    if (!/statement timeout|57014/.test(msg + cause)) throw e
+    await new Promise((r) => setTimeout(r, 500))
+    return q()
+  }
+}
+
+/**
  * Counts behind the admin "Needs your attention" card and the sidebar badges.
  * Callers must check platform admin first.
  */
@@ -31,25 +49,26 @@ export async function adminAttention(): Promise<AdminAttention> {
   monthStart.setDate(1)
   monthStart.setHours(0, 0, 0, 0)
 
-  const [[v], [r], [b], [t], [d], [p], [pr], [g]] = await Promise.all([
-    db().select({ n: count }).from(vendors).where(and(eq(vendors.status, "pending"), isNull(vendors.deletedAt))),
-    db().select({ n: count }).from(riders).where(and(eq(riders.status, "pending"), isNull(riders.deletedAt))),
-    db().select({ n: count }).from(brokers).where(and(eq(brokers.isVerified, false), eq(brokers.status, "active"), isNull(brokers.deletedAt))),
-    db().select({ n: count }).from(towOperators).where(and(eq(towOperators.isVerified, false), eq(towOperators.status, "active"), isNull(towOperators.deletedAt))),
-    db().select({ n: count }).from(escrowHolds).where(eq(escrowHolds.status, "disputed")),
-    db().select({ n: count }).from(payouts).where(eq(payouts.status, "needs_attention")),
-    db().select({ n: count }).from(privacyRequests).where(eq(privacyRequests.status, "requested")),
-    db().select({ n: count }).from(garages).where(and(isNull(garages.deletedAt), gte(garages.createdAt, monthStart))),
-  ])
+  const d = db()
+  // Sequential on purpose: the first query absorbs any cold-start/pooler
+  // latency (with one retry); the rest then reuse the warm connection.
+  const v = await countWithRetry(() => d.select({ n: count }).from(vendors).where(and(eq(vendors.status, "pending"), isNull(vendors.deletedAt))))
+  const r = await countWithRetry(() => d.select({ n: count }).from(riders).where(and(eq(riders.status, "pending"), isNull(riders.deletedAt))))
+  const b = await countWithRetry(() => d.select({ n: count }).from(brokers).where(and(eq(brokers.isVerified, false), eq(brokers.status, "active"), isNull(brokers.deletedAt))))
+  const t = await countWithRetry(() => d.select({ n: count }).from(towOperators).where(and(eq(towOperators.isVerified, false), eq(towOperators.status, "active"), isNull(towOperators.deletedAt))))
+  const dp = await countWithRetry(() => d.select({ n: count }).from(escrowHolds).where(eq(escrowHolds.status, "disputed")))
+  const p = await countWithRetry(() => d.select({ n: count }).from(payouts).where(eq(payouts.status, "needs_attention")))
+  const pr = await countWithRetry(() => d.select({ n: count }).from(privacyRequests).where(eq(privacyRequests.status, "requested")))
+  const g = await countWithRetry(() => d.select({ n: count }).from(garages).where(and(isNull(garages.deletedAt), gte(garages.createdAt, monthStart))))
   return {
-    vendorsPending: v?.n ?? 0,
-    ridersPending: r?.n ?? 0,
-    brokersUnverified: b?.n ?? 0,
-    towUnverified: t?.n ?? 0,
-    disputes: d?.n ?? 0,
-    payoutsNeedAttention: p?.n ?? 0,
-    privacyOpen: pr?.n ?? 0,
-    newGaragesThisMonth: g?.n ?? 0,
+    vendorsPending: v[0]?.n ?? 0,
+    ridersPending: r[0]?.n ?? 0,
+    brokersUnverified: b[0]?.n ?? 0,
+    towUnverified: t[0]?.n ?? 0,
+    disputes: dp[0]?.n ?? 0,
+    payoutsNeedAttention: p[0]?.n ?? 0,
+    privacyOpen: pr[0]?.n ?? 0,
+    newGaragesThisMonth: g[0]?.n ?? 0,
   }
 }
 
