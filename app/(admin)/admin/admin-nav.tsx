@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  ArrowLeftRight,
   BadgeCheck,
   Bot,
   Building2,
@@ -18,10 +17,20 @@ import {
 import { LogoMark } from "@/components/marketing/logo"
 import { ThemeToggle } from "@/components/brand/theme-toggle"
 import { cn } from "@/lib/utils"
+import type { Workspace } from "@/lib/accounts/workspaces"
+import { OtherWorkspaces } from "@/components/shell/other-workspaces"
 
 type Item = { label: string; href: string; icon: LucideIcon; badge?: number; exact?: boolean }
 
-export function AdminNav({ badges }: { badges: { approvals: number; payments: number; privacy: number } }) {
+export function AdminNav({
+  badges,
+  workspaces = [],
+  defaultKey = null,
+}: {
+  badges: { approvals: number; payments: number; privacy: number }
+  workspaces?: Workspace[]
+  defaultKey?: string | null
+}) {
   const pathname = usePathname()
   const items: Item[] = [
     { label: "Overview", href: "/admin", icon: LayoutGrid, exact: true },
@@ -67,14 +76,13 @@ export function AdminNav({ badges }: { badges: { approvals: number; payments: nu
             )
           })}
         </ul>
+        {workspaces.length > 0 && (
+          <div className="-mx-3 mt-4 hidden md:block">
+            <OtherWorkspaces workspaces={workspaces} currentKey="platform" defaultKey={defaultKey} />
+          </div>
+        )}
       </nav>
-      <div className="hidden items-center gap-2 border-t border-border px-3 py-3 md:flex">
-        <Link
-          href="/account"
-          className="flex h-10 flex-1 items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-surface-muted hover:text-foreground"
-        >
-          <ArrowLeftRight className="size-4" /> Switch workspace
-        </Link>
+      <div className="hidden items-center justify-end gap-2 border-t border-border px-3 py-3 md:flex">
         <ThemeToggle />
       </div>
     </aside>

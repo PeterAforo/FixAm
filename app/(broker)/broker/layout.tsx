@@ -23,6 +23,7 @@ async function BrokerShell({ children }: { children: ReactNode }) {
   return (
     <WorkspaceShell
       workspaces={ctx.workspaces}
+      defaultKey={ctx.defaultKey}
       currentKey={`broker:${mine.broker.id}`}
       user={ctx.user}
       nav={[

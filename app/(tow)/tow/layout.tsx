@@ -22,6 +22,7 @@ async function TowShell({ children }: { children: ReactNode }) {
   return (
     <WorkspaceShell
       workspaces={ctx.workspaces}
+      defaultKey={ctx.defaultKey}
       currentKey={`tow:${op.id}`}
       user={ctx.user}
       nav={[

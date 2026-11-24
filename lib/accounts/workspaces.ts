@@ -3,6 +3,7 @@ import { cookies } from "next/headers"
 import { and, desc, eq, isNull, ne } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { formatGhPhone } from "@/lib/phone"
+import { rankWorkspaces } from "./workspace-menu"
 import {
   brokerMembers,
   brokers,
@@ -26,6 +27,8 @@ export type Workspace = {
   name: string
   subtitle: string
   href: string
+  /** Garage staff role (owner, mechanic…) — decides which garage menu items show. */
+  role?: string
 }
 
 export const WORKSPACE_COOKIE = "fixam_ws"
@@ -111,6 +114,7 @@ export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
       name: g.name,
       subtitle: g.status === "suspended" ? "Suspended by FixAm" : `${String(g.role).replace(/_/g, " ")}${g.city ? ` · ${g.city}` : ""}`,
       href: `/g/${g.slug}`,
+      role: String(g.role),
     })
   }
   for (const v of vendorRows) {
@@ -154,6 +158,22 @@ export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
     })
   }
   return out
+}
+
+
+/** The user's saved default workspace, if it's still theirs. */
+export async function savedDefaultWorkspace(userId: string, list: Workspace[]): Promise<Workspace | null> {
+  const [me] = await db().select({ key: users.defaultWorkspace }).from(users).where(eq(users.id, userId)).limit(1)
+  return (me?.key && list.find((w) => w.key === me.key)) || null
+}
+
+/**
+ * Where to land after sign-in: the saved default → the workspace last used on
+ * this device → the highest-ranked one. Never the picker.
+ */
+export async function landingWorkspace(userId: string, list: Workspace[]): Promise<Workspace | null> {
+  if (!list.length) return null
+  return (await savedDefaultWorkspace(userId, list)) ?? (await preferredWorkspace(list)) ?? rankWorkspaces(list)[0]!
 }
 
 /** The workspace the user last opened (cookie), if it's still theirs. */

@@ -65,6 +65,24 @@
 
 ## Unreleased — subscriptions for every workspace (in progress)
 
+### Sign-in opens your workspace, other workspaces live in the sidebar
+- **No more workspace picker after sign-in.** You land in your default
+  workspace (the one you starred), else the one you last used on this device,
+  else the highest-ranked one: a garage before a parts shop, broker, tow
+  company or rider workspace, then platform admin, then My cars; owners
+  before staff (`landingWorkspace`, `rankWorkspaces`). `/account` is still
+  there to add or see all workspaces, but nobody is sent to it.
+- **Every sidebar now lists your other workspaces**, each as a group with its
+  own menu (garage items filtered by your role there), in the garage,
+  driver, parts shop, broker, tow, rider and admin sidebars
+  (`components/shell/other-workspaces.tsx`, `lib/accounts/workspace-menu.ts`).
+  Two or fewer are open by default; more start folded.
+- Links into another workspace go through `/switch/<key>?to=<page>`, which
+  remembers it as last used on this device and opens that page.
+- **"Open this one when I sign in"** under the groups saves the current
+  workspace as your default on every device (`users.default_workspace`,
+  migration `0039_default-workspace`).
+
 ### Paystack cleanup + subscription reconcile tests
 - Deleted the dead `/api/webhooks/paystack` route and
   `verifyPaystackSignature`; `lib/money/paystack-webhook.ts` is now

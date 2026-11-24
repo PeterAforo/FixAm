@@ -15,6 +15,7 @@ import { type ShellNotification } from "./notifications-bell"
 import { BranchSwitcher, type ShellBranch } from "./branch-switcher"
 import { ShellHeader } from "./shell-header"
 import { WorkspaceSwitcher } from "./workspace-switcher"
+import { OtherWorkspaces } from "./other-workspaces"
 import type { Workspace } from "@/lib/accounts/workspaces"
 import {
   BarChart3,
@@ -110,6 +111,7 @@ export function AppShell({
   notifications,
   impersonating = false,
   workspaces = [],
+  defaultKey = null,
   children,
 }: {
   garageId: string
@@ -124,6 +126,7 @@ export function AppShell({
   notifications: ShellNotification[]
   impersonating?: boolean
   workspaces?: Workspace[]
+  defaultKey?: string | null
   children: ReactNode
 }) {
   const pathname = usePathname()
@@ -287,6 +290,11 @@ export function AppShell({
                 <ul className="space-y-0.5">{g.items.map(renderItem)}</ul>
               </div>
             ) : null
+          )}
+          {workspaces.length > 0 && (
+            <div className="-mx-3 mt-5">
+              <OtherWorkspaces workspaces={workspaces} currentKey={`garage:${garageSlug}`} defaultKey={defaultKey} />
+            </div>
           )}
         </nav>
 

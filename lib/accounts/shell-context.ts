@@ -12,7 +12,7 @@ export async function getShellContext() {
   if (!userId) redirect("/login")
   await ensureUser()
   const [[me], phone, workspaces] = await Promise.all([
-    db().select({ fullName: users.fullName, email: users.email }).from(users).where(eq(users.id, userId)).limit(1),
+    db().select({ fullName: users.fullName, email: users.email, defaultWorkspace: users.defaultWorkspace }).from(users).where(eq(users.id, userId)).limit(1),
     getSessionPhone(),
     listMyWorkspaces(userId),
   ])
@@ -20,6 +20,7 @@ export async function getShellContext() {
     userId,
     phone,
     workspaces,
+    defaultKey: me?.defaultWorkspace ?? null,
     user: {
       name: me?.fullName ?? "FixAm user",
       detail: phone ? phone.replace("+233", "0") : (me?.email ?? ""),

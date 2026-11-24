@@ -94,6 +94,7 @@ async function ShellLoader({
     <AppShell
       impersonating={impersonating}
       workspaces={workspaces}
+      defaultKey={me[0]?.defaultWorkspace ?? null}
       garageId={garage.id}
       garageSlug={garage.slug}
       garageName={garage.name}

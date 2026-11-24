@@ -35,6 +35,8 @@ export const users = pgTable("users", {
   avatarUrl: text("avatar_url"),
   locale: text("locale").notNull().default("en-GH"),
   isPlatformAdmin: boolean("is_platform_admin").notNull().default(false),
+  /** Workspace key to open after sign-in (e.g. "garage:pitstop", "driver"); null = pick by rank. */
+  defaultWorkspace: text("default_workspace"),
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
   ...timestamps,
 })

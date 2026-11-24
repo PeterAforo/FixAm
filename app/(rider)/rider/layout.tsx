@@ -22,6 +22,7 @@ async function RiderShell({ children }: { children: ReactNode }) {
   return (
     <WorkspaceShell
       workspaces={ctx.workspaces}
+      defaultKey={ctx.defaultKey}
       currentKey={`rider:${rider.id}`}
       user={ctx.user}
       nav={[

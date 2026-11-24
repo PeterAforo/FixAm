@@ -231,3 +231,15 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
 - **Owner is never invitable.** Ownership transfer will be a dedicated fresh-code flow; until then the last active owner can't be demoted, paused or removed.
 - **Vendor keeps `vendor_owner`; new staff roles are `vendor_*`.** Existing `vendor_owner`/`vendor_staff` permission grants keep working � new roles map to staff-level `can()` grants in roles-permissions.json.
 
+## Landing workspace and grouped sidebar (24 Nov 2026)
+
+- **Sign-in never stops at a picker.** Order: saved default (all devices) →
+  last used on this device (cookie) → rank (garage, parts shop, broker, tow,
+  rider, admin, driver; owners first). A person who runs a business almost
+  always signs in to work in it.
+- **Other workspaces are menus, not a dropdown.** Each shows the same items
+  its own sidebar would (garage items by role), so a garage owner who also
+  drives reaches "Renewals" in one click without leaving context first.
+- **Links go through `/switch`** (a route handler) so the move is remembered
+  without a client round-trip; it only opens pages inside the target
+  workspace.

@@ -4,6 +4,10 @@ import { redirect } from "next/navigation"
 import { connection } from "next/server"
 import { ensureUser, getSessionUserId } from "@/lib/auth/ensure-user"
 import { adminAttention, approvalsWaiting, isPlatformAdmin } from "@/lib/admin/overview"
+import { listMyWorkspaces } from "@/lib/accounts/workspaces"
+import { eq } from "drizzle-orm"
+import { db } from "@/lib/db"
+import { users } from "@/lib/db/schema"
 import { AdminNav } from "./admin-nav"
 
 async function AdminShell({ children }: { children: ReactNode }) {
@@ -26,10 +30,17 @@ async function AdminShell({ children }: { children: ReactNode }) {
     )
   }
 
+  // Sequential on purpose: the pooler is happier with one warm connection (see lib/admin/overview.ts).
   const a = await adminAttention()
+  const workspaces = await listMyWorkspaces(userId)
+  const [me] = await db().select({ defaultWorkspace: users.defaultWorkspace }).from(users).where(eq(users.id, userId)).limit(1)
   return (
     <div className="min-h-screen bg-background md:flex">
-      <AdminNav badges={{ approvals: approvalsWaiting(a), payments: a.disputes + a.payoutsNeedAttention, privacy: a.privacyOpen }} />
+      <AdminNav
+        badges={{ approvals: approvalsWaiting(a), payments: a.disputes + a.payoutsNeedAttention, privacy: a.privacyOpen }}
+        workspaces={workspaces}
+        defaultKey={me?.defaultWorkspace ?? null}
+      />
       <main className="min-w-0 flex-1 px-4 pb-16 pt-6 md:px-10 md:pt-8">{children}</main>
     </div>
   )

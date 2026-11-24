@@ -13,6 +13,7 @@ async function DriverShell({ children }: { children: ReactNode }) {
   return (
     <WorkspaceShell
       workspaces={ctx.workspaces}
+      defaultKey={ctx.defaultKey}
       currentKey="driver"
       user={ctx.user}
       cta={{ label: "Breakdown SOS", href: "/portal/sos", tone: "danger" }}

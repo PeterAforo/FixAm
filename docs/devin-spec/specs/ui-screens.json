@@ -746,6 +746,7 @@
       "audience": "signed-in",
       "task": "ACC-03",
       "content": [
+        "Not a landing page: sign-in goes straight to the default / last-used / highest-ranked workspace. /account is for adding a workspace and seeing them all (linked from each sidebar's 'Add')",
         "Greeting with first name; account chip (name + formatted phone) and Sign out in the header",
         "Your workspaces: large cards, last-used first and highlighted with a 'Last used' badge, each with live numbers (admin: active garages / on trial / approvals waiting; garage: open jobs / ready to collect; parts shop: new / in-progress orders; driver: cars, or an 'Add your first car' prompt)",
         "Add a workspace: smaller tiles with each role's own icon and colour"

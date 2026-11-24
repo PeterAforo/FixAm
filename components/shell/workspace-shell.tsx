@@ -35,6 +35,7 @@ import type { Workspace } from "@/lib/accounts/workspaces"
 import { LogoMark } from "@/components/marketing/logo"
 import { ThemeToggle } from "@/components/brand/theme-toggle"
 import { WorkspaceSwitcher } from "./workspace-switcher"
+import { OtherWorkspaces } from "./other-workspaces"
 import { cn } from "@/lib/utils"
 
 const ICONS: Record<string, LucideIcon> = {
@@ -71,6 +72,7 @@ export type ShellNavItem = { label: string; href: string; icon: keyof typeof ICO
 export function WorkspaceShell({
   workspaces,
   currentKey,
+  defaultKey = null,
   nav,
   user,
   cta,
@@ -78,6 +80,8 @@ export function WorkspaceShell({
 }: {
   workspaces: Workspace[]
   currentKey: string
+  /** Saved "open after sign-in" workspace. */
+  defaultKey?: string | null
   nav: ShellNavItem[]
   user: { name: string; detail: string }
   cta?: { label: string; href: string; tone?: "primary" | "danger" }
@@ -148,6 +152,9 @@ export function WorkspaceShell({
               )
             })}
           </ul>
+          <div className="-mx-3 mt-4">
+            <OtherWorkspaces workspaces={workspaces} currentKey={currentKey} defaultKey={defaultKey} />
+          </div>
         </nav>
       </aside>
 

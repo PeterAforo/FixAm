@@ -15,6 +15,7 @@ async function VendorShell({ children }: { children: ReactNode }) {
   return (
     <WorkspaceShell
       workspaces={ctx.workspaces}
+      defaultKey={ctx.defaultKey}
       currentKey={`vendor:${m.vendor.id}`}
       user={ctx.user}
       nav={[
