@@ -77,9 +77,14 @@ export async function vendorSignup(rawInput: unknown): Promise<ActionResult<{ ve
     })).max(50).default([]),
     payoutMethod: z.enum(["momo", "bank"]).optional(),
     payoutDetails: z.string().max(500).optional(),
+    planCode: z.string().min(1).max(40).optional(),
   }).safeParse(rawInput)
   if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Check the highlighted fields" } }
   const d = parsed.data
+
+  const { resolvePlanCode, createTrialSubscription } = await import("@/lib/billing/account")
+  const planCode = await resolvePlanCode("vendor", d.planCode)
+  if (!planCode) return { ok: false, error: { code: "INTERNAL", message: "No vendor plans configured — contact support" } }
 
   const [user] = await db().select({ email: users.email }).from(users).where(eq(users.id, userId)).limit(1)
   const slug = d.businessName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) + "-" + uuidv7().slice(0, 8)
@@ -103,6 +108,7 @@ export async function vendorSignup(rawInput: unknown): Promise<ActionResult<{ ve
   await db().insert(vendorMembers).values({
     id: uuidv7(), vendorId, userId, role: "vendor_owner",
   })
+  await createTrialSubscription({ ownerKind: "vendor", ownerId: vendorId, planCode })
 
   await writeAuditLog({
     garageId: null, actorUserId: userId, action: "vendor.signup",

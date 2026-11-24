@@ -98,12 +98,13 @@ async function main() {
   // -- plans ---------------------------------------------------------------
   for (const p of plansSpec.plans) {
     await sql`
-      insert into public.plans (code, name, price_monthly, max_branches, max_staff, message_allowance, features, paystack_plan_code, is_active)
-      values (${p.code}, ${p.name}, ${Math.round((p.price_monthly_ghs ?? 0) * 100)},
+      insert into public.plans (code, name, audience, tagline, price_monthly, max_branches, max_staff, message_allowance, features, paystack_plan_code, is_active)
+      values (${p.code}, ${p.name}, ${p.audience ?? "garage"}, ${p.tagline ?? null}, ${Math.round((p.price_monthly_ghs ?? 0) * 100)},
         ${p.max_branches ?? null}, ${p.max_staff ?? null}, ${p.message_allowance},
         ${p.features}, ${p.paystack_plan_code ?? null}, true)
       on conflict (code) do update set
-        name = excluded.name, max_branches = excluded.max_branches, max_staff = excluded.max_staff,
+        name = excluded.name, audience = excluded.audience, tagline = excluded.tagline,
+        max_branches = excluded.max_branches, max_staff = excluded.max_staff,
         message_allowance = excluded.message_allowance, features = excluded.features, is_active = true`
   }
   log("plans", plansSpec.plans.map((p: { code: string }) => p.code).join(", "))

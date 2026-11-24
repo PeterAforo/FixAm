@@ -25,6 +25,16 @@ export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "paused",
 ])
 
+/** Which kind of FixAm workspace a plan / subscription belongs to. */
+export const planAudienceEnum = pgEnum("plan_audience", [
+  "garage",
+  "driver",
+  "vendor",
+  "broker",
+  "tow",
+  "rider",
+])
+
 export const notificationKindEnum = pgEnum("notification_kind", [
   "booking_new",
   "estimate_approved",

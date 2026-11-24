@@ -253,6 +253,13 @@
       "when": 1795458648755,
       "tag": "0035_inspections",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1795479676315,
+      "tag": "0036_majestic_sandman",
+      "breakpoints": true
     }
   ]
 }

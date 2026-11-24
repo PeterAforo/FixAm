@@ -174,3 +174,35 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
   environment, so the CI step only runs when `PLAYWRIGHT_BASE_URL` (and
   credentials) secrets exist; `check-rls` likewise enforces only when
   `DATABASE_URL` is present.
+
+## Subscriptions for every workspace (Nov 2026)
+
+- **Two subscription tables, one access rule.** Garages keep the legacy
+  `subscriptions` table (existing billing code, admin console and
+  `accessState()` untouched); the other five roles use
+  `account_subscriptions` keyed by `(owner_kind, owner_id)`. Both share the
+  same status/grace semantics and both accept `pending_payment_reference`
+  so `reconcileReference()` can settle either kind of checkout.
+- **No auto-debit.** theTeller only supports one-off MoMo/card charges, so
+  "charged after the trial" is implemented as trial end → SMS/email
+  reminders → hosted checkout → `active` on reconcile → 7-day grace →
+  read-only paywall (`SubscriptionGate` in each workspace layout). True
+  recurring billing needs a provider with tokenized mandates.
+- **Prices are admin-owned.** `plans.audience` scopes each plan to a
+  workspace role; `/admin/plans` is the only place prices/limits are set
+  (platform admin, Zod-validated, audit-logged). Seeded spec prices stay
+  `null` placeholders.
+- **Trial is real for new garages.** `createGarage` now records the plan
+  the owner picked and drops `isComplimentary` — only pilot garages keep
+  the never-expiring complimentary sub.
+
+## Garage suspension (24 Nov 2026)
+
+- **Suspend = staff locked out.** The gate lives in `resolveMembership`, so
+  every garage page, server action and PDF route refuses a suspended
+  garage's staff without per-feature checks. Public links customers already
+  hold (trackers, approval and payment links) are token-based and keep
+  working, so a suspension never strands a customer mid-repair.
+- **Platform admins can still "View as owner"** a suspended garage (the
+  impersonation check runs before the status check) so support can
+  investigate before reactivating.

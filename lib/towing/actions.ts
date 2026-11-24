@@ -213,6 +213,7 @@ const signupSchema = z.object({
   /** MoMo payout number + account name (network is worked out from the number). */
   momoPhone: z.string().trim().max(20).optional(),
   momoName: z.string().trim().max(120).optional(),
+  planCode: z.string().min(1).max(40).optional(),
 })
 
 function momoAccount(phone: string | undefined, name: string | undefined): PayoutAccount | null | "invalid" {
@@ -235,6 +236,9 @@ export async function towSignup(raw: unknown): Promise<{ ok: true } | Fail> {
   if (!phone) return { ok: false, error: "Enter a valid Ghana phone number" }
   const payout = momoAccount(d.momoPhone, d.momoName)
   if (payout === "invalid") return { ok: false, error: "Enter an MTN, Telecel or AirtelTigo MoMo number for payouts" }
+  const { resolvePlanCode, createTrialSubscription } = await import("@/lib/billing/account")
+  const planCode = await resolvePlanCode("tow", d.planCode)
+  if (!planCode) return { ok: false, error: "No towing plans configured — contact support" }
   const id = uuidv7()
   await db().insert(towOperators).values({
     id, businessName: d.businessName, phone, city: d.city ?? null, region: d.region ?? null,
@@ -244,6 +248,7 @@ export async function towSignup(raw: unknown): Promise<{ ok: true } | Fail> {
     payoutDetailsEncrypted: payout ? encryptPayoutAccount(payout) : null,
   })
   await db().insert(towOperatorMembers).values({ operatorId: id, userId, role: "owner" })
+  await createTrialSubscription({ ownerKind: "tow", ownerId: id, planCode })
   await writeAuditLog({ garageId: null, actorUserId: userId, action: "tow_operator.signup", entityType: "tow_operator", entityId: id, after: { businessName: d.businessName } }).catch(() => undefined)
   return { ok: true }
 }

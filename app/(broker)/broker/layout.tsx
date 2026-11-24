@@ -7,6 +7,7 @@ import { brokerRequests } from "@/lib/db/schema"
 import { getShellContext } from "@/lib/accounts/shell-context"
 import { getMyBroker } from "@/lib/brokers/actions"
 import { WorkspaceShell } from "@/components/shell/workspace-shell"
+import { SubscriptionGate } from "@/components/billing/subscription-gate"
 
 async function BrokerShell({ children }: { children: ReactNode }) {
   await connection()
@@ -31,7 +32,7 @@ async function BrokerShell({ children }: { children: ReactNode }) {
         { label: "Settings", href: "/broker/settings", icon: "settings" },
       ]}
     >
-      {children}
+      <SubscriptionGate owner={{ kind: "broker", ownerId: mine.broker.id }}>{children}</SubscriptionGate>
     </WorkspaceShell>
   )
 }

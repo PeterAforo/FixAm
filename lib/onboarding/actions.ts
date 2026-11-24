@@ -1,6 +1,6 @@
 "use server"
 import { z } from "zod"
-import { eq } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 import { db } from "@/lib/db"
 import {
   bays,
@@ -36,6 +36,7 @@ const onboardingSchema = z.object({
   pricesIncludeTax: z.boolean().default(false),
   vatPercent: z.number().min(0).max(100).default(15), // Ghana VAT standard rate
   bays: z.array(z.string().min(1).max(60)).max(30).default([]),
+  planCode: z.string().min(1).max(40).optional(),
   invites: z
     .array(
       z.object({
@@ -90,10 +91,11 @@ export async function createGarage(
     }
   }
 
+  const planCode = input.planCode ?? "pro"
   const proPlan = await db()
     .select({ id: plans.id })
     .from(plans)
-    .where(eq(plans.code, "pro"))
+    .where(and(eq(plans.code, planCode), eq(plans.audience, "garage"), eq(plans.isActive, true)))
     .limit(1)
   if (!proPlan[0]) {
     return {
@@ -193,7 +195,7 @@ export async function createGarage(
         })
       }
 
-      // Pilot: Pro plan, complimentary, 14-day trial per plans.json billing
+      // 14-day trial on the plan picked at signup; billed monthly after that.
       const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
       await tx.insert(subscriptions).values({
         garageId,
@@ -202,7 +204,7 @@ export async function createGarage(
         trialEndsAt: trialEnd,
         currentPeriodStart: new Date(),
         currentPeriodEnd: trialEnd,
-        isComplimentary: true,
+        isComplimentary: false,
       })
     })
   } catch (e) {

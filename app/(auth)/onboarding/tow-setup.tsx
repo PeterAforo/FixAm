@@ -9,6 +9,7 @@ import { SERVICES } from "@/lib/towing/core"
 import { normalizeGhPhone } from "@/lib/phone"
 import { photos } from "@/lib/images"
 import { Field, FormError, OnboardingFrame, PreviewCard, onbInputCls } from "./onboarding-frame"
+import { PlanPicker, type PlanOption } from "./plan-picker"
 import { GH_REGIONS } from "./options"
 
 const STEPS = [
@@ -17,7 +18,7 @@ const STEPS = [
 ]
 
 /** P8-15: tow operator setup — creates the /tow workspace. */
-export function TowSetup({ defaultPhone }: { defaultPhone: string | null }) {
+export function TowSetup({ defaultPhone, plans }: { defaultPhone: string | null; plans: PlanOption[] }) {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [businessName, setBusinessName] = useState("")
@@ -31,6 +32,7 @@ export function TowSetup({ defaultPhone }: { defaultPhone: string | null }) {
   const [perKm, setPerKm] = useState("10")
   const [momo, setMomo] = useState("")
   const [momoName, setMomoName] = useState("")
+  const [planCode, setPlanCode] = useState(() => plans[Math.min(1, plans.length - 1)]?.code ?? plans[0]?.code ?? "")
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -57,6 +59,7 @@ export function TowSetup({ defaultPhone }: { defaultPhone: string | null }) {
       baseFeeGhs: Number(baseFee) || 0, perKmFeeGhs: Number(perKm) || 0,
       momoPhone: momoPhone ?? undefined,
       momoName: momoName.trim() || businessName.trim(),
+      planCode: planCode || undefined,
     })
     if (!res.ok) { setBusy(false); return setError(res.error) }
     router.push("/tow")
@@ -88,7 +91,7 @@ export function TowSetup({ defaultPhone }: { defaultPhone: string | null }) {
       footer={
         step === 0 ? (
           <>
-            <span className="text-[13px] text-muted-foreground">Free while we pilot.</span>
+            <span className="text-[13px] text-muted-foreground">14-day free trial.</span>
             <Button type="button" size="lg" onClick={() => setStep(1)} disabled={!can0}>Continue <ArrowRight className="size-4" /></Button>
           </>
         ) : (
@@ -142,6 +145,11 @@ export function TowSetup({ defaultPhone }: { defaultPhone: string | null }) {
               <input className={onbInputCls} inputMode="tel" value={momo} onChange={(e) => setMomo(e.target.value)} placeholder={phone || "024 123 4567"} />
             </Field>
             <Field label="Name on the MoMo account"><input className={onbInputCls} value={momoName} onChange={(e) => setMomoName(e.target.value)} /></Field>
+          </div>
+          <div className="border-t border-border pt-4">
+            <p className="text-sm font-medium">Choose your plan</p>
+            <p className="mb-2.5 text-xs text-muted-foreground">14 days free — you choose what you pay after the trial.</p>
+            <PlanPicker plans={plans} value={planCode} onChange={setPlanCode} />
           </div>
         </div>
       )}

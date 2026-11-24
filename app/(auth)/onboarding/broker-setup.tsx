@@ -9,6 +9,7 @@ import { INSURERS } from "@/lib/brokers/catalog"
 import { normalizeGhPhone } from "@/lib/phone"
 import { photos } from "@/lib/images"
 import { Field, FormError, OnboardingFrame, PreviewCard, onbInputCls } from "./onboarding-frame"
+import { PlanPicker, type PlanOption } from "./plan-picker"
 import { Chips, Segmented } from "./chips"
 import { GH_REGIONS } from "./options"
 
@@ -19,7 +20,7 @@ const STEPS = [
   { label: "Services & fees", hint: "Licences, insurers and your fee" },
 ]
 
-export function BrokerSetup({ defaultKind, defaultPhone, defaultEmail }: { defaultKind: Kind; defaultPhone: string | null; defaultEmail: string }) {
+export function BrokerSetup({ defaultKind, defaultPhone, defaultEmail, plans }: { defaultKind: Kind; defaultPhone: string | null; defaultEmail: string; plans: PlanOption[] }) {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [kind, setKind] = useState<Kind>(defaultKind)
@@ -35,6 +36,7 @@ export function BrokerSetup({ defaultKind, defaultPhone, defaultEmail }: { defau
   const [insurers, setInsurers] = useState<string[]>([])
   const [fee, setFee] = useState(kind === "dvla" ? "50" : "80")
   const [about, setAbout] = useState("")
+  const [planCode, setPlanCode] = useState(() => plans[Math.min(1, plans.length - 1)]?.code ?? plans[0]?.code ?? "")
 
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -60,6 +62,7 @@ export function BrokerSetup({ defaultKind, defaultPhone, defaultEmail }: { defau
       dvlaAgentNumber: doesDvla ? dvlaNo : "",
       insurers: doesInsurance ? insurers : [],
       defaultServiceFee: fee ? Number(fee) : null,
+      planCode: planCode || undefined,
     })
     if (!res.ok) {
       setBusy(false)
@@ -96,7 +99,7 @@ export function BrokerSetup({ defaultKind, defaultPhone, defaultEmail }: { defau
       footer={
         step === 0 ? (
           <>
-            <span className="text-[13px] text-muted-foreground">Free while we pilot.</span>
+            <span className="text-[13px] text-muted-foreground">14-day free trial.</span>
             <Button type="button" size="lg" onClick={() => setStep(1)} disabled={!can0}>
               Continue <ArrowRight className="size-4" />
             </Button>
@@ -178,6 +181,11 @@ export function BrokerSetup({ defaultKind, defaultPhone, defaultEmail }: { defau
           <Field label="About you (optional)">
             <textarea className={`${onbInputCls} h-20 resize-none py-2.5`} value={about} onChange={(e) => setAbout(e.target.value)} placeholder="Years in business, turnaround time, anything that builds trust." />
           </Field>
+          <div className="border-t border-border pt-4">
+            <p className="text-sm font-medium">Choose your plan</p>
+            <p className="mb-2.5 text-xs text-muted-foreground">14 days free — you choose what you pay after the trial.</p>
+            <PlanPicker plans={plans} value={planCode} onChange={setPlanCode} />
+          </div>
         </div>
       )}
       <FormError message={error} />

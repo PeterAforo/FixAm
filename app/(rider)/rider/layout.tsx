@@ -7,6 +7,7 @@ import { deliveryOffers, deliveries } from "@/lib/db/schema"
 import { getShellContext } from "@/lib/accounts/shell-context"
 import { getMyRider } from "@/lib/riders/actions"
 import { WorkspaceShell } from "@/components/shell/workspace-shell"
+import { SubscriptionGate } from "@/components/billing/subscription-gate"
 
 async function RiderShell({ children }: { children: ReactNode }) {
   await connection()
@@ -28,7 +29,7 @@ async function RiderShell({ children }: { children: ReactNode }) {
         { label: "Earnings", href: "/rider/earnings", icon: "wallet" },
       ]}
     >
-      {children}
+      <SubscriptionGate owner={{ kind: "rider", ownerId: rider.id }}>{children}</SubscriptionGate>
     </WorkspaceShell>
   )
 }

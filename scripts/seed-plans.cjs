@@ -11,13 +11,15 @@ function toPesewas(ghs) {
 ;(async () => {
   for (const p of plansSpec.plans) {
     await sql`
-      insert into public.plans (code, name, price_monthly, max_branches, max_staff,
+      insert into public.plans (code, name, audience, tagline, price_monthly, max_branches, max_staff,
         message_allowance, features, paystack_plan_code, is_active)
-      values (${p.code}, ${p.name}, ${toPesewas(p.price_monthly_ghs) ?? 0},
+      values (${p.code}, ${p.name}, ${p.audience ?? "garage"}, ${p.tagline ?? null}, ${toPesewas(p.price_monthly_ghs) ?? 0},
         ${p.max_branches ?? null}, ${p.max_staff ?? null},
         ${p.message_allowance}, ${p.features}, ${p.paystack_plan_code ?? null}, true)
       on conflict (code) do update set
         name = excluded.name,
+        audience = excluded.audience,
+        tagline = excluded.tagline,
         max_branches = excluded.max_branches,
         max_staff = excluded.max_staff,
         message_allowance = excluded.message_allowance,

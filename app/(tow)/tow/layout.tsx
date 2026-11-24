@@ -7,6 +7,7 @@ import { sosRecipients, sosRequests } from "@/lib/db/schema"
 import { getShellContext } from "@/lib/accounts/shell-context"
 import { getMyOperator } from "@/lib/towing/actions"
 import { WorkspaceShell } from "@/components/shell/workspace-shell"
+import { SubscriptionGate } from "@/components/billing/subscription-gate"
 
 async function TowShell({ children }: { children: ReactNode }) {
   await connection()
@@ -28,7 +29,7 @@ async function TowShell({ children }: { children: ReactNode }) {
         { label: "Settings", href: "/tow/settings", icon: "settings" },
       ]}
     >
-      {children}
+      <SubscriptionGate owner={{ kind: "tow", ownerId: op.id }}>{children}</SubscriptionGate>
     </WorkspaceShell>
   )
 }

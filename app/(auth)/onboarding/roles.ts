@@ -41,7 +41,7 @@ export const ROLE_OPTIONS: RoleOption[] = [
     title: "I drive a car",
     text: "Track repairs, approve work, get reminders and renew insurance or roadworthy.",
     icon: Car,
-    badge: "Free for drivers",
+    badge: "14-day free trial",
     pitch: "Your car's whole life, in your pocket.",
     intro: "Live repair updates, one-tap approvals and reminders before oil, insurance or roadworthy run out.",
     photo: photos.suvGarage,

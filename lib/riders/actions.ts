@@ -80,8 +80,13 @@ export async function riderSignup(form: FormData): Promise<{ ok: true } | Fail> 
   if (!motorbike) return fail("Add a photo of your motorbike")
   if (!licence) return fail("Add a photo of your licence")
 
+  const { resolvePlanCode, createTrialSubscription } = await import("@/lib/billing/account")
+  const planCode = await resolvePlanCode("rider", String(form.get("planCode") ?? "") || null)
+  if (!planCode) return fail("No rider plans configured — contact support")
+
+  const riderId = uuidv7()
   await db().insert(riders).values({
-    id: uuidv7(),
+    id: riderId,
     userId,
     fullName: u?.fullName ?? null,
     bikePlate: bikePlate.slice(0, 20),
@@ -92,7 +97,8 @@ export async function riderSignup(form: FormData): Promise<{ ok: true } | Fail> 
     payoutDetailsEncrypted: payout ? encryptPayoutAccount(payout) : null,
     status: "pending",
   })
-  await writeAuditLog({ garageId: null, actorUserId: userId, action: "rider.signup", entityType: "rider", entityId: userId, after: { bikePlate } }).catch(() => undefined)
+  await createTrialSubscription({ ownerKind: "rider", ownerId: riderId, planCode })
+  await writeAuditLog({ garageId: null, actorUserId: userId, action: "rider.signup", entityType: "rider", entityId: riderId, after: { bikePlate } }).catch(() => undefined)
   return { ok: true }
 }
 

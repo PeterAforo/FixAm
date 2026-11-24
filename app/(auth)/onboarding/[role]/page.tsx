@@ -6,6 +6,8 @@ import { db } from "@/lib/db"
 import { portalProfiles } from "@/lib/db/schema"
 import { ROLE_OPTIONS, roleBySlug, type RoleSlug } from "../roles"
 import { loadOnboarding } from "../load"
+import { listAudiencePlans } from "@/lib/billing/account"
+import type { PlanAudience } from "@/lib/billing/account"
 import { GarageWizard } from "../garage-wizard"
 import { DriverSetup } from "../driver-setup"
 import { VendorSetup } from "../vendor-setup"
@@ -19,34 +21,52 @@ export function generateStaticParams() {
   return ROLE_OPTIONS.map((r) => ({ role: r.slug }))
 }
 
+const AUDIENCE: Record<RoleSlug, PlanAudience> = {
+  garage: "garage",
+  driver: "driver",
+  "parts-seller": "vendor",
+  "insurance-broker": "broker",
+  "dvla-agent": "broker",
+  "tow-operator": "tow",
+  rider: "rider",
+}
+
 async function Wizard({ slug }: { slug: RoleSlug }) {
   await connection()
   const ctx = await loadOnboarding(`/signup/${slug}`)
   const has = (t: string) => ctx.workspaces.some((w) => w.type === t)
+  const audiencePlans = (await listAudiencePlans(AUDIENCE[slug])).map((p) => ({
+    code: p.code,
+    name: p.name,
+    tagline: p.tagline,
+    priceGhs: p.priceMonthly / 100,
+    messageAllowance: p.messageAllowance,
+    features: p.features ?? [],
+  }))
 
   switch (slug) {
     case "garage":
-      return <GarageWizard defaultPhone={ctx.phone} />
+      return <GarageWizard defaultPhone={ctx.phone} plans={audiencePlans} />
     case "driver": {
       if (ctx.phone) {
         const [profile] = await db().select({ phone: portalProfiles.phone }).from(portalProfiles).where(eq(portalProfiles.phone, ctx.phone)).limit(1)
         if (profile) redirect("/portal")
       }
-      return <DriverSetup phone={ctx.phone} defaultName={ctx.name} defaultEmail={ctx.email} />
+      return <DriverSetup phone={ctx.phone} defaultName={ctx.name} defaultEmail={ctx.email} plans={audiencePlans} />
     }
     case "parts-seller":
       if (has("vendor")) redirect("/vendor")
-      return <VendorSetup defaultPhone={ctx.phone} defaultEmail={ctx.email} />
+      return <VendorSetup defaultPhone={ctx.phone} defaultEmail={ctx.email} plans={audiencePlans} />
     case "insurance-broker":
     case "dvla-agent":
       if (has("broker")) redirect("/broker")
-      return <BrokerSetup defaultKind={slug === "dvla-agent" ? "dvla" : "insurance"} defaultPhone={ctx.phone} defaultEmail={ctx.email} />
+      return <BrokerSetup defaultKind={slug === "dvla-agent" ? "dvla" : "insurance"} defaultPhone={ctx.phone} defaultEmail={ctx.email} plans={audiencePlans} />
     case "tow-operator":
       if (has("tow")) redirect("/tow")
-      return <TowSetup defaultPhone={ctx.phone} />
+      return <TowSetup defaultPhone={ctx.phone} plans={audiencePlans} />
     case "rider":
       if (has("rider")) redirect("/rider")
-      return <RiderSetup defaultPhone={ctx.phone} defaultName={ctx.name} />
+      return <RiderSetup defaultPhone={ctx.phone} defaultName={ctx.name} plans={audiencePlans} />
   }
 }
 

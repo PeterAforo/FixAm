@@ -536,7 +536,11 @@ export async function reconcileReference(reference: string): Promise<ReconcileSt
     return v.status
   }
 
-  // 4. Vendor orders (one reference may cover several vendors' orders).
+  // 4. Subscription payments (garage + account subscriptions).
+  const subResult = await reconcileSubscriptionPayment(reference)
+  if (subResult !== "unknown") return subResult
+
+  // 5. Vendor orders (one reference may cover several vendors' orders).
   const orders = await db().select().from(vendorOrders).where(eq(vendorOrders.paystackReference, reference))
   if (orders.length === 0) return "unknown"
   if (orders.every((o) => o.paymentStatus === "paid")) return "success"
@@ -597,11 +601,79 @@ export async function reconcileReference(reference: string): Promise<ReconcileSt
   return "success"
 }
 
+/**
+ * Activate a subscription when its pending checkout payment confirms.
+ * Handles both garage `subscriptions` and `account_subscriptions`.
+ */
+export async function reconcileSubscriptionPayment(reference: string): Promise<ReconcileStatus> {
+  const { accountSubscriptions, subscriptions } = await import("@/lib/db/schema")
+  const now = new Date()
+  const periodEnd = new Date(now.getTime() + 30 * 86_400_000)
+
+  const [gSub] = await db()
+    .select({ id: subscriptions.id, status: subscriptions.status })
+    .from(subscriptions)
+    .where(eq(subscriptions.pendingPaymentReference, reference))
+    .limit(1)
+  if (gSub) {
+    if (gSub.status === "active") return "success"
+    const v = await paymentProvider().verify(reference)
+    if (v.status === "pending") return "pending"
+    if (v.status === "success") {
+      await db()
+        .update(subscriptions)
+        .set({
+          status: "active",
+          isComplimentary: false,
+          currentPeriodStart: now,
+          currentPeriodEnd: periodEnd,
+          trialEndsAt: null,
+          pendingPaymentReference: null,
+          paystackSubscriptionCode: reference,
+          updatedAt: now,
+        })
+        .where(eq(subscriptions.id, gSub.id))
+      return "success"
+    }
+    await db().update(subscriptions).set({ pendingPaymentReference: null, updatedAt: now }).where(eq(subscriptions.id, gSub.id))
+    return "failed"
+  }
+
+  const [aSub] = await db()
+    .select({ id: accountSubscriptions.id, status: accountSubscriptions.status })
+    .from(accountSubscriptions)
+    .where(eq(accountSubscriptions.pendingPaymentReference, reference))
+    .limit(1)
+  if (!aSub) return "unknown"
+  if (aSub.status === "active") return "success"
+  const v = await paymentProvider().verify(reference)
+  if (v.status === "pending") return "pending"
+  if (v.status === "success") {
+    await db()
+      .update(accountSubscriptions)
+      .set({
+        status: "active",
+        isComplimentary: false,
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+        trialEndsAt: null,
+        pendingPaymentReference: null,
+        lastPaymentReference: reference,
+        updatedAt: now,
+      })
+      .where(eq(accountSubscriptions.id, aSub.id))
+    return "success"
+  }
+  await db().update(accountSubscriptions).set({ pendingPaymentReference: null, updatedAt: now }).where(eq(accountSubscriptions.id, aSub.id))
+  return "failed"
+}
+
 /** Cron: references still pending after a couple of minutes (theTeller has no webhooks). */
 export async function pendingReferences(limit = 100): Promise<string[]> {
   const olderThan = new Date(Date.now() - 2 * 60_000)
   const newerThan = new Date(Date.now() - 48 * 3600_000)
-  const [pay, orders, sos] = await Promise.all([
+  const { accountSubscriptions, subscriptions: garageSubs } = await import("@/lib/db/schema")
+  const [pay, orders, sos, gSubs, aSubs] = await Promise.all([
     db()
       .selectDistinct({ ref: payments.paystackReference })
       .from(payments)
@@ -617,6 +689,16 @@ export async function pendingReferences(limit = 100): Promise<string[]> {
       .from(sosRequests)
       .where(and(eq(sosRequests.paymentStatus, "pending"), isNotNull(sosRequests.paymentReference), lte(sosRequests.updatedAt, olderThan), sql`${sosRequests.createdAt} > ${newerThan.toISOString()}`))
       .limit(limit),
+    db()
+      .select({ ref: garageSubs.pendingPaymentReference })
+      .from(garageSubs)
+      .where(and(isNotNull(garageSubs.pendingPaymentReference), lte(garageSubs.updatedAt, olderThan), sql`${garageSubs.updatedAt} > ${newerThan.toISOString()}`))
+      .limit(limit),
+    db()
+      .select({ ref: accountSubscriptions.pendingPaymentReference })
+      .from(accountSubscriptions)
+      .where(and(isNotNull(accountSubscriptions.pendingPaymentReference), lte(accountSubscriptions.updatedAt, olderThan), sql`${accountSubscriptions.updatedAt} > ${newerThan.toISOString()}`))
+      .limit(limit),
   ])
-  return [...new Set([...pay, ...orders, ...sos].map((r) => r.ref).filter((r): r is string => Boolean(r)))]
+  return [...new Set([...pay, ...orders, ...sos, ...gSubs, ...aSubs].map((r) => r.ref).filter((r): r is string => Boolean(r)))]
 }

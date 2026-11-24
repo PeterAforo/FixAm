@@ -8,13 +8,14 @@ import { PhoneVerify } from "@/components/auth/phone-verify"
 import { addPortalVehicle, completePortalRegistration } from "@/lib/portal/profile-actions"
 import { photos } from "@/lib/images"
 import { Field, FormError, OnboardingFrame, onbInputCls } from "./onboarding-frame"
+import { PlanPicker, type PlanOption } from "./plan-picker"
 
 const STEPS = [
   { label: "About you", hint: "Name and phone" },
   { label: "Your car", hint: "Plate, make and model" },
 ]
 
-export function DriverSetup({ phone: initialPhone, defaultName, defaultEmail }: { phone: string | null; defaultName: string; defaultEmail: string }) {
+export function DriverSetup({ phone: initialPhone, defaultName, defaultEmail, plans }: { phone: string | null; defaultName: string; defaultEmail: string; plans: PlanOption[] }) {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [phone, setPhone] = useState(initialPhone)
@@ -23,6 +24,7 @@ export function DriverSetup({ phone: initialPhone, defaultName, defaultEmail }: 
   const [city, setCity] = useState("")
   const [marketing, setMarketing] = useState(false)
   const [terms, setTerms] = useState(false)
+  const [planCode, setPlanCode] = useState(() => plans[Math.min(1, plans.length - 1)]?.code ?? plans[0]?.code ?? "")
 
   const [plate, setPlate] = useState("")
   const [make, setMake] = useState("")
@@ -36,7 +38,7 @@ export function DriverSetup({ phone: initialPhone, defaultName, defaultEmail }: 
   async function saveProfile() {
     setError(null)
     setBusy(true)
-    const res = await completePortalRegistration({ fullName, email, city, marketingOptIn: marketing, acceptTerms: true })
+    const res = await completePortalRegistration({ fullName, email, city, marketingOptIn: marketing, acceptTerms: true, planCode: planCode || undefined })
     setBusy(false)
     if (!res.ok) return setError(res.error.message)
     setStep(1)
@@ -66,7 +68,7 @@ export function DriverSetup({ phone: initialPhone, defaultName, defaultEmail }: 
   return (
     <OnboardingFrame
       photo={photos.suvGarage}
-      badge="Free for drivers"
+      badge="14-day free trial"
       title="Your car's whole life, in your pocket."
       intro="Live repair updates, one-tap approvals and reminders before oil, insurance or roadworthy run out."
       steps={STEPS}
@@ -143,6 +145,11 @@ export function DriverSetup({ phone: initialPhone, defaultName, defaultEmail }: 
             <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} className="mt-0.5 size-5 accent-[#16130F]" />
             <span className="text-sm">I agree to the <a href="/terms" target="_blank" className="underline">Terms</a> and <a href="/privacy" target="_blank" className="underline">Privacy Policy</a></span>
           </label>
+          <div className="border-t border-border pt-4">
+            <p className="text-sm font-medium">Choose your plan</p>
+            <p className="mb-2.5 text-xs text-muted-foreground">14 days free — you choose what you pay after the trial.</p>
+            <PlanPicker plans={plans} value={planCode} onChange={setPlanCode} />
+          </div>
         </div>
       ) : (
         <div className="space-y-4">

@@ -1,6 +1,85 @@
 # Changelog
 
-## Unreleased — P8 Smart repair marketplace (in progress)
+## Unreleased — subscriptions for every workspace (in progress)
+
+### Paid plans for all workspace roles, managed by platform admins
+- **`plans` now has an `audience`** (`garage | driver | vendor | broker |
+  tow | rider`) and a `tagline`. New `account_subscriptions` table holds one
+  subscription per `(owner_kind, owner_id)` for the five non-garage roles;
+  garages keep the legacy `subscriptions` table. Both tables gained
+  `pending_payment_reference` for theTeller checkout reconciliation.
+  Migration `drizzle/0036_majestic_sandman.sql`.
+- **`/admin/plans`** — platform admins create, edit, activate/deactivate
+  plans per audience and set monthly prices (GHS). Server actions in
+  `lib/admin/plan-actions.ts` enforce `users.isPlatformAdmin`, validate with
+  Zod and write audit logs.
+- **Plan picker in every onboarding flow** — garage, driver, parts-seller,
+  broker, tow operator and rider setup components now show that role's
+  audience plans (name, GH₵ price, 14-day trial, limits/features). The
+  selected plan code is required at signup and creates a `trialing`
+  subscription in the same transaction as the workspace. New garage signups
+  no longer get the perpetual complimentary Pro sub — they pick a plan and
+  get a real 14-day trial. Pilot garages stay `is_complimentary`.
+- **Post-trial billing via theTeller** — `lib/billing/pay-actions.ts`
+  starts a one-off MoMo/card checkout for the plan price; the reference is
+  stored on the subscription and reconciled by `reconcileReference()` /
+  `pendingReferences()` (escrow polling) or the payment return route, which
+  marks the sub `active` and sets the next period.
+- **Lifecycle sweep** — the daily `billingSweep` Inngest function now also
+  processes `account_subscriptions` (expired trials/periods → `past_due`,
+  stale → `cancelled`) and texts owners at trial end (3 days before) and
+  when payment is due (day 0/3/6 of grace) via new platform templates
+  `subscription_trial_ending` / `subscription_payment_due`.
+- **Read-only enforcement** — `components/billing/subscription-gate.tsx`
+  wraps the `/portal`, `/vendor`, `/broker`, `/tow` and `/rider` layouts:
+  grace period shows a banner, lapse past 7 days shows a paywall with a
+  "Pay now" checkout button. Garage settings → billing gained the same Pay
+  now button (`SubscriptionPayButton`).
+
+### Suspending a garage now locks out its staff
+- `resolveMembership` (`lib/actions.ts`) — the check every garage page,
+  server action and PDF route goes through — now ignores memberships of a
+  suspended garage, and so does the broker hand-off check
+  (`lib/brokers/actions.ts`). Staff opening `/g/<garage>` see a
+  "<garage> is suspended" notice with a link back to their workspaces.
+- A platform admin using "View as owner" can still open a suspended garage
+  (impersonation is checked first), so support can help.
+- Staff invites to a suspended garage can't be accepted; the workspace
+  switcher shows such a garage as "Suspended by FixAm".
+- Admin suspend dialog now says exactly this.
+
+### UI redesign — workspace picker, platform admin, driver home
+- **Workspace picker (`/account`)**: greeting by first name, account chip with
+  the phone formatted `+233 20 000 0001` (new `formatGhPhone` in `lib/phone.ts`),
+  large workspace cards with the last-used one first (dark, "Last used"
+  badge) and live numbers per workspace (`lib/accounts/workspace-stats.ts`).
+  "Add a workspace" tiles now use each role's own icon and colour.
+- **Platform admin** gets its own layout (`app/(admin)/admin/layout.tsx`) with
+  a sidebar and one page per area: `/admin` (overview), `/admin/garages`,
+  `/admin/approvals`, `/admin/payments`, `/admin/partners`,
+  `/admin/catalogue`, `/admin/ai`, `/admin/privacy`. The layout checks
+  platform admin once for every admin page. Sidebar badges show approvals,
+  disputes/stuck payouts and privacy requests waiting
+  (`lib/admin/overview.ts`).
+  - Overview: four headline numbers (MRR explains complimentary/trial),
+    subscription health bar, "Needs your attention" queue, latest garages.
+  - Garages: table with search and status filter; "View as owner" per row;
+    Suspend moved into a ⋯ menu with a confirmation dialog.
+- **Driver home (`/portal`)**: greeting by name, red "Breakdown? Get help
+  now" button, a setup card for new drivers (add car → choose garage → pick
+  reminders), four quick actions, one "My cars" section (garage-recorded
+  health cards + cars the driver added — the duplicate "My vehicles"
+  section is gone), "Coming up" and "Invoices & payments" side by side.
+  - Notification settings and data requests moved to `/portal/settings`
+    (`portal-preferences.tsx`), with clear channel labels (the duplicate
+    "WhatsApp reminders" box is folded into the WhatsApp channel).
+  - Driver nav: Home, Repairs, Parts & orders, Renewals, **Claims** and
+    **Car inspections** (both were missing from the nav), Pay later, Price
+    check, Profile & notifications. Sidebar button is now a red "Breakdown
+    SOS". "My orders" is a button on the parts page.
+- **Shell**: breadcrumb no longer repeats the workspace name on its home
+  page ("My cars / My cars"); the theme button is icon-only with a tooltip
+  (it read "Front office").
 
 ### Hotfix — `/i/[token]` prerender failure
 - **Inspection share page** (`app/i/[token]/page.tsx`): moved `connection()`,

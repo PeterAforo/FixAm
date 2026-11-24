@@ -11,7 +11,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core"
-import { subscriptionStatusEnum } from "./enums"
+import { planAudienceEnum, subscriptionStatusEnum } from "./enums"
 import { garages } from "./identity"
 
 const moneyCol = (name: string) => bigint(name, { mode: "bigint" })
@@ -25,6 +25,8 @@ export const plans = pgTable("plans", {
   id: uuid("id").primaryKey().defaultRandom(),
   code: text("code").notNull().unique(),
   name: text("name").notNull(),
+  audience: planAudienceEnum("audience").notNull().default("garage"),
+  tagline: text("tagline"),
   priceMonthly: moneyCol("price_monthly").notNull(),
   maxBranches: integer("max_branches"), // null = unlimited
   maxStaff: integer("max_staff"), // null = unlimited
@@ -52,11 +54,45 @@ export const subscriptions = pgTable(
     currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
     paystackSubscriptionCode: text("paystack_subscription_code"),
     paystackCustomerCode: text("paystack_customer_code"),
+    pendingPaymentReference: text("pending_payment_reference"),
     isComplimentary: boolean("is_complimentary").default(false),
     cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
     ...timestamps,
   },
   (t) => [index("subscriptions_garage_idx").on(t.garageId)]
+)
+
+/**
+ * Subscriptions for every non-garage workspace (driver, vendor, broker, tow,
+ * rider). Garages keep using `subscriptions` (keyed by garage_id).
+ * owner_id points at the workspace row: vendors.id / brokers.id /
+ * tow_operators.id / riders.id (uuid) or portal_profiles.phone (driver, E.164).
+ */
+export const accountSubscriptions = pgTable(
+  "account_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerKind: planAudienceEnum("owner_kind").notNull(),
+    // uuid for vendors/brokers/towOperators/riders/users; E.164 phone for drivers
+    ownerId: text("owner_id").notNull(),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => plans.id),
+    status: subscriptionStatusEnum("status").notNull().default("trialing"),
+    trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
+    currentPeriodStart: timestamp("current_period_start", { withTimezone: true }),
+    currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+    isComplimentary: boolean("is_complimentary").default(false),
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+    pendingPaymentReference: text("pending_payment_reference"),
+    lastPaymentReference: text("last_payment_reference"),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("account_subscriptions_owner_uniq").on(t.ownerKind, t.ownerId),
+    index("account_subscriptions_plan_idx").on(t.planId),
+    index("account_subscriptions_trial_idx").on(t.status, t.trialEndsAt),
+  ]
 )
 
 export const messageUsage = pgTable(

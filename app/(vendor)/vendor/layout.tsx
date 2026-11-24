@@ -4,6 +4,7 @@ import { connection } from "next/server"
 import { getShellContext } from "@/lib/accounts/shell-context"
 import { resolveVendorMembership } from "@/lib/vendors/actions"
 import { WorkspaceShell } from "@/components/shell/workspace-shell"
+import { SubscriptionGate } from "@/components/billing/subscription-gate"
 
 async function VendorShell({ children }: { children: ReactNode }) {
   await connection()
@@ -18,7 +19,7 @@ async function VendorShell({ children }: { children: ReactNode }) {
       user={ctx.user}
       nav={[{ label: "My shop", href: "/vendor", icon: "store", exact: true }]}
     >
-      {children}
+      <SubscriptionGate owner={{ kind: "vendor", ownerId: m.vendor.id }}>{children}</SubscriptionGate>
     </WorkspaceShell>
   )
 }

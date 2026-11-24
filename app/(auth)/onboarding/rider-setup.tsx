@@ -7,6 +7,7 @@ import { Button } from "@/components/brand/button"
 import { riderSignup } from "@/lib/riders/actions"
 import { photos } from "@/lib/images"
 import { Field, FormError, OnboardingFrame, PreviewCard, onbInputCls } from "./onboarding-frame"
+import { PlanPicker, type PlanOption } from "./plan-picker"
 
 const STEPS = [
   { label: "You & your bike", hint: "Ghana Card, plate, photos" },
@@ -28,7 +29,7 @@ function PhotoPick({ label, hint, file, onPick, icon }: { label: string; hint?: 
 }
 
 /** P8-18: FixAm rider setup — creates the /rider workspace (admin approves before jobs). */
-export function RiderSetup({ defaultPhone, defaultName }: { defaultPhone: string | null; defaultName: string | null }) {
+export function RiderSetup({ defaultPhone, defaultName, plans }: { defaultPhone: string | null; defaultName: string | null; plans: PlanOption[] }) {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [ghanaCard, setGhanaCard] = useState("")
@@ -37,6 +38,7 @@ export function RiderSetup({ defaultPhone, defaultName }: { defaultPhone: string
   const [licence, setLicence] = useState<File | null>(null)
   const [momo, setMomo] = useState(defaultPhone ? `0${defaultPhone.replace(/^\+233/, "")}` : "")
   const [momoName, setMomoName] = useState(defaultName ?? "")
+  const [planCode, setPlanCode] = useState(() => plans[Math.min(1, plans.length - 1)]?.code ?? plans[0]?.code ?? "")
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -51,6 +53,7 @@ export function RiderSetup({ defaultPhone, defaultName }: { defaultPhone: string
     form.set("bikePlate", bikePlate)
     form.set("momoPhone", momo)
     form.set("momoName", momoName)
+    if (planCode) form.set("planCode", planCode)
     if (motorbike) form.set("motorbike", motorbike)
     if (licence) form.set("licence", licence)
     const res = await riderSignup(form)
@@ -84,7 +87,7 @@ export function RiderSetup({ defaultPhone, defaultName }: { defaultPhone: string
       footer={
         step === 0 ? (
           <>
-            <span className="text-[13px] text-muted-foreground">Free to join. Paid per delivery.</span>
+            <span className="text-[13px] text-muted-foreground">14-day free trial.</span>
             <Button type="button" size="lg" onClick={() => setStep(1)} disabled={!can0}>Continue <ArrowRight className="size-4" /></Button>
           </>
         ) : (
@@ -121,6 +124,11 @@ export function RiderSetup({ defaultPhone, defaultName }: { defaultPhone: string
           <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface-muted/50 p-4 text-sm text-muted-foreground">
             <FileCheck className="mt-0.5 size-4 shrink-0" />
             <p>A FixAm admin reviews every rider — usually within a day. You&rsquo;ll get an SMS when you&rsquo;re cleared to go online.</p>
+          </div>
+          <div className="border-t border-border pt-4">
+            <p className="text-sm font-medium">Choose your plan</p>
+            <p className="mb-2.5 text-xs text-muted-foreground">14 days free — you choose what you pay after the trial.</p>
+            <PlanPicker plans={plans} value={planCode} onChange={setPlanCode} />
           </div>
         </div>
       )}

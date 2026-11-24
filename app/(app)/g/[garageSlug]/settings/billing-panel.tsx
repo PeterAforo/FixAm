@@ -6,6 +6,7 @@ import { Button } from "@/components/brand/button"
 import { Card, CardContent } from "@/components/brand/card"
 import { StatusPill } from "@/components/brand/status-pill"
 import { changePlan } from "@/lib/billing/actions"
+import { SubscriptionPayButton } from "@/components/billing/pay-button"
 
 type Plan = {
   id: string; code: string; name: string
@@ -92,7 +93,19 @@ export function BillingPanel({ garageId, billing }: { garageId: string; billing:
             </Button>
             {msg && <p className={`text-sm font-semibold ${msg.ok ? "text-success" : "text-danger"}`}>{msg.text}</p>}
           </div>
-          <p className="mt-2 text-[11px] text-muted-foreground">Card billing via Paystack activates when payment keys are configured; changes apply immediately.</p>
+          <p className="mt-2 text-[11px] text-muted-foreground">Plan changes apply immediately. Pay by Mobile Money or card below.</p>
+        </CardContent></Card>
+      )}
+
+      {!billing.isComplimentary && (
+        <Card><CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+          <div>
+            <h3 className="font-display text-base font-bold">Pay subscription</h3>
+            <p className="text-xs text-muted-foreground">
+              {billing.planName ?? "Plan"} — GH₵ {((billing.plans.find((p) => p.code === billing.planCode)?.priceMonthly ?? 0) / 100).toFixed(2)}/month via theTeller (MoMo or card).
+            </p>
+          </div>
+          <SubscriptionPayButton owner={{ kind: "garage", garageId }} label="Pay now" />
         </CardContent></Card>
       )}
     </div>

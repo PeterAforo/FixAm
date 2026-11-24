@@ -17,6 +17,10 @@ const PLATFORM_TEMPLATES: Record<string, string> = {
     "{{plate}} {{kind}} renewal is now {{status}} — {{broker}}. Details: {{link}}",
   broker_request_reply:
     "{{requester}} {{action}} your quote for {{plate}} ({{number}}). Open FixAm: {{link}}",
+  subscription_trial_ending:
+    "FixAm: your {{plan}} plan — {{detail}} Choose or change your plan: {{link}}",
+  subscription_payment_due:
+    "FixAm: {{detail}} Pay to keep your account running: {{link}}",
 }
 
 export function smsIsLive() {

@@ -19,6 +19,7 @@ const registerSchema = z.object({
   region: z.string().max(80).optional().or(z.literal("")),
   marketingOptIn: z.boolean().default(false),
   acceptTerms: z.literal(true),
+  planCode: z.string().min(1).max(40).optional(),
 })
 
 /** Complete self-registration for the signed-in portal phone. */
@@ -79,6 +80,14 @@ export async function completePortalRegistration(rawInput: unknown): Promise<Act
         updatedAt: new Date(),
       },
     })
+
+  const { resolvePlanCode, createTrialSubscription } = await import("@/lib/billing/account")
+  const planCode = await resolvePlanCode("driver", d.planCode)
+  if (planCode) {
+    await createTrialSubscription({ ownerKind: "driver", ownerId: phone, planCode }).catch((e) =>
+      console.error("[portal] driver subscription failed", e)
+    )
+  }
   return { ok: true, data: { ok: true } }
 }
 

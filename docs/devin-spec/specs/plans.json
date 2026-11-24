@@ -1,13 +1,14 @@
 {
   "$schema_version": "1.0",
-  "description": "Subscription plans seeded into the plans table. Prices are placeholders (price_monthly_ghs: null) until Peter sets them; store as pesewas when set. Platform Admin can edit plans in the admin console. Messages (SMS + WhatsApp) are included as a monthly allowance; push and email do not count against it.",
+  "description": "Subscription plans managed by platform admins at /admin/plans (create/edit/deactivate, prices in GHS entered as pesewas in the admin UI; seeded values are placeholders). Plans are scoped to an audience (garage, driver, vendor, broker, tow, rider); every workspace type requires a subscription — 14-day trial, then a monthly payment via theTeller (MoMo or card; no auto-debit). Messages (SMS + WhatsApp) are included as a monthly allowance; push and email do not count against it.",
   "currency": "GHS",
   "billing": {
     "interval": "monthly",
-    "provider": "paystack",
+    "provider": "theteller",
     "trial_days": 14,
     "grace_period_days": 7,
-    "past_due_behaviour": "After grace period the garage becomes read-only (can view and take payments on existing invoices, cannot create jobs or send reminders) until payment succeeds."
+    "audiences": ["garage", "driver", "vendor", "broker", "tow", "rider"],
+    "past_due_behaviour": "After grace period the workspace becomes read-only until payment succeeds. Garage subscriptions keep the legacy subscriptions table; all other roles use account_subscriptions keyed by (owner_kind, owner_id)."
   },
   "message_units": {
     "sms_segment": 1,
@@ -39,6 +40,7 @@
     {
       "code": "starter",
       "name": "Starter",
+      "audience": "garage",
       "tagline": "For small garages going digital",
       "price_monthly_ghs": null,
       "max_branches": 1,
@@ -58,6 +60,7 @@
     {
       "code": "growth",
       "name": "Growth",
+      "audience": "garage",
       "tagline": "For busy garages that want recurring revenue",
       "price_monthly_ghs": null,
       "max_branches": 3,
@@ -85,6 +88,7 @@
     {
       "code": "pro",
       "name": "Pro",
+      "audience": "garage",
       "tagline": "For multi-branch garages and fleets",
       "price_monthly_ghs": null,
       "max_branches": null,
@@ -109,6 +113,61 @@
         "priority_support",
         "directory_listing"
       ]
+    },
+    {
+      "code": "driver",
+      "name": "Driver",
+      "audience": "driver",
+      "tagline": "Vehicle care for drivers",
+      "price_monthly_ghs": null,
+      "max_branches": null,
+      "max_staff": null,
+      "message_allowance": 200,
+      "features": ["reminders", "payment_plans", "online_catalogue"]
+    },
+    {
+      "code": "vendor",
+      "name": "Parts seller",
+      "audience": "vendor",
+      "tagline": "Sell parts to garages and drivers",
+      "price_monthly_ghs": null,
+      "max_branches": null,
+      "max_staff": null,
+      "message_allowance": 500,
+      "features": ["marketplace", "online_catalogue", "priority_support"]
+    },
+    {
+      "code": "broker",
+      "name": "Broker",
+      "audience": "broker",
+      "tagline": "Insurance & DVLA renewals",
+      "price_monthly_ghs": null,
+      "max_branches": null,
+      "max_staff": null,
+      "message_allowance": 300,
+      "features": ["agent_renewals", "priority_support"]
+    },
+    {
+      "code": "tow",
+      "name": "Towing operator",
+      "audience": "tow",
+      "tagline": "Breakdown & recovery jobs",
+      "price_monthly_ghs": null,
+      "max_branches": null,
+      "max_staff": null,
+      "message_allowance": 300,
+      "features": ["priority_support"]
+    },
+    {
+      "code": "rider",
+      "name": "Rider",
+      "audience": "rider",
+      "tagline": "Pickup & delivery jobs",
+      "price_monthly_ghs": null,
+      "max_branches": null,
+      "max_staff": null,
+      "message_allowance": 100,
+      "features": []
     }
   ],
   "addon_bundles": [
@@ -128,7 +187,7 @@
   "pilot": {
     "plan_code": "pro",
     "is_complimentary": true,
-    "note": "Pilot garage subscription created with is_complimentary = true; no Paystack subscription required."
+    "note": "Pilot garage subscriptions are created with is_complimentary = true; complimentary subscriptions never expire. New signups pick a plan and get a non-complimentary 14-day trial."
   },
   "open_decisions": [
     "Monthly prices per plan in GHS",

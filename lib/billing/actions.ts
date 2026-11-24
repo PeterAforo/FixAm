@@ -23,7 +23,7 @@ export async function listPlans() {
     priceMonthly: plans.priceMonthly, maxBranches: plans.maxBranches,
     maxStaff: plans.maxStaff, messageAllowance: plans.messageAllowance,
     features: plans.features,
-  }).from(plans).where(eq(plans.isActive, true)).orderBy(plans.priceMonthly)
+  }).from(plans).where(and(eq(plans.isActive, true), eq(plans.audience, "garage"))).orderBy(plans.priceMonthly)
   return rows.map((p) => ({ ...p, priceMonthly: Number(p.priceMonthly) }))
 }
 
@@ -70,7 +70,7 @@ export async function changePlan(rawInput: unknown): Promise<ActionResult<{ plan
   const ctx = await requireOwner(userId, garageId)
   if (!ctx) return { ok: false, error: { code: "FORBIDDEN", message: "Only the owner can change the plan" } }
 
-  const [plan] = await db().select().from(plans).where(and(eq(plans.code, planCode), eq(plans.isActive, true))).limit(1)
+  const [plan] = await db().select().from(plans).where(and(eq(plans.code, planCode), eq(plans.audience, "garage"), eq(plans.isActive, true))).limit(1)
   if (!plan) return { ok: false, error: { code: "NOT_FOUND", message: "Plan not found" } }
 
   const [sub] = await db().select().from(subscriptions).where(eq(subscriptions.garageId, garageId)).limit(1)

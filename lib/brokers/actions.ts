@@ -1,6 +1,6 @@
 "use server"
 import { z } from "zod"
-import { and, asc, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm"
+import { and, asc, desc, eq, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
 import {
   brokerMembers,
@@ -153,6 +153,7 @@ const profileSchema = z.object({
   dvlaAgentNumber: z.string().max(60).optional().or(z.literal("")),
   insurers: z.array(z.string().max(80)).max(30).default([]),
   defaultServiceFee: z.number().min(0).max(100000).optional().nullable(), // cedis
+  planCode: z.string().min(1).max(40).optional(),
 })
 
 export async function getMyBroker() {
@@ -171,6 +172,10 @@ export async function brokerSignup(rawInput: unknown): Promise<ActionResult<{ br
   const d = parsed.data
   const phone = normalizeGhPhone(d.phone)
   if (!phone) return fail("VALIDATION", "Enter a valid Ghana phone number")
+
+  const { resolvePlanCode, createTrialSubscription } = await import("@/lib/billing/account")
+  const planCode = await resolvePlanCode("broker", d.planCode)
+  if (!planCode) return fail("INTERNAL", "No broker plans configured — contact support")
 
   const base = d.businessName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) || "broker"
   const slug = `${base}-${uuidv7().slice(-6)}`
@@ -192,6 +197,7 @@ export async function brokerSignup(rawInput: unknown): Promise<ActionResult<{ br
     defaultServiceFee: d.defaultServiceFee != null ? pes(d.defaultServiceFee) : null,
   })
   await db().insert(brokerMembers).values({ brokerId, userId, role: "owner" })
+  await createTrialSubscription({ ownerKind: "broker", ownerId: brokerId, planCode })
 
   await writeAuditLog({
     garageId: null, actorUserId: userId, action: "broker.signup",
@@ -604,7 +610,8 @@ async function requireGarageStaff(garageId: string) {
   const userId = await getSessionUserId()
   if (!userId) return null
   const rows = await db().select({ role: memberships.role }).from(memberships)
-    .where(and(eq(memberships.garageId, garageId), eq(memberships.userId, userId), eq(memberships.status, "active"), isNull(memberships.deletedAt)))
+    .innerJoin(garages, eq(garages.id, memberships.garageId))
+    .where(and(eq(memberships.garageId, garageId), eq(memberships.userId, userId), eq(memberships.status, "active"), isNull(memberships.deletedAt), ne(garages.status, "suspended")))
   const ok = rows.some((m) => GARAGE_ROLES.includes(m.role))
   return ok ? { userId } : null
 }

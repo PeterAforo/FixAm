@@ -21,6 +21,7 @@ import { createGarage } from "@/lib/onboarding/actions"
 import { Button } from "@/components/brand/button"
 import { photos } from "@/lib/images"
 import { Field, FormError, OnboardingFrame, PreviewCard, onbInputCls } from "./onboarding-frame"
+import { PlanPicker, type PlanOption } from "./plan-picker"
 import { normalizeGhPhone } from "@/lib/phone"
 import { parseGHS } from "@/lib/money"
 import { cn } from "@/lib/utils"
@@ -39,6 +40,7 @@ const STEPS = [
   { label: "Your garage", hint: "Name, contact and location", icon: Store, title: "Tell us about your garage", sub: "This is how customers will find and recognise you." },
   { label: "Branch & rates", hint: "Bays, labour rate and VAT", icon: Warehouse, title: "Set up your workshop", sub: "Add your first branch, the bays you work in and how you charge." },
   { label: "Your team", hint: "Invite staff by phone", icon: Users, title: "Invite your team", sub: "They'll get an SMS invite and join when they sign in. You can skip this for now." },
+  { label: "Your plan", hint: "Pick a plan — 14 days free", icon: Rocket, title: "Choose your plan", sub: "Every plan starts with a 14-day free trial. You won't be charged until it ends." },
   { label: "Launch", hint: "Review and go live", icon: Rocket, title: "Ready to launch", sub: "Check everything looks right. You can change any of this later in Settings." },
 ] as const
 
@@ -52,7 +54,7 @@ function slugify(name: string) {
     .slice(0, 60)
 }
 
-export function GarageWizard({ defaultPhone }: { defaultPhone?: string | null }) {
+export function GarageWizard({ defaultPhone, plans }: { defaultPhone?: string | null; plans: PlanOption[] }) {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
@@ -77,6 +79,7 @@ export function GarageWizard({ defaultPhone }: { defaultPhone?: string | null })
   const [vatPercent, setVatPercent] = useState("15")
 
   const [invites, setInvites] = useState<Invite[]>([])
+  const [planCode, setPlanCode] = useState(() => plans[Math.min(1, plans.length - 1)]?.code ?? plans[0]?.code ?? "")
   const bodyRef = useRef<HTMLDivElement>(null)
 
   const slugPreview = useMemo(
@@ -88,7 +91,13 @@ export function GarageWizard({ defaultPhone }: { defaultPhone?: string | null })
   const validInvites = invites.filter((i) => normalizeGhPhone(i.phone))
 
   const canContinue =
-    step === 0 ? Boolean(garageName.trim()) && phoneValid : step === 1 ? Boolean(branchName.trim()) : true
+    step === 0
+      ? Boolean(garageName.trim()) && phoneValid
+      : step === 1
+        ? Boolean(branchName.trim())
+        : step === 3
+          ? plans.length === 0 || Boolean(planCode)
+          : true
 
   function go(to: number) {
     setError(null)
@@ -135,6 +144,7 @@ export function GarageWizard({ defaultPhone }: { defaultPhone?: string | null })
       vatPercent: Number(vatPercent) || 0,
       bays: cleanBays,
       invites: validInvites.map((i) => ({ phone: i.phone, role: i.role as never })),
+      planCode: planCode || undefined,
     })
     setSubmitting(false)
     if (!result.ok) {
@@ -182,7 +192,7 @@ export function GarageWizard({ defaultPhone }: { defaultPhone?: string | null })
   return (
     <OnboardingFrame
       photo={photos.accraWorkshop}
-      badge="14-day free Pro trial"
+      badge="14-day free trial"
       title="Let's get your garage running on FixAm."
       intro="About three minutes. No card needed."
       steps={[...STEPS]}
@@ -404,6 +414,15 @@ export function GarageWizard({ defaultPhone }: { defaultPhone?: string | null })
             )}
 
             {step === 3 && (
+              <div className="space-y-4">
+                <PlanPicker plans={plans} value={planCode} onChange={setPlanCode} />
+                <p className="text-[13px] text-muted-foreground">
+                  You won&apos;t be charged during the trial. When it ends we&apos;ll send a payment prompt — pay by MoMo or card to keep everything running.
+                </p>
+              </div>
+            )}
+
+            {step === 4 && (
               <div className="overflow-hidden rounded-[20px] border border-border bg-card">
                 {[
                   {
@@ -431,6 +450,14 @@ export function GarageWizard({ defaultPhone }: { defaultPhone?: string | null })
                     title: "Team",
                     to: 2,
                     rows: [["Invites", validInvites.length ? `${validInvites.length} person${validInvites.length === 1 ? "" : "s"} will get an SMS` : "Just you for now"]],
+                  },
+                  {
+                    title: "Plan",
+                    to: 3,
+                    rows: [
+                      ["Plan", plans.find((p) => p.code === planCode)?.name ?? "—"],
+                      ["Price", plans.find((p) => p.code === planCode) ? `GH₵ ${plans.find((p) => p.code === planCode)!.priceGhs.toFixed(2)} / month after trial` : "—"],
+                    ],
                   },
                 ].map((sec, si) => (
                   <div key={sec.title} className={cn("px-5 py-4", si > 0 && "border-t border-border")}>

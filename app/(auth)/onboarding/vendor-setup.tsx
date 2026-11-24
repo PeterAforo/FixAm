@@ -8,6 +8,7 @@ import { vendorSignup } from "@/lib/vendors/actions"
 import { normalizeGhPhone } from "@/lib/phone"
 import { photos } from "@/lib/images"
 import { Field, FormError, OnboardingFrame, PreviewCard, onbInputCls } from "./onboarding-frame"
+import { PlanPicker, type PlanOption } from "./plan-picker"
 import { Chips, Segmented } from "./chips"
 import { GH_REGIONS, PART_CATEGORIES } from "./options"
 
@@ -16,7 +17,7 @@ const STEPS = [
   { label: "Delivery & payouts", hint: "Where you deliver, how you get paid" },
 ]
 
-export function VendorSetup({ defaultPhone, defaultEmail }: { defaultPhone: string | null; defaultEmail: string }) {
+export function VendorSetup({ defaultPhone, defaultEmail, plans }: { defaultPhone: string | null; defaultEmail: string; plans: PlanOption[] }) {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [businessName, setBusinessName] = useState("")
@@ -31,6 +32,7 @@ export function VendorSetup({ defaultPhone, defaultEmail }: { defaultPhone: stri
   const [eta, setEta] = useState("24")
   const [payoutMethod, setPayoutMethod] = useState<"momo" | "bank">("momo")
   const [payoutDetails, setPayoutDetails] = useState("")
+  const [planCode, setPlanCode] = useState(() => plans[Math.min(1, plans.length - 1)]?.code ?? plans[0]?.code ?? "")
 
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -51,6 +53,7 @@ export function VendorSetup({ defaultPhone, defaultEmail }: { defaultPhone: stri
       deliveryZones: zones.map((r) => ({ region: r, fee: Number(fee) || 0, etaHours: Number(eta) || undefined })),
       payoutMethod,
       payoutDetails: payoutDetails || undefined,
+      planCode: planCode || undefined,
     })
     if (!res.ok) {
       setBusy(false)
@@ -165,6 +168,11 @@ export function VendorSetup({ defaultPhone, defaultEmail }: { defaultPhone: stri
               onChange={(e) => setPayoutDetails(e.target.value)}
               placeholder={payoutMethod === "momo" ? "MoMo number and name, e.g. 024 123 4567 · Kofi Mensah" : "Bank, branch, account name and number"}
             />
+          </div>
+          <div className="border-t border-border pt-4">
+            <p className="text-sm font-medium">Choose your plan</p>
+            <p className="mb-2.5 text-xs text-muted-foreground">14 days free — you choose what you pay after the trial.</p>
+            <PlanPicker plans={plans} value={planCode} onChange={setPlanCode} />
           </div>
         </div>
       )}
