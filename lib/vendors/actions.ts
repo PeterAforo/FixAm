@@ -51,7 +51,7 @@ function legacyPayout(method: string | undefined, text: string | undefined): str
 }
 
 function vendorPrincipal(role: string): Principal {
-  return { kind: "vendor", vendorRole: role === "vendor_owner" ? "owner" : "staff" };
+  return { kind: "vendor", vendorRole: role };
 }
 
 async function requireVendor(userId: string) {

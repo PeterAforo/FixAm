@@ -586,6 +586,45 @@
       "owner",
       "manager",
       "accountant"
+    ],
+    "workspace.staff.manage": [
+      "owner",
+      "vendor_owner",
+      "broker_owner",
+      "tow_operator_owner"
+    ],
+    "workspace.billing.manage": [
+      "owner",
+      "vendor_owner",
+      "broker_owner",
+      "tow_operator_owner"
+    ],
+    "workspace.payouts.manage": [
+      "vendor_owner",
+      "broker_owner",
+      "tow_operator_owner"
+    ],
+    "workspace.settings.manage": [
+      "vendor_owner",
+      "broker_owner",
+      "tow_operator_owner"
+    ],
+    "broker.requests.work": [
+      "broker_owner",
+      "broker_agent"
+    ],
+    "broker.claims.review": [
+      "broker_owner",
+      "broker_agent"
+    ],
+    "tow.jobs.work": [
+      "tow_operator_owner",
+      "tow_operator_dispatcher",
+      "tow_operator_driver"
+    ],
+    "tow.dispatch.manage": [
+      "tow_operator_owner",
+      "tow_operator_dispatcher"
     ]
   },
   "field_level_rules": [

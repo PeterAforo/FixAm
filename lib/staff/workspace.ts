@@ -17,7 +17,8 @@ import { writeAuditLog, type ActionError, type ActionResult } from "@/lib/action
 import { getSessionUserId } from "@/lib/auth/ensure-user";
 import { normalizeGhPhone } from "@/lib/phone";
 import { sendDirectSms, appUrl } from "@/lib/messaging/direct";
-import { accountBilling, accountWriteBlockReason } from "@/lib/billing/account";
+import { accountBilling, accountWriteBlockReason } from "@/lib/billing/account"
+import { can, workspacePrincipal } from "@/lib/auth/permissions";
 import {
   WORKSPACE_KINDS,
   isWorkspaceKind,
@@ -126,7 +127,7 @@ async function myMembership(kind: WorkspaceKind, userId: string): Promise<Ctx | 
 }
 
 function isOwner(kind: WorkspaceKind, role: string) {
-  return role === WORKSPACE_KINDS[kind].ownerRole;
+  return can(workspacePrincipal(kind, role), "workspace.staff.manage");
 }
 
 async function requireOwner(

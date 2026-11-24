@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased — RBAC unification for workspace staff (in progress)
+
+### Member roles now resolve through `can()` / roles-permissions.json
+- `Principal` gained `broker` and `tow` kinds, and `vendorRole` now carries
+  the raw stored role. New `workspacePrincipal(kind, role)` maps a member
+  row to the spec role (`owner`→`broker_owner`/`tow_operator_owner`,
+  etc.).
+- `roles-permissions.json` gained `workspace.staff.manage`,
+  `workspace.billing.manage`, `workspace.payouts.manage`,
+  `workspace.settings.manage` (owner-only across workspaces) plus
+  `broker.requests.work`, `broker.claims.review`, `tow.jobs.work` and
+  `tow.dispatch.manage` role grants.
+- The shared staff actions now authorize via
+  `can(principal, "workspace.staff.manage")` instead of a hardcoded
+  owner-role comparison — same owner-only behaviour, but spec-driven.
+- `vendorPrincipal` passes the stored role through so `vendor_manager`,
+  `vendor_sales` and `vendor_dispatcher` get their own grants instead of
+  collapsing to generic staff.
+
 ## Unreleased — shared staff & invites for all workspaces (in progress)
 
 ### Staff management for parts sellers, brokers & tow companies

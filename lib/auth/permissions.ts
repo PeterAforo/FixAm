@@ -20,7 +20,16 @@ export type Principal =
   | { kind: "staff"; role: StaffRole; garageId: string; branchId?: string | null }
   | { kind: "platform_admin" }
   | { kind: "customer"; customerType?: "private" | "business" | "fleet" }
-  | { kind: "vendor"; vendorRole?: "owner" | "staff" }
+  | { kind: "vendor"; vendorRole?: string }
+  | { kind: "broker"; brokerRole?: string }
+  | { kind: "tow"; towRole?: string }
+
+/** Map a stored member role to the spec role name can() resolves. */
+export function workspacePrincipal(kind: "vendor" | "broker" | "tow", role: string): Principal {
+  if (kind === "vendor") return { kind: "vendor", vendorRole: role }
+  if (kind === "broker") return { kind: "broker", brokerRole: role }
+  return { kind: "tow", towRole: role }
+}
 
 export type Permission = keyof typeof rolesSpec.permissions & string
 
@@ -58,9 +67,15 @@ export function can(
         ? principal.customerType === "business" || principal.customerType === "fleet"
           ? "fleet_manager"
           : "customer"
-        : principal.vendorRole === "owner"
-          ? "vendor_owner"
-          : "vendor_staff"
+        : principal.kind === "vendor"
+          ? principal.vendorRole === "owner"
+            ? "vendor_owner"
+            : principal.vendorRole === "staff" || !principal.vendorRole
+              ? "vendor_staff"
+              : principal.vendorRole
+          : principal.kind === "broker"
+            ? `broker_${principal.brokerRole ?? "agent"}`
+            : `tow_operator_${principal.towRole ?? "driver"}`
 
   const grant = grantFor(permission, role)
   if (grant === undefined) return false
