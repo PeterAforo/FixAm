@@ -94,7 +94,7 @@ export function RemindersPanel({ garageId, data }: { garageId: string; data: Dat
 
       {tab === "sent" && (
         <Card><CardContent className="p-0">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">When</th><th className="px-4 py-3">Channel</th>
@@ -122,7 +122,7 @@ export function RemindersPanel({ garageId, data }: { garageId: string; data: Dat
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </CardContent></Card>
       )}
 
@@ -130,7 +130,7 @@ export function RemindersPanel({ garageId, data }: { garageId: string; data: Dat
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">Garage overrides replace the platform default. Edits apply to future sends only.</p>
           <Card><CardContent className="p-0">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                   <th className="px-4 py-3">Key</th><th className="px-4 py-3">Channel</th>
@@ -154,14 +154,14 @@ export function RemindersPanel({ garageId, data }: { garageId: string; data: Dat
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           </CardContent></Card>
         </div>
       )}
 
       {editTpl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setEditTpl(null)}>
-          <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+          <Card className="max-h-[calc(100dvh-2rem)] overflow-y-auto w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
             <CardContent className="p-5">
               <h3 className="text-[15px] font-semibold">{editTpl.key} · {editTpl.channel}</h3>
               {editTpl.isOverride && <p className="mt-1 text-xs text-muted-foreground">Currently overriding platform default.</p>}
@@ -197,7 +197,7 @@ function DueTable(props: { items: Data["items"]; canSend: boolean; pending: bool
   }
   return (
     <Card><CardContent className="p-0">
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
         <thead>
           <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
             <th className="px-4 py-3">Due item</th><th className="px-4 py-3">Customer / vehicle</th>
@@ -218,7 +218,7 @@ function DueTable(props: { items: Data["items"]; canSend: boolean; pending: bool
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </CardContent></Card>
   )
 }

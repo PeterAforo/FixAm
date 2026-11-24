@@ -56,7 +56,7 @@ export const metadata = {
 
 export default function PartsPage({ searchParams }: { searchParams: Promise<SP> }) {
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <PageHero
         image={photos.mechanicEngine}
         active="Find parts"

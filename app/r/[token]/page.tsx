@@ -16,7 +16,7 @@ async function ReceiptView({ params }: { params: Promise<{ token: string }> }) {
   if (!r) notFound()
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-6">
+    <main className="flex min-h-dvh items-center justify-center bg-background p-6">
       <div className="w-full max-w-sm rounded-2xl border-2 border-border bg-surface p-6 text-center shadow-sm">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{r.garageName}</p>
         <h1 className="mt-2 font-display text-2xl font-bold">Payment received</h1>
@@ -53,7 +53,7 @@ async function ReceiptView({ params }: { params: Promise<{ token: string }> }) {
 
 export default function ReceiptPage({ params }: { params: Promise<{ token: string }> }) {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" /></div>}>
+    <Suspense fallback={<div className="flex min-h-dvh items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" /></div>}>
       <ReceiptView params={params} />
     </Suspense>
   )

@@ -244,7 +244,7 @@ export function AdminGaragesPanel({ garages, compact = false }: { garages: Garag
 
       {confirmFor && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="suspend-title">
-          <div className="w-full max-w-md rounded-[22px] border border-border bg-card p-6 shadow-2xl">
+          <div className="max-h-[calc(100dvh-2rem)] overflow-y-auto w-full max-w-md rounded-[22px] border border-border bg-card p-6 shadow-2xl">
             <h3 id="suspend-title" className="font-display text-xl font-bold">Suspend {confirmFor.name}?</h3>
             <p className="mt-2 text-sm text-muted-foreground">
               Its staff are locked out (they see a “suspended” notice) and the garage disappears from the public directory and breakdown matching until you reactivate it. You can still open it with “View as owner”. Undo from the ⋯ menu; both steps are recorded in the audit log.

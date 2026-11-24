@@ -320,7 +320,7 @@ async function ProfileContent({ params }: { params: Promise<{ slug: string }> })
 
 export default function GarageProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <Suspense
         fallback={
           <>

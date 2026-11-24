@@ -61,7 +61,7 @@ export default function StaffSettingsPage({
   params: Promise<{ garageSlug: string }>
 }) {
   return (
-    <main className="min-h-screen bg-background px-5 py-6 md:px-10 md:py-8">
+    <main className="min-h-dvh bg-background px-5 py-6 md:px-10 md:py-8">
       <div className="mx-auto max-w-4xl">
         <Suspense fallback={<div className="h-40 animate-pulse rounded-2xl bg-muted" />}>
           <StaffLoader params={params} />

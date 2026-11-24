@@ -45,7 +45,7 @@ async function AccountContent() {
   const who = phone ? formatGhPhone(phone) : (me?.email ?? "")
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-dvh bg-background">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-16 max-w-[1120px] items-center justify-between gap-3 px-6">
           <Logo href="/" />
@@ -136,7 +136,7 @@ async function AccountContent() {
 
 export default function AccountPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-background" />}>
+    <Suspense fallback={<main className="min-h-dvh bg-background" />}>
       <AccountContent />
     </Suspense>
   )

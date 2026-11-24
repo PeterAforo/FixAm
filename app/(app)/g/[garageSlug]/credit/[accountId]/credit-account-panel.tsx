@@ -143,7 +143,7 @@ export function CreditAccountPanel(p: Props) {
               }}>Record payment</Button>
             )}
           </div>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">Invoice</th>
@@ -169,7 +169,7 @@ export function CreditAccountPanel(p: Props) {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </CardContent>
       </Card>
 
@@ -196,7 +196,7 @@ export function CreditAccountPanel(p: Props) {
       <Card>
         <CardContent className="p-0">
           <h2 className="border-b px-4 py-3 text-[15px] font-semibold">Statements</h2>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">Period</th>
@@ -222,14 +222,14 @@ export function CreditAccountPanel(p: Props) {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </CardContent>
       </Card>
 
       {/* Payment modal */}
       {payOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-6 shadow-xl">
+          <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-6 shadow-xl">
             <h2 className="text-lg font-semibold tracking-[-0.01em]">Record credit payment</h2>
             <label className="mt-4 block text-sm">
               <span className="mb-1 block font-medium">Amount (GH₵)</span>

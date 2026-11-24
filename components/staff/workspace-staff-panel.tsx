@@ -228,7 +228,7 @@ export function WorkspaceStaffPanel({
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Pending invites</CardTitle>
-            <CardDescription>Invites expire 7 days after they're sent.</CardDescription>
+            <CardDescription>Invites expire 7 days after they&apos;re sent.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             {invites.map((i) => (

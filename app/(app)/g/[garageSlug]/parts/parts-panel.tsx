@@ -326,7 +326,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
       {/* adjust stock modal */}
       {adjustFor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setAdjustFor(null)}>
-          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <Card className="max-h-[calc(100dvh-2rem)] overflow-y-auto w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <CardContent className="p-4">
               <h3 className="text-[15px] font-semibold">Adjust stock — {adjustFor.name}</h3>
               <p className="text-xs text-muted-foreground">On hand {adjustFor.onHand ?? 0} · branch {adjustFor.branchName}</p>
@@ -347,7 +347,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
       {/* transfer modal */}
       {transferFor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setTransferFor(null)}>
-          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <Card className="max-h-[calc(100dvh-2rem)] overflow-y-auto w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <CardContent className="p-4">
               <h3 className="text-[15px] font-semibold">Transfer — {transferFor.name}</h3>
               <form onSubmit={submitTransfer} className="mt-3 space-y-3">
@@ -369,7 +369,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
       {/* stock config modal */}
       {configFor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setConfigFor(null)}>
-          <Card className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <Card className="max-h-[calc(100dvh-2rem)] overflow-y-auto w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <CardContent className="p-4">
               <h3 className="text-[15px] font-semibold">Stock settings — {configFor.name}</h3>
               <form onSubmit={submitConfig} className="mt-3 space-y-3">

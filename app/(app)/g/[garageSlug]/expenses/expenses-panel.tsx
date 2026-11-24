@@ -126,7 +126,7 @@ export function ExpensesPanel(props: {
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
           <Card>
             <CardContent className="p-0">
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
                 <thead>
                   <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                     <th className="px-4 py-3">Date</th>
@@ -156,7 +156,7 @@ export function ExpensesPanel(props: {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             </CardContent>
           </Card>
 
@@ -195,7 +195,7 @@ export function ExpensesPanel(props: {
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
           <Card>
             <CardContent className="p-0">
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
                 <thead>
                   <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                     <th className="px-4 py-3">Date</th>
@@ -228,7 +228,7 @@ export function ExpensesPanel(props: {
                     )
                   })}
                 </tbody>
-              </table>
+              </table></div>
             </CardContent>
           </Card>
 

@@ -246,7 +246,7 @@ export function InvoiceDetailPanel(props: {
 
       <Card>
         <CardContent className="p-0">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">Description</th>
@@ -273,7 +273,7 @@ export function InvoiceDetailPanel(props: {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </CardContent>
       </Card>
 
@@ -300,7 +300,7 @@ export function InvoiceDetailPanel(props: {
 
       {voidOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
+          <div className="max-h-[calc(100dvh-2rem)] overflow-y-auto w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
             <h2 className="text-lg font-semibold tracking-[-0.01em]">Void {inv.number ?? "invoice"}</h2>
             <input
               value={voidReason}
@@ -343,7 +343,7 @@ export function InvoiceDetailPanel(props: {
                 <Button variant="ghost" onClick={cancelPlan}>Cancel plan</Button>
               )}
             </div>
-            <table className="mt-3 w-full text-sm">
+            <div className="overflow-x-auto"><table className="mt-3 w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                   <th className="py-2">#</th>
@@ -379,14 +379,14 @@ export function InvoiceDetailPanel(props: {
                   )
                 })}
               </tbody>
-            </table>
+            </table></div>
           </CardContent>
         </Card>
       )}
 
       {planOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-6 shadow-xl">
+          <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-6 shadow-xl">
             <h2 className="text-lg font-semibold tracking-[-0.01em]">Payment plan</h2>
             <p className="mt-1 text-sm text-muted-foreground">Balance: {formatGHS(inv.balanceDue)}</p>
             <div className="mt-4 grid grid-cols-2 gap-3">
@@ -446,7 +446,7 @@ export function InvoiceDetailPanel(props: {
 
       {payOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
+          <div className="max-h-[calc(100dvh-2rem)] overflow-y-auto w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
             <h2 className="text-lg font-semibold tracking-[-0.01em]">Record payment</h2>
             <p className="mt-1 text-sm text-muted-foreground">Balance due: {formatGHS(inv.balanceDue)}</p>
             <div className="mt-4 grid grid-cols-3 gap-2">
@@ -497,7 +497,7 @@ export function InvoiceDetailPanel(props: {
 
       {creditOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
+          <div className="max-h-[calc(100dvh-2rem)] overflow-y-auto w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
             <h2 className="text-lg font-semibold tracking-[-0.01em]">Credit note</h2>
             <p className="mt-1 text-sm text-muted-foreground">Balance due: {formatGHS(inv.balanceDue)}</p>
             <input

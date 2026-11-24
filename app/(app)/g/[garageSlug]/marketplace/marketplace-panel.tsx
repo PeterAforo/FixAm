@@ -345,7 +345,7 @@ export function MarketplacePanel(props: {
                           )}
                         </ol>
 
-                        <table className="w-full text-sm">
+                        <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
                           <tbody>
                             {detail.items.map((i) => (
                               <tr key={i.id} className="border-b last:border-0">
@@ -355,7 +355,7 @@ export function MarketplacePanel(props: {
                               </tr>
                             ))}
                           </tbody>
-                        </table>
+                        </table></div>
 
                         <div className="flex flex-wrap gap-2">
                           {canReceive && ["delivered", "out_for_delivery"].includes(detail.status) && (

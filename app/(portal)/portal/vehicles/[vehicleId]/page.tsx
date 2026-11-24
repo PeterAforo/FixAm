@@ -56,7 +56,7 @@ async function PortalVehicleContent({ params }: { params: Promise<{ vehicleId: s
 
 export default function PortalVehiclePage({ params }: { params: Promise<{ vehicleId: string }> }) {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-background" />}>
+    <Suspense fallback={<main className="min-h-dvh bg-background" />}>
       <PortalVehicleContent params={params} />
     </Suspense>
   )

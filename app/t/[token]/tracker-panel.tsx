@@ -63,7 +63,7 @@ export function TrackerPanel({ token, initial }: { token: string; initial: Track
 
   return (
     <main
-      className="min-h-screen bg-background pb-28"
+      className="min-h-dvh bg-background pb-28"
       style={{ ["--garage-accent" as string]: accent }}
     >
       {/* Hero — spec: large CarAvatar on soft gradient, status headline, ETA chip */}

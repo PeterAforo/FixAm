@@ -18,7 +18,7 @@ async function AdminShell({ children }: { children: ReactNode }) {
 
   if (!(await isPlatformAdmin(userId))) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background p-6">
+      <main className="flex min-h-dvh items-center justify-center bg-background p-6">
         <div className="max-w-sm rounded-[22px] border border-border bg-card p-8 text-center">
           <h1 className="font-display text-2xl font-bold">Platform admin only</h1>
           <p className="mt-2 text-sm text-muted-foreground">This area is for the FixAm team.</p>
@@ -35,7 +35,7 @@ async function AdminShell({ children }: { children: ReactNode }) {
   const workspaces = await listMyWorkspaces(userId)
   const [me] = await db().select({ defaultWorkspace: users.defaultWorkspace }).from(users).where(eq(users.id, userId)).limit(1)
   return (
-    <div className="min-h-screen bg-background md:flex">
+    <div className="min-h-dvh bg-background md:flex">
       <AdminNav
         badges={{ approvals: approvalsWaiting(a), payments: a.disputes + a.payoutsNeedAttention, privacy: a.privacyOpen }}
         workspaces={workspaces}
@@ -48,7 +48,7 @@ async function AdminShell({ children }: { children: ReactNode }) {
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+    <Suspense fallback={<div className="min-h-dvh bg-background" />}>
       <AdminShell>{children}</AdminShell>
     </Suspense>
   )

@@ -28,7 +28,7 @@ async function TokenView({ params, searchParams }: { params: Promise<{ token: st
 
   if (est) {
     return (
-      <main className="min-h-screen bg-background">
+      <main className="min-h-dvh bg-background">
         <div className="mx-auto max-w-lg px-4 py-8">
           <header className="mb-6 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{est.garageName}</p>
@@ -58,7 +58,7 @@ async function TokenView({ params, searchParams }: { params: Promise<{ token: st
 
   if (inv) {
     return (
-      <main className="min-h-screen bg-background">
+      <main className="min-h-dvh bg-background">
         <div className="mx-auto max-w-lg px-4 py-8">
           <header className="mb-6 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{inv.garageName}</p>
@@ -90,7 +90,7 @@ async function TokenView({ params, searchParams }: { params: Promise<{ token: st
 
   if (rem) {
     return (
-      <main className="min-h-screen bg-background">
+      <main className="min-h-dvh bg-background">
         <div className="mx-auto max-w-lg px-4 py-8">
           <header className="mb-6 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{rem.garageName}</p>
@@ -121,7 +121,7 @@ async function TokenView({ params, searchParams }: { params: Promise<{ token: st
 
   if (!trk) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background p-8">
+      <main className="flex min-h-dvh items-center justify-center bg-background p-8">
         <div className="max-w-sm text-center">
           <h1 className="font-display text-2xl font-bold">Link expired</h1>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -150,7 +150,7 @@ async function TokenView({ params, searchParams }: { params: Promise<{ token: st
 
 export default function MagicLinkPage({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ payment?: string }> }) {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" /></div>}>
+    <Suspense fallback={<div className="flex min-h-dvh items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" /></div>}>
       <TokenView params={params} searchParams={searchParams} />
     </Suspense>
   )

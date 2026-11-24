@@ -159,7 +159,7 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
 
 export default function VehiclePassportPage({ params }: { params: Promise<{ token: string }> }) {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-dvh bg-background">
       <Suspense fallback={<div className="mx-auto mt-10 h-96 max-w-lg animate-pulse rounded-2xl bg-muted" />}>
         <Content params={params} />
       </Suspense>

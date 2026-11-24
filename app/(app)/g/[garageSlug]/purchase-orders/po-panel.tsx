@@ -212,7 +212,7 @@ export function PosOrdersPanel(props: { garageSlug: string; garageId: string; da
       {/* receive modal */}
       {receiveFor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setReceiveFor(null)}>
-          <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+          <Card className="max-h-[calc(100dvh-2rem)] overflow-y-auto w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
             <CardContent className="p-4">
               <h3 className="text-[15px] font-semibold">Receive — {receiveFor.number}</h3>
               {!receiveItems ? (

@@ -40,7 +40,7 @@ export function AdminRidersPanel({ riders }: { riders: Row[] }) {
   return (
     <div className="mt-4 overflow-hidden rounded-[18px] border border-border bg-card">
       {msg && <p className="border-b border-border bg-danger-subtle px-4 py-2 text-sm">{msg}</p>}
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
         <thead>
           <tr className="border-b border-border bg-surface-muted/50 text-left text-xs font-medium text-muted-foreground">
             <th className="px-4 py-3">Rider</th>
@@ -105,7 +105,7 @@ export function AdminRidersPanel({ riders }: { riders: Row[] }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   )
 }

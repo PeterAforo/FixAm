@@ -622,7 +622,7 @@ export function JobDetailPanel(props: {
             {items.length === 0 ? (
               <p className="text-sm text-muted-foreground">No items yet.</p>
             ) : (
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
                 <thead>
                   <tr className="border-b border-border text-left text-xs text-muted-foreground">
                     <th className="py-2">Item</th><th>Type</th><th className="text-right">Qty</th><th className="text-right">Price</th><th className="text-right">Total</th><th>Status</th>
@@ -679,7 +679,7 @@ export function JobDetailPanel(props: {
                     </Fragment>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             )}
           </CardContent>
         </Card>

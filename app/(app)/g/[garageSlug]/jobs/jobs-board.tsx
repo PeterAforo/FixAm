@@ -292,7 +292,7 @@ export function JobsBoard({
                   </span>
                   <span className="rounded-pill bg-surface px-2 py-0.5 text-xs font-semibold">{colJobs.length}</span>
                 </div>
-                <div className="flex-1 space-y-2 overflow-y-auto px-2 pb-2" style={{ maxHeight: "calc(100vh - 320px)", minHeight: 120 }}>
+                <div className="flex-1 space-y-2 overflow-y-auto px-2 pb-2" style={{ maxHeight: "calc(100dvh - 320px)", minHeight: 120 }}>
                   {colJobs.map((j) => (
                     <JobCard
                       key={j.id}

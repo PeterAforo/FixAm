@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased — mobile responsiveness fixes (audit: docs/MOBILE_AUDIT.md)
+
+- `viewport-fit=cover` added via the `viewport` export in `app/layout.tsx`,
+  so `env(safe-area-inset-*)` now resolves on notched iPhones — the bottom
+  nav safe-area padding was previously inert.
+- Global mobile safeguards in `globals.css`: `overflow-x: clip` on
+  `html, body`, and a 16px floor on `input/select/textarea` below `md`
+  (stops iOS Safari auto-zoom on focus).
+- `min-h-screen`/`h-screen`/`100vh`/`*vh` utilities swapped to their
+  `dvh` equivalents across all routes — mobile browser chrome no longer
+  clips bottom-anchored content.
+- 22 data tables across admin, vendor, portal, garage and credit panels
+  wrapped in `overflow-x-auto` with `min-w-[600px]`, so they scroll
+  horizontally instead of squeezing or overflowing at 320–375px.
+- Overlay modals gained `max-h-[calc(100dvh-2rem)] overflow-y-auto` so
+  tall forms remain reachable on small screens; `max-h-[90vh]`→`90dvh`.
+- Tap targets: header search/user-menu buttons and the theme toggle are
+  now ≥44px.
+- Mobile nav escapes: garage bottom bar gains a "More" button opening the
+  command palette; `WorkspaceShell` bottom bar shows 4 items + a "More"
+  sheet for the rest (portal's 9-item nav previously hid 4 sections).
+- New `lib/use-focus-trap.ts` (focus trap + Escape close + scroll lock +
+  focus restore) wired into the command palette, vehicle/customer form
+  drawers, reorder drawer and celebration modal. Remaining inline modals
+  can adopt it incrementally.
+
 ## Unreleased — approval-before-public for brokers & tow companies
 
 - Broker and tow-operator signups now start `status: "pending"` (vendors

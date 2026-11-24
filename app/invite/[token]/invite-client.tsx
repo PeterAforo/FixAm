@@ -59,7 +59,7 @@ export function InviteClient({ token }: { token: string }) {
   }, [state, router]);
 
   return (
-    <main className="bg-background flex min-h-screen items-center justify-center p-6">
+    <main className="bg-background flex min-h-dvh items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader className="items-center text-center">
           <span className="border-border bg-primary text-primary-foreground shadow-chunky-sm mb-2 flex size-14 items-center justify-center rounded-full border-2">

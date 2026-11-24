@@ -8,6 +8,7 @@ import {
   Bell,
   Car,
   ChevronDown,
+  Menu,
   ClipboardList,
   FileText,
   Gauge,
@@ -90,6 +91,7 @@ export function WorkspaceShell({
   const pathname = usePathname()
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
 
   const isActive = (item: ShellNavItem) =>
     item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -104,8 +106,8 @@ export function WorkspaceShell({
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-border bg-card md:flex">
+    <div className="flex min-h-dvh bg-background">
+      <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-border bg-card md:flex">
         <div className="px-4 pb-3 pt-4">
           <Link href={current?.href ?? "/account"} className="flex items-center gap-2.5 px-1">
             <LogoMark className="size-7 rounded-[9px]" />
@@ -184,7 +186,7 @@ export function WorkspaceShell({
           <div className="relative">
             <button
               type="button"
-              className="flex h-10 items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-surface-muted"
+              className="flex h-11 items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-surface-muted"
               onClick={() => setMenuOpen((o) => !o)}
               aria-label="Account menu"
               aria-expanded={menuOpen}
@@ -224,7 +226,7 @@ export function WorkspaceShell({
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-card/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden" aria-label="Mobile navigation">
-        {nav.slice(0, 5).map((item) => {
+        {nav.slice(0, 4).map((item) => {
           const Icon = ICONS[item.icon] ?? Gauge
           const on = active?.href === item.href
           return (
@@ -234,7 +236,42 @@ export function WorkspaceShell({
             </Link>
           )
         })}
+        {nav.length > 4 && (
+          <button
+            type="button"
+            onClick={() => setMoreOpen((o) => !o)}
+            aria-label="More navigation"
+            aria-expanded={moreOpen}
+            className={cn("flex min-h-16 flex-1 flex-col items-center justify-center gap-1", moreOpen ? "text-primary" : "text-muted-foreground")}
+          >
+            <Menu className="size-5" strokeWidth={1.75} />
+            <span className="max-w-16 truncate text-[11px] font-medium">More</span>
+          </button>
+        )}
       </nav>
+      {moreOpen && nav.length > 4 && (
+        <>
+          <button className="fixed inset-0 bottom-16 z-40 cursor-default md:hidden" aria-label="Close menu" onClick={() => setMoreOpen(false)} />
+          <div className="fixed inset-x-3 bottom-16 z-50 mb-1 max-h-[60dvh] overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-3 md:hidden" role="menu">
+            {nav.slice(4).map((item) => {
+              const Icon = ICONS[item.icon] ?? Gauge
+              const on = active?.href === item.href
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMoreOpen(false)}
+                  className={cn("flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium", on ? "bg-primary-subtle text-primary" : "text-foreground hover:bg-surface-muted")}
+                >
+                  <Icon className="size-5 shrink-0" strokeWidth={1.75} />
+                  <span className="flex-1 truncate">{item.label}</span>
+                  {item.badge ? <span className="rounded-full bg-danger px-2 py-0.5 text-[11px] font-semibold text-danger-foreground">{item.badge}</span> : null}
+                </Link>
+              )
+            })}
+          </div>
+        </>
+      )}
     </div>
   )
 }

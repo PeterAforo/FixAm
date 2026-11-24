@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { navForRole, type NavItem } from "@/lib/nav"
 import type { StaffRole } from "@/lib/auth/permissions"
 import { searchVehiclesAndCustomers } from "@/lib/vehicles/actions"
+import { useFocusTrap } from "@/lib/use-focus-trap"
 import { Card } from "@/components/brand/card"
 import {
   BarChart3,
@@ -88,6 +89,8 @@ function PaletteDialog({
   const router = useRouter()
   const [query, setQuery] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(panelRef, onClose)
   const [records, setRecords] = useState<{
     q: string
     vehicles: { id: string; plate: string; label: string; path: string }[]
@@ -132,7 +135,7 @@ function PaletteDialog({
         aria-label="Close search"
         onClick={onClose}
       />
-      <Card className="relative w-full max-w-lg overflow-hidden">
+      <Card ref={panelRef} className="relative w-full max-w-lg overflow-hidden" role="dialog" aria-modal="true" aria-label="Command palette">
         <input
           ref={inputRef}
           value={query}

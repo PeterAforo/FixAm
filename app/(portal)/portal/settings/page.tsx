@@ -46,7 +46,7 @@ async function SettingsContent() {
 
 export default function PortalSettingsPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-background" />}>
+    <Suspense fallback={<main className="min-h-dvh bg-background" />}>
       <SettingsContent />
     </Suspense>
   )

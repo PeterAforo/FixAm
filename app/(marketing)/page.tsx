@@ -31,7 +31,7 @@ const h2 = "mt-3.5 font-display text-4xl font-bold leading-[1.05] tracking-[-0.0
 
 export default function MarketingHome() {
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <Suspense fallback={null}>
         <AuthGate />
       </Suspense>

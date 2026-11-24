@@ -20,7 +20,7 @@ export default function ContactPage() {
   ].filter(Boolean) as { icon: typeof Mail; title: string; text: string; value: string; href: string; external?: boolean }[]
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <PageHero
         image={photos.suvGarage}
         eyebrow="Contact"

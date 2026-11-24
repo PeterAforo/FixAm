@@ -419,3 +419,19 @@
     .torq-eyes { animation: none; }
   }
 }
+
+/* ── Mobile safeguards (unlayered so they beat utility font-sizes) ──── */
+html,
+body {
+  overflow-x: clip;
+}
+
+/* iOS Safari auto-zooms on inputs under 16px — floor all fields at 16px
+   on mobile/tablet widths regardless of their text-* utility class. */
+@media (max-width: 767.98px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}

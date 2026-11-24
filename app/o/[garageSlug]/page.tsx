@@ -27,7 +27,7 @@ function PaymentBanner({ tone, text }: { tone: "ok" | "wait" | "bad"; text: stri
 
 export default function OrderPage({ params, searchParams }: { params: Promise<{ garageSlug: string }>; searchParams: Promise<{ payment?: string }> }) {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-dvh bg-background">
       <Suspense fallback={<div className="mx-auto max-w-5xl p-8"><div className="h-64 animate-pulse rounded-2xl bg-muted" /></div>}>
         <Loader params={params} searchParams={searchParams} />
       </Suspense>

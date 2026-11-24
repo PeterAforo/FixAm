@@ -28,6 +28,7 @@ import {
   MessageCircle,
   Truck,
   KanbanSquare,
+  Menu,
   Package,
   Plus,
   ScanBarcode,
@@ -245,9 +246,9 @@ export function AppShell({
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-dvh bg-background">
       {/* Sidebar — desktop */}
-      <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-border bg-card md:flex">
+      <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-border bg-card md:flex">
         <div className="px-4 pb-3 pt-4">
           <Link href={base} className="flex items-center gap-2.5 px-1">
             <LogoMark className="size-7 rounded-[9px]" />
@@ -363,6 +364,19 @@ export function AppShell({
             </Link>
           )
         })}
+        {/* "More" opens the command palette — the escape hatch to every
+            nav section that doesn't fit in the bottom bar. */}
+        <button
+          type="button"
+          onClick={() => setPaletteOpen(true)}
+          className="flex min-h-16 flex-1 items-center justify-center text-muted-foreground"
+          aria-label="More navigation"
+        >
+          <span className="flex flex-col items-center gap-1">
+            <Menu className="size-5" strokeWidth={1.75} />
+            <span className="max-w-16 truncate text-[11px] font-medium">{labelFor("More")}</span>
+          </span>
+        </button>
       </nav>
 
       <CommandPalette

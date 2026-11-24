@@ -32,6 +32,7 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="sm"
+      className="min-h-11 min-w-11 px-3"
       aria-label={`Theme: ${meta.label} — switch to ${META[meta.next].label}`}
       title={mounted ? `${meta.label} theme — switch to ${META[meta.next].label}` : "Change theme"}
       onClick={() => setTheme(meta.next)}

@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/brand/button"
 import { Card, CardContent } from "@/components/brand/card"
+import { useFocusTrap } from "@/lib/use-focus-trap"
 import { formatGHS } from "@/lib/money"
 import { suggestVendorsForPart } from "@/lib/reorder/actions"
 import { createVendorOrder } from "@/lib/marketplace/actions"
@@ -30,6 +31,8 @@ export function ReorderDrawer(props: {
   const [suggestions, setSuggestions] = useState<Suggestion[] | null>(null)
   const [qty, setQty] = useState<Record<string, number>>({})
   const [msg, setMsg] = useState<string | null>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(panelRef, onClose)
 
   useEffect(() => {
     startTransition(async () => {
@@ -61,8 +64,8 @@ export function ReorderDrawer(props: {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-        <CardContent className="max-h-[80vh] space-y-3 overflow-y-auto p-5">
+      <Card ref={panelRef} tabIndex={-1} className="max-h-[calc(100dvh-2rem)] overflow-y-auto w-full max-w-lg outline-none" onClick={(e) => e.stopPropagation()}>
+        <CardContent className="max-h-[80dvh] space-y-3 overflow-y-auto p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-[15px] font-semibold">Reorder — {partName}</h2>
             <button onClick={onClose} className="text-muted-foreground">✕</button>

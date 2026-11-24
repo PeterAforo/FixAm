@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useRef, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { X } from "lucide-react"
 import { Button } from "@/components/brand/button"
 import { createCustomer, updateCustomer } from "@/lib/customers/actions"
+import { useFocusTrap } from "@/lib/use-focus-trap"
 
 export type CustomerFormValues = {
   id?: string
@@ -71,6 +72,8 @@ export function CustomerFormDrawer({
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [duplicate, setDuplicate] = useState<{ id: string; name: string } | null>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(panelRef, onClose, open)
 
   // reset when opened with different initial values
   const [prevOpen, setPrevOpen] = useState(open)
@@ -150,7 +153,7 @@ export function CustomerFormDrawer({
         onClick={onClose}
         aria-label="Close"
       />
-      <div className="relative flex h-full w-full max-w-md flex-col border-l border-border bg-background shadow-1">
+      <div ref={panelRef} tabIndex={-1} className="relative flex h-full w-full max-w-md flex-col border-l border-border bg-background shadow-1 outline-none">
         <header className="flex items-center justify-between border-b border-border px-5 py-4">
           <h2 className="font-display text-xl font-semibold">
             {form.id ? "Edit customer" : "New customer"}

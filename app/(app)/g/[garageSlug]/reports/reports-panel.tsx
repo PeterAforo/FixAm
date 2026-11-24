@@ -225,7 +225,7 @@ export function ReportsPanel(props: {
           <div className="border-b px-4 py-3">
             <h3 className="text-[15px] font-semibold text-foreground">Staff performance — jobs delivered</h3>
           </div>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
             <tbody>
               {mt.staffPerformance.length === 0 && (
                 <tr><td className="px-4 py-8 text-center text-muted-foreground">No completed jobs in this period</td></tr>
@@ -237,7 +237,7 @@ export function ReportsPanel(props: {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </CardContent>
       </Card>
 

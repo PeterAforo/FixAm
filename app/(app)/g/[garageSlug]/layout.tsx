@@ -113,7 +113,7 @@ async function ShellLoader({
 
 function GarageSuspended({ name }: { name: string }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-6">
+    <main className="flex min-h-dvh items-center justify-center bg-background p-6">
       <div className="max-w-md rounded-[22px] border border-border bg-card p-8 text-center">
         <h1 className="font-display text-2xl font-bold">{name} is suspended</h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -135,7 +135,7 @@ export default function GarageLayout({
   children: React.ReactNode
 }) {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+    <Suspense fallback={<div className="min-h-dvh bg-background" />}>
       <ShellLoader params={params}>{children}</ShellLoader>
     </Suspense>
   )

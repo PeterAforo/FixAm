@@ -70,7 +70,7 @@ export function ShellHeader({
       <Button
         type="button"
         variant="ghost"
-        className="min-h-10 min-w-10 px-2.5 lg:hidden"
+        className="min-h-11 min-w-11 px-2.5 lg:hidden"
         onClick={onOpenPalette}
         aria-label="Search (Ctrl+K)"
       >
@@ -82,7 +82,7 @@ export function ShellHeader({
       <div className="relative">
         <button
           type="button"
-          className="flex h-10 items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-surface-muted"
+          className="flex h-11 items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-surface-muted"
           onClick={() => setMenuOpen((o) => !o)}
           aria-label="User menu"
           aria-expanded={menuOpen}

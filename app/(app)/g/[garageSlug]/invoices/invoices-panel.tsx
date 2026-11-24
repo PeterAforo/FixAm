@@ -222,7 +222,7 @@ export function InvoicesPanel(props: {
 
       {createOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-surface p-6 shadow-xl">
+          <div className="max-h-[90dvh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-surface p-6 shadow-xl">
             <h2 className="text-lg font-semibold tracking-[-0.01em]">New invoice</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <label className="text-sm">
@@ -300,7 +300,7 @@ export function InvoicesPanel(props: {
 
       {voidTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
+          <div className="max-h-[calc(100dvh-2rem)] overflow-y-auto w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
             <h2 className="text-lg font-semibold tracking-[-0.01em]">Void {voidTarget.number ?? "invoice"}</h2>
             <p className="mt-1 text-sm text-muted-foreground">This cannot be undone. A reason is required.</p>
             <input

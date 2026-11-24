@@ -19,7 +19,7 @@ async function Content({ params }: { params: Promise<{ ref: string; seq: string 
 /** Stand-in for a partner lender's repayment page while FINANCING_PROVIDER=mock. */
 export default function MockPayPage({ params }: { params: Promise<{ ref: string; seq: string }> }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-6">
+    <main className="flex min-h-dvh items-center justify-center bg-background p-6">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 text-center">
         <p className="text-xs font-bold uppercase tracking-widest text-amber-700">Test lender — no real money</p>
         <Suspense fallback={<div className="mt-4 h-24 animate-pulse rounded-xl bg-muted" />}>

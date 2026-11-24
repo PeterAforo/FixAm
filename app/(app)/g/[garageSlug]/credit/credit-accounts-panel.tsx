@@ -65,7 +65,7 @@ export function CreditAccountsPanel(props: {
 
       <Card>
         <CardContent className="p-0">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">Customer</th>
@@ -105,13 +105,13 @@ export function CreditAccountsPanel(props: {
                 )
               })}
             </tbody>
-          </table>
+          </table></div>
         </CardContent>
       </Card>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
+          <div className="max-h-[calc(100dvh-2rem)] overflow-y-auto w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
             <h2 className="text-lg font-semibold tracking-[-0.01em]">Open credit account</h2>
             <div className="mt-4 space-y-3">
               <label className="block text-sm">

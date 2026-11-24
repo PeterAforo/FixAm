@@ -38,7 +38,7 @@ async function TowShell({ children }: { children: ReactNode }) {
 
 export default function TowLayout({ children }: { children: ReactNode }) {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+    <Suspense fallback={<div className="min-h-dvh bg-background" />}>
       <TowShell>{children}</TowShell>
     </Suspense>
   )

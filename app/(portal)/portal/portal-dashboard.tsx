@@ -206,7 +206,7 @@ export function PortalDashboard({ data, fleets = [], claimedVehicles = [], catal
           {/* Fleet report: per-vehicle jobs + spend */}
           {f.featureEnabled && f.vehicles.length > 0 && (
             <Card className="mt-3"><CardContent className="p-0">
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
                 <thead>
                   <tr className="border-b-2 border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
                     <th className="px-4 py-3">Vehicle</th><th className="px-4 py-3 text-right">Jobs</th>
@@ -223,7 +223,7 @@ export function PortalDashboard({ data, fleets = [], claimedVehicles = [], catal
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             </CardContent></Card>
           )}
         </section>

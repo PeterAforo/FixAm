@@ -37,7 +37,7 @@ async function RiderShell({ children }: { children: ReactNode }) {
 
 export default function RiderLayout({ children }: { children: ReactNode }) {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+    <Suspense fallback={<div className="min-h-dvh bg-background" />}>
       <RiderShell>{children}</RiderShell>
     </Suspense>
   )

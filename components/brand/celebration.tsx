@@ -1,7 +1,9 @@
 "use client"
 
 import { motion } from "framer-motion"
+import { useRef } from "react"
 import { X } from "lucide-react"
+import { useFocusTrap } from "@/lib/use-focus-trap"
 import { fireConfetti } from "./confetti"
 import { Torq } from "./torq"
 import type { TorqPose } from "./torq"
@@ -25,6 +27,8 @@ export function Celebration({
   action?: React.ReactNode
   onClose?: () => void
 }) {
+  const panelRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(panelRef, onClose)
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -38,7 +42,9 @@ export function Celebration({
         initial={{ scale: 0.5, opacity: 0, rotate: -6 }}
         animate={{ scale: 1, opacity: 1, rotate: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
-        className="relative w-full max-w-sm rounded-3xl border border-border bg-card p-8 text-center shadow-4"
+        ref={panelRef}
+        tabIndex={-1}
+        className="relative max-h-[calc(100dvh-3rem)] w-full max-w-sm overflow-y-auto rounded-3xl border border-border bg-card p-8 text-center shadow-4 outline-none"
       >
         {onClose ? (
           <button

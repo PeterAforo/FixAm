@@ -110,7 +110,7 @@ const TOPICS: (HelpTopic & { icon: typeof Rocket })[] = [
 export default function SupportPage() {
   const wa = whatsappLink("Hi FixAm support, I need help with…")
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <PageHero
         image={photos.mechanicEngine}
         active="Support"

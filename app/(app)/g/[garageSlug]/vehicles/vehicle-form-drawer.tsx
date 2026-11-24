@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { X } from "lucide-react"
 import { Button } from "@/components/brand/button"
 import { createVehicle, updateVehicle } from "@/lib/vehicles/actions"
+import { useFocusTrap } from "@/lib/use-focus-trap"
 
 export type VehicleFormValues = {
   id?: string
@@ -78,6 +79,8 @@ export function VehicleFormDrawer({
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [duplicate, setDuplicate] = useState<{ id: string; plate: string } | null>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(panelRef, onClose, open)
 
   const [prevOpen, setPrevOpen] = useState(open)
   if (open !== prevOpen) {
@@ -142,7 +145,7 @@ export function VehicleFormDrawer({
       {open && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/40" role="dialog" aria-modal="true" aria-label={initial ? "Edit vehicle" : "New vehicle"}>
           <button className="absolute inset-0 cursor-default" aria-label="Close" onClick={onClose} />
-          <div className="relative flex h-full w-full max-w-md flex-col border-l border-border bg-surface shadow-1">
+          <div ref={panelRef} tabIndex={-1} className="relative flex h-full w-full max-w-md flex-col border-l border-border bg-surface shadow-1 outline-none">
             <header className="flex items-center justify-between border-b border-border px-5 py-4">
               <h2 className="font-display text-xl font-semibold">{initial ? "Edit vehicle" : "New vehicle"}</h2>
               <button onClick={onClose} className="rounded-lg p-2 hover:bg-surface-muted" aria-label="Close">

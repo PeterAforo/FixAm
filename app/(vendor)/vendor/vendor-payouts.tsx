@@ -121,7 +121,7 @@ export function VendorPayouts({ view, isOwner }: { view: VendorPayoutsView | nul
           {view.rows.length === 0 ? (
             <p className="p-6 text-center text-sm text-muted-foreground">No payouts yet.</p>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
               <thead className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr><th className="px-4 py-2">Date</th><th className="px-4 py-2">Amount</th><th className="px-4 py-2">To</th><th className="px-4 py-2">Status</th></tr>
               </thead>
@@ -141,7 +141,7 @@ export function VendorPayouts({ view, isOwner }: { view: VendorPayoutsView | nul
                   )
                 })}
               </tbody>
-            </table>
+            </table></div>
           )}
         </CardContent>
       </Card>

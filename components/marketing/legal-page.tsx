@@ -22,7 +22,7 @@ export function LegalPage({
   sections: LegalSection[]
 }) {
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <PageHero eyebrow="Legal" title={title} subtitle={intro} />
       <div className="mx-auto grid max-w-[1200px] gap-12 px-6 py-16 md:px-8 lg:grid-cols-[240px_minmax(0,1fr)]">
         <nav aria-label="On this page" className="hidden lg:block">

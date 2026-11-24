@@ -122,7 +122,7 @@ export function PortalLogin() {
   }
 
   return (
-    <main className="flex min-h-screen flex-wrap bg-card text-foreground">
+    <main className="flex min-h-dvh flex-wrap bg-card text-foreground">
       {/* Visual side */}
       <aside className="relative hidden min-w-0 flex-[1_1_520px] flex-col justify-between gap-10 overflow-hidden bg-[#F6EFE6] p-12 lg:flex">
         <div aria-hidden className="absolute left-1/2 top-1/2 size-[760px] -translate-x-1/2 -translate-y-[45%] bg-[radial-gradient(50%_50%_at_50%_50%,rgba(255,122,61,0.30)_0%,rgba(255,122,61,0)_100%)]" />

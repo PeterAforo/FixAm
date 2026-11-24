@@ -10,7 +10,7 @@ async function BookingView({ params }: { params: Promise<{ garageSlug: string }>
 
   if (!info) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background p-8">
+      <main className="flex min-h-dvh items-center justify-center bg-background p-8">
         <div className="max-w-sm text-center">
           <h1 className="font-display text-2xl font-bold">Garage not found</h1>
           <p className="mt-2 text-sm text-muted-foreground">This booking page doesn&rsquo;t exist or the garage isn&rsquo;t taking bookings.</p>
@@ -22,7 +22,7 @@ async function BookingView({ params }: { params: Promise<{ garageSlug: string }>
   const accent = info.garageBrandColor ?? "var(--color-primary)"
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-dvh bg-background">
       <div className="mx-auto max-w-lg px-4 py-8">
         <header className="mb-6 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
           <div className="h-2" style={{ background: `linear-gradient(90deg, ${accent}, var(--color-primary))` }} />
@@ -67,7 +67,7 @@ async function BookingView({ params }: { params: Promise<{ garageSlug: string }>
 
 export default function PublicBookingPage({ params }: { params: Promise<{ garageSlug: string }> }) {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" /></div>}>
+    <Suspense fallback={<div className="flex min-h-dvh items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-foreground" /></div>}>
       <BookingView params={params} />
     </Suspense>
   )

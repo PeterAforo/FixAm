@@ -24,7 +24,7 @@ async function Content({ params }: { params: Promise<{ token: string }> }) {
 
 export default function SeasonalOptOutPage({ params }: { params: Promise<{ token: string }> }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-6">
+    <main className="flex min-h-dvh items-center justify-center bg-background p-6">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-sm">
         <Suspense fallback={<div className="h-40 animate-pulse rounded-xl bg-muted" />}>
           <Content params={params} />

@@ -213,7 +213,7 @@ const FAQ = [
 
 export default function PricingPage() {
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-dvh bg-background text-foreground">
       <SiteHeader active="Pricing" />
 
       <section className="mx-auto max-w-[1200px] px-6 pt-20 text-center md:px-8 md:pt-[88px]">
