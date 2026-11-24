@@ -112,7 +112,8 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
   (`/signup/garage`, `/onboarding/garage`). The "come back to" path lives in
   the `fixam_next` cookie (30 min, httpOnly), set by `proxy.ts` and cleared when
   the user reaches it. `postLoginDestination(next?)` resolves: explicit next →
-  cookie → last-used workspace → only workspace → `/account` → `/onboarding`.
+  cookie → saved default → last-used workspace → highest-ranked workspace →
+  `/onboarding` (no picker since 24 Nov 2026 — see "Landing workspace" below).
 - **Sign-up ≠ sign-in visually.** `/login` is a classic split (form left, photo
   right). `/signup/<role>` uses `OnboardingFrame` so creating the account reads
   as step 1 of that role's setup.
@@ -227,9 +228,9 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
 ## Shared staff & invites for non-garage workspaces (24 Nov 2026)
 
 - **One invites table for vendor/broker/tow.** `workspace_invites` mirrors the garage `memberships` invite pattern (hashed token, contact match, auto-accept on sign-in) but keyed by `(kind, workspace_id)` since those workspaces have separate member tables. Garages keep their existing flow.
-- **Member `status` column = the off switch.** `active|paused` on all three member tables; every membership lookup filters on it so pause/remove bites on the next request � same guarantee as suspended garages.
+- **Member `status` column = the off switch.** `active|paused` on all three member tables; every membership lookup filters on it so pause/remove bites on the next request — same guarantee as suspended garages.
 - **Owner is never invitable.** Ownership transfer will be a dedicated fresh-code flow; until then the last active owner can't be demoted, paused or removed.
-- **Vendor keeps `vendor_owner`; new staff roles are `vendor_*`.** Existing `vendor_owner`/`vendor_staff` permission grants keep working � new roles map to staff-level `can()` grants in roles-permissions.json.
+- **Vendor keeps `vendor_owner`; new staff roles are `vendor_*`.** Existing `vendor_owner`/`vendor_staff` permission grants keep working — new roles map to staff-level `can()` grants in roles-permissions.json.
 
 ## Landing workspace and grouped sidebar (24 Nov 2026)
 
