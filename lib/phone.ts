@@ -23,3 +23,9 @@ export function normalizeGhPhone(input: string): string | null {
 export function isValidGhPhone(input: string): boolean {
   return normalizeGhPhone(input) !== null
 }
+
+/** "+233200000001" → "+233 20 000 0001" for display. Other input is returned unchanged. */
+export function formatGhPhone(e164: string): string {
+  const m = /^\+233(\d{2})(\d{3})(\d{4})$/.exec(e164)
+  return m ? `+233 ${m[1]} ${m[2]} ${m[3]}` : e164
+}

@@ -18,12 +18,7 @@ export async function AdminAiUsageSection() {
   ])
   const pct = (v: number | null) => (v == null ? "—" : `${Math.round(v * 100)}%`)
   return (
-    <section className="mt-10">
-      <h2 className="font-display text-xl font-bold">AI usage · last 30 days</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Claude and Khaya calls per garage. &ldquo;Drivers &amp; platform&rdquo; covers signed-out drivers, WhatsApp and admin tools. Prompts and
-        transcripts are never stored — only counts and cost.
-      </p>
+    <section className="mt-6">
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Calls" value={totals.calls.toLocaleString()} />
         <Stat label="Errors" value={totals.errors.toLocaleString()} />

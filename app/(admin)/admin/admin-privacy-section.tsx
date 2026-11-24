@@ -19,9 +19,7 @@ export async function AdminPrivacySection() {
   const requests = await adminListPrivacyRequests()
 
   return (
-    <section className="mt-10">
-      <h2 className="font-display text-xl font-bold">Privacy requests</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Data export &amp; deletion requests under Act 843.</p>
+    <section className="mt-6">
       <AdminPrivacyPanel requests={requests.ok ? requests.data : []} />
     </section>
   )

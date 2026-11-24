@@ -169,6 +169,9 @@ export async function acceptInvite(token: string): Promise<ActionResult<{ garage
     .limit(1)
 
   if (!row) return { ok: false, error: { code: "NOT_FOUND", message: "Invite not found or already used" } }
+  if (row.g.status === "suspended") {
+    return { ok: false, error: { code: "FORBIDDEN", message: "This garage is suspended on FixAm. Ask the owner to contact FixAm support." } }
+  }
 
   // Bind to this user if the invite contact matches the user's email/phone
   const me = await db().select().from(users).where(eq(users.id, userId)).limit(1)

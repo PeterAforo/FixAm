@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { isValidGhPhone, normalizeGhPhone } from "./phone"
+import { formatGhPhone, isValidGhPhone, normalizeGhPhone } from "./phone"
 
 describe("normalizeGhPhone", () => {
   it("normalises local numbers to +233", () => {
@@ -23,5 +23,14 @@ describe("normalizeGhPhone", () => {
     expect(normalizeGhPhone("12345")).toBeNull()
     expect(normalizeGhPhone("+15551234567")).toBeNull()
     expect(isValidGhPhone("abc")).toBe(false)
+  })
+})
+
+describe("formatGhPhone", () => {
+  it("spaces a Ghana number for display", () => {
+    expect(formatGhPhone("+233200000001")).toBe("+233 20 000 0001")
+  })
+  it("leaves anything else alone", () => {
+    expect(formatGhPhone("+15551234567")).toBe("+15551234567")
   })
 })

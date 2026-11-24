@@ -9,11 +9,14 @@ import {
   Car,
   ChevronDown,
   ClipboardList,
+  FileText,
   Gauge,
+  House,
   Inbox,
   LogOut,
   Package,
   Scale,
+  Search,
   CalendarClock,
   Settings,
   Siren,
@@ -52,6 +55,9 @@ const ICONS: Record<string, LucideIcon> = {
   wrench: Wrench,
   user: UserRound,
   bell: Bell,
+  home: House,
+  fileText: FileText,
+  search: Search,
 }
 
 export type ShellNavItem = { label: string; href: string; icon: keyof typeof ICONS; exact?: boolean; badge?: number }
@@ -72,7 +78,7 @@ export function WorkspaceShell({
   currentKey: string
   nav: ShellNavItem[]
   user: { name: string; detail: string }
-  cta?: { label: string; href: string }
+  cta?: { label: string; href: string; tone?: "primary" | "danger" }
   children: ReactNode
 }) {
   const pathname = usePathname()
@@ -103,8 +109,14 @@ export function WorkspaceShell({
           {cta && (
             <Link
               href={cta.href}
-              className="mt-3 flex h-10 items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-primary-foreground shadow-glow-primary transition-colors hover:bg-primary-hover"
+              className={cn(
+                "mt-3 flex h-10 items-center justify-center gap-2 rounded-full text-sm font-semibold transition-colors",
+                cta.tone === "danger"
+                  ? "bg-danger text-danger-foreground hover:bg-danger/90"
+                  : "bg-primary text-primary-foreground shadow-glow-primary hover:bg-primary-hover"
+              )}
             >
+              {cta.tone === "danger" && <Siren className="size-4" />}
               {cta.label}
             </Link>
           )}
@@ -144,9 +156,19 @@ export function WorkspaceShell({
               <WorkspaceSwitcher workspaces={workspaces} currentKey={currentKey} className="max-w-[260px]" />
             </div>
             <nav aria-label="Breadcrumb" className="hidden items-center gap-2 text-sm md:flex">
-              <span className="truncate text-muted-foreground">{current?.name ?? "FixAm"}</span>
-              <span className="text-border-strong" aria-hidden>/</span>
-              <span className="truncate font-semibold text-foreground">{active?.label ?? "Overview"}</span>
+              {(() => {
+                const ws = current?.name ?? "FixAm"
+                const page = active?.label ?? "Overview"
+                // "My cars / Home" reads oddly on a workspace's home page — show just the workspace there.
+                if (active?.exact || page === ws) return <span className="truncate font-semibold text-foreground">{ws}</span>
+                return (
+                  <>
+                    <span className="truncate text-muted-foreground">{ws}</span>
+                    <span className="text-border-strong" aria-hidden>/</span>
+                    <span className="truncate font-semibold text-foreground">{page}</span>
+                  </>
+                )
+              })()}
             </nav>
           </div>
           <ThemeToggle />

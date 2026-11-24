@@ -1,8 +1,8 @@
 import "server-only"
 import { z } from "zod"
-import { and, eq } from "drizzle-orm"
+import { and, eq, ne } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { memberships, auditLogs } from "@/lib/db/schema"
+import { memberships, auditLogs, garages } from "@/lib/db/schema"
 import { can, type Permission, type Principal } from "@/lib/auth/permissions"
 
 /**
@@ -65,18 +65,22 @@ export async function resolveMembership(
     } as MembershipRow
   }
 
+  // A suspended garage locks out all of its staff (platform-admin
+  // impersonation above still works, so the FixAm team can help).
   const rows = await db()
-    .select()
+    .select({ m: memberships })
     .from(memberships)
+    .innerJoin(garages, eq(garages.id, memberships.garageId))
     .where(
       and(
         eq(memberships.userId, userId),
         eq(memberships.garageId, garageId),
-        eq(memberships.status, "active")
+        eq(memberships.status, "active"),
+        ne(garages.status, "suspended")
       )
     )
     .limit(1)
-  return rows[0] ?? null
+  return rows[0]?.m ?? null
 }
 
 export async function resolvePrincipal(

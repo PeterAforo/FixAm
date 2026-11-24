@@ -606,12 +606,13 @@
       "audience": "customer",
       "task": "P4-07",
       "content": [
-        "Uses the shared FixAm account (no separate portal login); WorkspaceShell with My cars / Renewals / Profile",
-        "Vehicle health cards carousel",
-        "Things due soon",
-        "Active jobs with tracker",
-        "Balances and pay",
-        "Shop parts for my car (P3-07)"
+        "Uses the shared FixAm account (no separate portal login); WorkspaceShell nav: Home, Repairs, Parts & orders, Renewals, Claims, Car inspections, Pay later, Price check, Profile & notifications; sidebar CTA = red Breakdown SOS",
+        "Greeting + red 'Breakdown? Get help now' button (also reachable on mobile)",
+        "Setup card for new drivers (add car → choose garage → pick reminders) until a car and a garage exist",
+        "Quick actions: Get it fixed, Buy parts, Renew insurance / DVLA, Check a price",
+        "My cars: garage-recorded vehicle health cards + cars the driver added, in one section",
+        "Coming up (due items) and Invoices & payments side by side",
+        "Notification channels and data requests live on /portal/settings, not the home page"
       ]
     },
     {
@@ -620,7 +621,7 @@
       "audience": "customer",
       "task": "P4-07",
       "content": [
-        "Uses the shared FixAm account (no separate portal login); WorkspaceShell with My cars / Renewals / Profile",
+        "Uses the shared FixAm account (no separate portal login); driver WorkspaceShell",
         "History timeline",
         "Documents",
         "Due items",
@@ -649,13 +650,13 @@
       "audience": "platform_admin",
       "task": "P5-02",
       "content": [
-        "Garages list/detail/suspend/impersonate",
-        "Vendors approval queue",
-        "Plans and bundles",
-        "DVLA fee table",
-        "Insurance partners",
-        "Global templates and defaults",
-        "Platform analytics: active garages, MRR, churn, messages, renewals"
+        "Admin layout with its own sidebar: Overview, Garages, Approvals, Payments & payouts, Insurance partners, Parts & DVLA fees, AI usage, Privacy requests (badges = items waiting)",
+        "Overview (/admin): four headline numbers (active garages, MRR with complimentary/trial note, active staff, messages), subscription health bar, 'Needs your attention' queue, latest garages",
+        "/admin/garages: table with search + status filter; 'View as owner' (impersonate) per row; Suspend/Reactivate in a ⋯ menu with confirmation",
+        "/admin/approvals: vendors, brokers & DVLA agents, riders",
+        "/admin/payments: escrow holds, disputes, payouts",
+        "/admin/partners, /admin/catalogue (parts list + DVLA fee table), /admin/ai, /admin/privacy",
+        "Plans and bundles; global templates and defaults (not built yet)"
       ]
     },
     {
@@ -717,9 +718,9 @@
       "audience": "signed-in",
       "task": "ACC-03",
       "content": [
-        "All workspaces as cards",
-        "Add another workspace",
-        "Sign out"
+        "Greeting with first name; account chip (name + formatted phone) and Sign out in the header",
+        "Your workspaces: large cards, last-used first and highlighted with a 'Last used' badge, each with live numbers (admin: active garages / on trial / approvals waiting; garage: open jobs / ready to collect; parts shop: new / in-progress orders; driver: cars, or an 'Add your first car' prompt)",
+        "Add a workspace: smaller tiles with each role's own icon and colour"
       ]
     },
     {

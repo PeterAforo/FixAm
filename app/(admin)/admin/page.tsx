@@ -1,51 +1,31 @@
 import { Suspense } from "react"
-import { AdminVendorsSection } from "./admin-vendors-section"
-import { AdminBrokersSection } from "./admin-brokers-section"
-import { AdminRidersSection } from "./admin-riders-section"
-import { AdminPartsSection } from "./admin-parts-section"
-import { AdminAiUsageSection } from "./admin-ai-usage-section"
-import { AdminEscrowSection } from "./admin-escrow-section"
-import { AdminDvlaFeesSection } from "./admin-dvla-fees-section"
-import { AdminGaragesSection } from "./admin-garages-section"
-import { AdminPartnersSection } from "./admin-partners-section"
-import { AdminPrivacySection } from "./admin-privacy-section"
+import { connection } from "next/server"
+import { adminAnalytics, adminListGarages } from "@/lib/admin/actions"
+import { adminAttention } from "@/lib/admin/overview"
+import { AdminAnalyticsPanel } from "./admin-analytics-panel"
+import { AdminGaragesPanel } from "./admin-garages-panel"
+import { AdminPageHeader } from "./admin-page-header"
+
+async function Overview() {
+  await connection()
+  const [analytics, attention, garages] = await Promise.all([adminAnalytics(), adminAttention(), adminListGarages()])
+  const rows = garages.ok ? garages.data : []
+  const branches = rows.reduce((n, g) => n + Number(g.branchCount ?? 0), 0)
+  const complimentary = rows.filter((g) => g.isComplimentary).length
+  const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Africa/Accra" })
+  return (
+    <>
+      <AdminPageHeader eyebrow={today} title="Platform overview" />
+      <AdminAnalyticsPanel analytics={analytics.ok ? analytics.data : null} attention={attention} branches={branches} complimentary={complimentary} />
+      <AdminGaragesPanel garages={rows} compact />
+    </>
+  )
+}
 
 export default function AdminPage() {
   return (
-    <main className="min-h-screen bg-background p-8">
-      <h1 className="font-display text-3xl font-bold text-foreground">
-        Platform admin
-      </h1>
-      <Suspense fallback={null}>
-        <AdminGaragesSection />
-      </Suspense>
-      <Suspense fallback={null}>
-        <AdminPartnersSection />
-      </Suspense>
-      <Suspense fallback={null}>
-        <AdminPrivacySection />
-      </Suspense>
-      <Suspense fallback={null}>
-        <AdminEscrowSection />
-      </Suspense>
-      <Suspense fallback={null}>
-        <AdminVendorsSection />
-      </Suspense>
-      <Suspense fallback={null}>
-        <AdminBrokersSection />
-      </Suspense>
-      <Suspense fallback={null}>
-        <AdminRidersSection />
-      </Suspense>
-      <Suspense fallback={null}>
-        <AdminPartsSection />
-      </Suspense>
-      <Suspense fallback={null}>
-        <AdminAiUsageSection />
-      </Suspense>
-      <Suspense fallback={null}>
-        <AdminDvlaFeesSection />
-      </Suspense>
-    </main>
+    <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-surface-muted" />}>
+      <Overview />
+    </Suspense>
   )
 }

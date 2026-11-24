@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
 import { cookies } from "next/headers"
@@ -37,6 +38,14 @@ async function ShellLoader({
     .where(eq(garages.slug, garageSlug))
     .limit(1)
   if (!garage) redirect("/onboarding")
+
+  // Suspended garages lock out staff; a platform admin "viewing as owner" still gets in.
+  if (garage.status === "suspended") {
+    const imp = await getImpersonation()
+    if (!(imp && imp.adminId === user.id && imp.garageId === garage.id)) {
+      return <GarageSuspended name={garage.name} />
+    }
+  }
 
   const ctx = await resolvePrincipal(user.id, garage.id)
   if (!ctx) redirect("/onboarding")
@@ -98,6 +107,22 @@ async function ShellLoader({
     >
       {children}
     </AppShell>
+  )
+}
+
+function GarageSuspended({ name }: { name: string }) {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-background p-6">
+      <div className="max-w-md rounded-[22px] border border-border bg-card p-8 text-center">
+        <h1 className="font-display text-2xl font-bold">{name} is suspended</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          FixAm has paused this garage, so staff can&apos;t open it right now. The owner can contact FixAm support to sort it out.
+        </p>
+        <Link href="/account" className="mt-5 inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground">
+          Back to your workspaces
+        </Link>
+      </div>
+    </main>
   )
 }
 

@@ -26,10 +26,20 @@ export type ClaimedVehicle = {
 const inputCls =
   "min-h-10 w-full rounded-lg border-2 border-border bg-surface px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
 
-export function PortalVehiclesCard({ vehicles, catalogue }: { vehicles: ClaimedVehicle[]; catalogue: CatalogueEntry[] }) {
+export function PortalVehiclesCard({
+  vehicles,
+  catalogue,
+  title = "My cars",
+  startOpen = false,
+}: {
+  vehicles: ClaimedVehicle[]
+  catalogue: CatalogueEntry[]
+  title?: string
+  startOpen?: boolean
+}) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(startOpen)
   const [make, setMake] = useState("")
   const [model, setModel] = useState("")
   const [year, setYear] = useState("")
@@ -70,9 +80,9 @@ export function PortalVehiclesCard({ vehicles, catalogue }: { vehicles: ClaimedV
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between">
-        <CardTitle className="text-lg">My vehicles</CardTitle>
+        <CardTitle className="text-lg">{title}</CardTitle>
         <Button size="sm" variant="secondary" onClick={() => setOpen((o) => !o)}>
-          <Plus className="size-4" /> Add vehicle
+          <Plus className="size-4" /> Add a car
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -102,14 +112,14 @@ export function PortalVehiclesCard({ vehicles, catalogue }: { vehicles: ClaimedV
             </label>
             {error && <p className="text-sm font-semibold text-danger sm:col-span-2">{error}</p>}
             <div className="sm:col-span-2">
-              <Button type="submit" size="sm" disabled={pending}>{pending ? "Saving…" : "Save vehicle"}</Button>
+              <Button type="submit" size="sm" disabled={pending}>{pending ? "Saving…" : "Save car"}</Button>
             </div>
           </form>
         )}
 
         {vehicles.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No vehicles yet. Add your car so garages can recognise it when you visit or book.
+            Add the plate and model so garages recognise your car when you visit or book.
           </p>
         ) : (
           <ul className="divide-y divide-border">

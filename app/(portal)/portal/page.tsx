@@ -25,6 +25,7 @@ async function PortalContent() {
   return (
     <PortalDashboard
       phone={phone}
+      name={profile.fullName}
       data={data}
       fleets={fleets}
       claimedVehicles={claimedVehicles.map((v) => ({

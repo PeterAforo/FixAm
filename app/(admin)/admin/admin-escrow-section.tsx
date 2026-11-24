@@ -7,11 +7,7 @@ export async function AdminEscrowSection() {
   const view = await adminEscrowView()
   if (!view) return null
   return (
-    <section className="mt-10">
-      <h2 className="font-display text-xl font-bold">Payments held &amp; payouts</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Buyer money FixAm is holding, open disputes, and payouts that need a hand. Every action is recorded in the ledger and audit log.
-      </p>
+    <section className="mt-6">
       <AdminEscrowPanel view={view} />
     </section>
   )

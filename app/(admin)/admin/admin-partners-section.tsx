@@ -19,9 +19,7 @@ export async function AdminPartnersSection() {
   const partners = await adminListInsurancePartners()
 
   return (
-    <section className="mt-10">
-      <h2 className="font-display text-xl font-bold">Insurance partners</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Agencies garages can use for agent renewals.</p>
+    <section className="mt-6">
       <AdminPartnersPanel partners={partners.ok ? partners.data : []} />
     </section>
   )

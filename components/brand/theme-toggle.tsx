@@ -33,10 +33,10 @@ export function ThemeToggle() {
       variant="ghost"
       size="sm"
       aria-label={`Theme: ${meta.label} — switch to ${META[meta.next].label}`}
+      title={mounted ? `${meta.label} theme — switch to ${META[meta.next].label}` : "Change theme"}
       onClick={() => setTheme(meta.next)}
     >
       {mounted ? <Icon /> : <SunDim />}
-      <span className="hidden sm:inline">{mounted ? meta.label : "Theme"}</span>
     </Button>
   )
 }

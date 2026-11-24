@@ -2,6 +2,7 @@ import "server-only"
 import { cookies } from "next/headers"
 import { and, desc, eq, isNull, ne } from "drizzle-orm"
 import { db } from "@/lib/db"
+import { formatGhPhone } from "@/lib/phone"
 import {
   brokerMembers,
   brokers,
@@ -51,7 +52,7 @@ export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
 
   const [garageRows, vendorRows, brokerRows, driverProfile, driverCustomer, towRows, riderRows] = await Promise.all([
     db()
-      .select({ slug: garages.slug, name: garages.name, city: garages.city, role: memberships.role })
+      .select({ slug: garages.slug, name: garages.name, city: garages.city, role: memberships.role, status: garages.status })
       .from(memberships)
       .innerJoin(garages, eq(memberships.garageId, garages.id))
       .where(
@@ -108,7 +109,7 @@ export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
       key: `garage:${g.slug}`,
       type: "garage",
       name: g.name,
-      subtitle: `${String(g.role).replace(/_/g, " ")}${g.city ? ` · ${g.city}` : ""}`,
+      subtitle: g.status === "suspended" ? "Suspended by FixAm" : `${String(g.role).replace(/_/g, " ")}${g.city ? ` · ${g.city}` : ""}`,
       href: `/g/${g.slug}`,
     })
   }
@@ -148,7 +149,7 @@ export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
       key: "driver",
       type: "driver",
       name: "My cars",
-      subtitle: me?.phone ?? "Driver",
+      subtitle: me?.phone ? formatGhPhone(me.phone) : "Driver",
       href: "/portal",
     })
   }
