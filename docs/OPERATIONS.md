@@ -66,9 +66,11 @@ Run quarterly and after any major migration.
 
 ## Incident playbooks
 
-- **Paystack webhook failures**: check `webhook_events` table for unprocessed
-  rows (`processed_at is null`, `error is not null`); replay by re-POSTing the
-  payload to `/api/webhooks/paystack`.
+- **Payment reconcile failures**: theTeller has no webhooks — settlement
+  relies on the customer return redirect plus the Inngest
+  `reconcileReference` sweep. Check `payments`/`vendor_orders`/
+  `subscriptions` rows stuck in `pending` and the Inngest dashboard for
+  failed runs; `pendingPaymentReference` columns hold in-flight checkouts.
 - **Messaging outage**: messages fall back WhatsApp → SMS inside
   `lib/messaging/send.ts`; check `message_logs` for `failed` rows and the
   provider dashboards (Arkesel/WhatsApp Business).

@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import { connection } from "next/server"
 import { notFound } from "next/navigation"
-import { getPublicReceipt } from "@/lib/money/paystack-webhook"
+import { getPublicReceipt } from "@/lib/money/payment-settle"
 import { formatGHS } from "@/lib/money"
 
 const METHOD_LABEL: Record<string, string> = {

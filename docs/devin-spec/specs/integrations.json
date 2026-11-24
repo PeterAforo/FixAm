@@ -47,34 +47,21 @@
       "implementation": {
         "options": [
           "theteller",
-          "paystack",
           "mock"
-        ]
+        ],
+        "note": "Paystack was removed — no account, dead webhook route deleted. theTeller has no webhooks: settlement arrives via the customer return redirect (/api/payments/return/[reference]/[to]) plus the Inngest reconcileReference sweep over pending references."
       },
       "interface": {
-        "initializeCardOrMomoCheckout({ amountPesewas, email?, phone, reference, metadata, subaccount?, splitCode? }) -> { authorizationUrl, reference }": "Hosted checkout supporting card and mobile money",
-        "chargeMobileMoney({ amountPesewas, phone, network: 'mtn'|'telecel'|'airteltigo', reference, metadata }) -> { status, displayText }": "Direct MoMo prompt to the customer's phone",
+        "initializeCheckout({ amountPesewas, phone?, reference, description, returnPath, metadata? }) -> { authorizationUrl, reference }": "Hosted MoMo/card checkout",
+        "chargeMobileMoney({ amountPesewas, phone, network: 'mtn'|'telecel'|'airteltigo', reference }) -> { status, displayText }": "Direct MoMo prompt to the customer's phone",
         "verify(reference) -> { status, amountPesewas, channel, paidAt }": "Always verify server-side before marking paid",
         "refund({ reference, amountPesewas }) -> { refundId, status }": "",
-        "createSubaccount({ businessName, settlementBank|momo, accountNumber, percentageCharge }) -> { subaccountCode }": "For vendors (and optionally garages)",
-        "createSubscription({ customerEmail|code, planCode }) -> { subscriptionCode }": "Garage SaaS billing",
-        "parseWebhook(req) -> event": "Verify x-paystack-signature (HMAC SHA512 of raw body with secret key)"
+        "transferMomo/transferBank({ transactionId, amountPesewas, ... }) -> PayoutResult": "Payouts via payoutProvider()"
       },
       "webhook": {
-        "route": "/api/webhooks/paystack",
-        "events_handled": [
-          "charge.success",
-          "charge.failed",
-          "refund.processed",
-          "refund.failed",
-          "subscription.create",
-          "subscription.disable",
-          "invoice.payment_failed",
-          "invoice.update",
-          "transfer.success",
-          "transfer.failed"
-        ],
-        "idempotency": "Insert into webhook_events (provider, event_id) first; skip if exists."
+        "route": null,
+        "events_handled": [],
+        "idempotency": "Reconciliation is idempotent by reference: each payments/vendor_orders/subscriptions row is settled once; replays find terminal status and return early."
       },
       "reference_format": "{doc_type}_{garageShort}_{uuidv7} e.g. inv_ab12_01HX...",
       "currency": "GHS",

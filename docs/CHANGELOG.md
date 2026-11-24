@@ -2,6 +2,19 @@
 
 ## Unreleased — subscriptions for every workspace (in progress)
 
+### Paystack cleanup + subscription reconcile tests
+- Deleted the dead `/api/webhooks/paystack` route and
+  `verifyPaystackSignature`; `lib/money/paystack-webhook.ts` is now
+  `lib/money/payment-settle.ts` (`handlePaymentSettled`, provider-neutral).
+  Legacy `paystack_*` column names remain as storage identifiers.
+- Fixed a reconcile idempotency gap: once a subscription payment succeeded,
+  `pending_payment_reference` was cleared so `reconcileSubscriptionPayment`
+  returned "unknown" on replay. It now also matches the stored last-payment
+  reference (`last_payment_reference` / `paystack_subscription_code`).
+- New DB-backed test `tests/db/subscription-reconcile.test.ts` drives the
+  mock gateway pending → success for both garage and account subscriptions
+  (skips without DATABASE_URL or when a real provider is configured).
+
 ### Subscription creation is now transactional; plan changes bill
 - Vendor, broker, tow-operator, rider and driver signups now create the
   workspace row(s) and the trial `account_subscriptions` row inside one

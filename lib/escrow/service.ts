@@ -508,8 +508,8 @@ export async function reconcileReference(reference: string): Promise<ReconcileSt
     if (p.status === "failed") return "failed"
     const v = await paymentProvider().verify(reference)
     if (v.status === "pending") return "pending"
-    const { handlePaystackEvent } = await import("@/lib/money/paystack-webhook")
-    await handlePaystackEvent({ event: v.status === "success" ? "charge.success" : "charge.failed", data: { reference } })
+    const { handlePaymentSettled } = await import("@/lib/money/payment-settle")
+    await handlePaymentSettled({ event: v.status === "success" ? "charge.success" : "charge.failed", data: { reference } })
     return v.status
   }
 
@@ -610,10 +610,13 @@ export async function reconcileSubscriptionPayment(reference: string): Promise<R
   const now = new Date()
   const periodEnd = new Date(now.getTime() + 30 * 86_400_000)
 
+  // Match settled references too (pending_payment_reference is cleared on
+  // success; garage subs keep the reference in paystack_subscription_code,
+  // account subs in last_payment_reference) so replays stay idempotent.
   const [gSub] = await db()
     .select({ id: subscriptions.id, status: subscriptions.status })
     .from(subscriptions)
-    .where(eq(subscriptions.pendingPaymentReference, reference))
+    .where(or(eq(subscriptions.pendingPaymentReference, reference), eq(subscriptions.paystackSubscriptionCode, reference)))
     .limit(1)
   if (gSub) {
     if (gSub.status === "active") return "success"
@@ -642,7 +645,7 @@ export async function reconcileSubscriptionPayment(reference: string): Promise<R
   const [aSub] = await db()
     .select({ id: accountSubscriptions.id, status: accountSubscriptions.status })
     .from(accountSubscriptions)
-    .where(eq(accountSubscriptions.pendingPaymentReference, reference))
+    .where(or(eq(accountSubscriptions.pendingPaymentReference, reference), eq(accountSubscriptions.lastPaymentReference, reference)))
     .limit(1)
   if (!aSub) return "unknown"
   if (aSub.status === "active") return "success"

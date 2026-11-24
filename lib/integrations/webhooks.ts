@@ -21,16 +21,6 @@ export function safeEqualHex(a: string, b: string): boolean {
   }
 }
 
-/** Paystack: x-paystack-signature = HMAC-SHA512(raw body, secret key). */
-export function verifyPaystackSignature(
-  rawBody: string,
-  signature: string | null,
-  secretKey: string | undefined
-): boolean {
-  if (!signature || !secretKey) return false
-  return safeEqualHex(hmacSha512Hex(secretKey, rawBody), signature)
-}
-
 /** Meta WhatsApp: X-Hub-Signature-256 = "sha256=" + HMAC-SHA256(raw body, app secret). */
 export function verifyWhatsAppSignature(
   rawBody: string,

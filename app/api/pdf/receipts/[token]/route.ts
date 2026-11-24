@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getPublicReceipt } from "@/lib/money/paystack-webhook"
+import { getPublicReceipt } from "@/lib/money/payment-settle"
 import { renderReceiptPdf } from "@/lib/pdf/receipts"
 
 /** GET /api/pdf/receipts/[token] — token-gated public receipt PDF. */

@@ -162,10 +162,12 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
 ## P8-21 — launch readiness notes
 
 - **theTeller has no webhooks.** Settlement relies on the customer return
-  redirect (`/payments/return/[reference]/[to]`) plus the Inngest
+  redirect (`/api/payments/return/[reference]/[to]`) plus the Inngest
   `reconcileReference` sweep. The legacy `/api/webhooks/paystack` route and
-  `lib/money/paystack-webhook.ts` remain for the mock provider path but are
-  dead code once `PAYMENT_PROVIDER=theteller`; remove in a cleanup pass.
+  `verifyPaystackSignature` were removed (Nov 2026 cleanup); settlement
+  lives in `lib/money/payment-settle.ts` (`handlePaymentSettled`). Legacy
+  `paystack_*` column names remain as storage identifiers — they hold
+  theTeller/mock references now.
 - **Production env gate.** `lib/env.ts` runs from `instrumentation.ts` and
   throws at startup when required vars (core + theTeller creds when
   `PAYMENT_PROVIDER=theteller`) are missing — a misconfigured deploy fails

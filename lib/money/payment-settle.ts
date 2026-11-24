@@ -10,11 +10,13 @@ import { sendPaymentReceipt } from "./payments"
 import { writeAuditLog } from "@/lib/actions"
 
 /**
- * Paystack webhook domain handler. The route dedupes by webhook_events;
- * this settles the payment exactly once — replayed charge.success events
- * find status="succeeded" and return early.
+ * Payment settlement for gateway references (theTeller/mock today; the
+ * legacy Paystack webhook route was removed — theTeller has no webhooks,
+ * settlement arrives via the return redirect + Inngest reconcile sweep).
+ * `reconcileReference` calls this with a synthetic charge.success/failed
+ * event; replays find status="succeeded" and return early.
  */
-export async function handlePaystackEvent(event: {
+export async function handlePaymentSettled(event: {
   event?: string
   data?: { reference?: string; amount?: number; currency?: string }
 }) {
@@ -101,7 +103,7 @@ export async function handlePaystackEvent(event: {
   await sendPaymentReceipt(p.id).catch(() => undefined)
 
   // theTeller (and the mock) collect into FixAm's account — pass the money on to the garage.
-  if (paymentProvider().name !== "paystack") {
+  {
     const { queueGarageSettlement } = await import("@/lib/escrow/service")
     await queueGarageSettlement({
       garageId: p.garageId,

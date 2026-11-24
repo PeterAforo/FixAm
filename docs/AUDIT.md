@@ -87,7 +87,7 @@ The codebase is large and genuinely full-stack: **113 page routes, 12 API routes
 | MEDIUM | `pnpm audit`: 4 moderate vulns via `@sentry/nextjs`/`inngest` → `glob`/`minimatch` | transitive deps |
 | MEDIUM | No recurring billing — subscriptions require manual payment each period; churn risk | `lib/billing/*` |
 | MEDIUM | `changePlan` (garage) changes plan without charging | `lib/billing/actions.ts` |
-| MEDIUM | Dead Paystack webhook/plan-code paths still in codebase | `app/api/webhooks/paystack`, schema `paystackPlanCode` |
+| ~~MEDIUM~~ FIXED | Paystack webhook route deleted; settle logic renamed to `lib/money/payment-settle.ts`; `paystack_*` columns remain as storage names only | — |
 | MEDIUM | Non-garage signup actions aren't transactional — workspace row can persist if subscription insert throws | `lib/vendors|brokers|towing|riders/actions.ts` |
 | LOW | `planCode ?? "pro"` default in `createGarage` silently fails if "pro" deactivated | `lib/onboarding/actions.ts:94` |
 | LOW | Mock messaging now memory-fallback — garage SMS in prod silently no-ops if provider unset | `lib/integrations/messaging/mock.ts` |
