@@ -2,6 +2,17 @@
 
 ## Unreleased — subscriptions for every workspace (in progress)
 
+### Subscription creation is now transactional; plan changes bill
+- Vendor, broker, tow-operator, rider and driver signups now create the
+  workspace row(s) and the trial `account_subscriptions` row inside one
+  `db().transaction` — a subscription failure can no longer orphan a
+  workspace. `createTrialSubscription` accepts an optional transaction
+  executor (`DbOrTx`). Driver signup now also fails loudly when no driver
+  plan is configured instead of silently skipping the subscription.
+- Garage "Change plan" in Settings → billing now sends the owner to
+  theTeller checkout for the new plan's monthly price (complimentary pilot
+  subs skip payment). Previously the plan switched with no charge.
+
 ### Security & reliability fixes from the project audit
 - `drizzle-orm` upgraded 0.44.7 → 0.45.4 (fixes GHSA-gpj5-g38j-94v9, a
   high-severity SQL injection advisory). `pnpm audit --prod` no longer
