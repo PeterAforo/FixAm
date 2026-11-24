@@ -20,7 +20,6 @@ type Method = "phone" | "email"
  */
 export function AuthMethods({ mode, next }: { mode: "signin" | "signup"; next?: string }) {
   const router = useRouter()
-  const supabase = createClient()
   const signup = mode === "signup"
 
   const [method, setMethod] = useState<Method>("phone")
@@ -78,6 +77,9 @@ export function AuthMethods({ mode, next }: { mode: "signin" | "signup"; next?: 
       return setError("Use the Phone number tab to sign in with your phone.")
     }
     setLoading(true)
+    // Created on demand — the Supabase env vars aren't present during
+    // static prerendering (e.g. CI builds) and aren't needed until submit.
+    const supabase = createClient()
     if (!signup) {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
