@@ -81,9 +81,9 @@ The codebase is large and genuinely full-stack: **113 page routes, 12 API routes
 
 | Sev | Finding | Location |
 |---|---|---|
-| **HIGH** | `drizzle-orm@0.44.7` vulnerable to SQL injection (GHSA-gpj5-g38j-94v9), patched ≥0.45.2 | `package.json` |
+| ~~HIGH~~ FIXED | `drizzle-orm` upgraded to 0.45.4 — SQLi advisory resolved | `package.json` |
 | **HIGH** | SMS provider unconfigured in production → phone OTP (primary auth) fails; garage customer SMS also undelivered | Vercel env; `lib/messaging/direct.ts` |
-| **HIGH** | Supabase pooler cold starts exceed statement timeout → intermittent 500s/React #441 on first-hit pages (`/admin`, `/portal/renewals` seen) | `lib/db/index.ts`, `lib/admin/overview.ts` (mitigated for admin only) |
+| ~~HIGH~~ MITIGATED | Supabase pooler cold starts exceed statement timeout → `client.unsafe` now retries once on 57014; `/admin` counts also sequential | `lib/db/index.ts`, `lib/admin/overview.ts` |
 | MEDIUM | `pnpm audit`: 4 moderate vulns via `@sentry/nextjs`/`inngest` → `glob`/`minimatch` | transitive deps |
 | MEDIUM | No recurring billing — subscriptions require manual payment each period; churn risk | `lib/billing/*` |
 | MEDIUM | `changePlan` (garage) changes plan without charging | `lib/billing/actions.ts` |

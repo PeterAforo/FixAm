@@ -35,7 +35,7 @@
     "cn": "^0.5.2",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
-    "drizzle-orm": "^0.44.7",
+    "drizzle-orm": "^0.45.4",
     "framer-motion": "^12.35.2",
     "geist": "^1.9.2",
     "inngest": "^4.26.2",

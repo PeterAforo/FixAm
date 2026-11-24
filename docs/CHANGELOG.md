@@ -2,6 +2,15 @@
 
 ## Unreleased — subscriptions for every workspace (in progress)
 
+### Security & reliability fixes from the project audit
+- `drizzle-orm` upgraded 0.44.7 → 0.45.4 (fixes GHSA-gpj5-g38j-94v9, a
+  high-severity SQL injection advisory). `pnpm audit --prod` no longer
+  reports it; `db:generate` confirms no schema drift.
+- `lib/db/index.ts` now wraps `client.unsafe` so every query retries once
+  after ~600ms on a Postgres statement timeout (57014) — covers the
+  Supabase pooler cold-start timeouts that caused React #441 on
+  first-touch pages, not just `/admin`.
+
 ### Phone sign-in SMS no longer crashes on serverless filesystems
 - The mock messaging provider wrote every "sent" message to
   `.dev-inbox/messages.json`; on Vercel's read-only filesystem that threw,
