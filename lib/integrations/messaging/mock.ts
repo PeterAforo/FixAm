@@ -31,7 +31,9 @@ export type MockMessage = {
 const INBOX_PATH = path.join(process.cwd(), ".dev-inbox", "messages.json")
 const seen = new Set<string>()
 
-async function readInbox(): Promise<MockMessage[]> {
+const memoryInbox: MockMessage[] = []
+
+async function readDisk(): Promise<MockMessage[]> {
   try {
     return JSON.parse(await readFile(INBOX_PATH, "utf8")) as MockMessage[]
   } catch {
@@ -39,11 +41,19 @@ async function readInbox(): Promise<MockMessage[]> {
   }
 }
 
+async function readInbox(): Promise<MockMessage[]> {
+  const seen = new Set<string>()
+  return [...(await readDisk()), ...memoryInbox].filter((m) => (seen.has(m.id) ? false : (seen.add(m.id), true)))
+}
+
 async function appendToInbox(msg: MockMessage) {
-  const inbox = await readInbox()
-  inbox.push(msg)
-  await mkdir(path.dirname(INBOX_PATH), { recursive: true })
-  await writeFile(INBOX_PATH, JSON.stringify(inbox, null, 2))
+  memoryInbox.push(msg)
+  try {
+    await mkdir(path.dirname(INBOX_PATH), { recursive: true })
+    await writeFile(INBOX_PATH, JSON.stringify([...(await readDisk()), msg], null, 2))
+  } catch {
+    // Read-only filesystem (e.g. Vercel) — keep the message in memory only.
+  }
 }
 
 export async function listMockMessages(): Promise<MockMessage[]> {

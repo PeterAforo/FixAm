@@ -46,7 +46,11 @@ async function issueCode(phone: string, purpose: "signin" | "link"): Promise<Act
 
   const sent = await sendDirectSms(phone, "otp", { otp_code: code, garage_name: "FixAm" })
   const isDev = process.env.NODE_ENV !== "production"
-  if (!sent.ok && !isDev) {
+  // In production the mock provider "succeeds" without delivering anything —
+  // treat an unconfigured SMS provider as a failure so nobody waits for a
+  // code that will never arrive.
+  const smsLive = smsIsLive()
+  if ((!sent.ok || !smsLive) && !isDev) {
     return {
       ok: false,
       error: { code: "INTERNAL", message: "We couldn't send the SMS just now. Try again, or sign in with e-mail." },

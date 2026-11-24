@@ -2,6 +2,17 @@
 
 ## Unreleased — subscriptions for every workspace (in progress)
 
+### Phone sign-in SMS no longer crashes on serverless filesystems
+- The mock messaging provider wrote every "sent" message to
+  `.dev-inbox/messages.json`; on Vercel's read-only filesystem that threw,
+  so `sendDirectSms` failed and sign-in showed "We couldn't send the SMS".
+  The mock now keeps an in-memory inbox when the disk write fails.
+- `issueCode` treats an unconfigured SMS provider (`MESSAGING_SMS_PROVIDER`
+  unset/mock) as a failure in production instead of silently "sending" a
+  code nobody receives. Real SMS needs `MESSAGING_SMS_PROVIDER=arkesel`
+  (or `hubtel`) plus `ARKESEL_API_KEY` / `HUBTEL_CLIENT_ID` +
+  `HUBTEL_CLIENT_SECRET` and an approved `SMS_SENDER_ID` in Vercel env.
+
 ### Admin overview survives cold database connections
 - `adminAttention()` (`lib/admin/overview.ts`) ran eight count queries in
   parallel; on a cold serverless instance the Supabase pooler can exceed the
