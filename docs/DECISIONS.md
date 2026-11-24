@@ -223,3 +223,11 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
   separately ("Not on the map yet") rather than guessed from the city.
 - **Hand-off to sign-in uses a path for brokers** (`/portal/renewals/ask/
   <kind>/<ids>`) and the proxy now remembers the query string for the rest.
+
+## Shared staff & invites for non-garage workspaces (24 Nov 2026)
+
+- **One invites table for vendor/broker/tow.** `workspace_invites` mirrors the garage `memberships` invite pattern (hashed token, contact match, auto-accept on sign-in) but keyed by `(kind, workspace_id)` since those workspaces have separate member tables. Garages keep their existing flow.
+- **Member `status` column = the off switch.** `active|paused` on all three member tables; every membership lookup filters on it so pause/remove bites on the next request — same guarantee as suspended garages.
+- **Owner is never invitable.** Ownership transfer will be a dedicated fresh-code flow; until then the last active owner can't be demoted, paused or removed.
+- **Vendor keeps `vendor_owner`; new staff roles are `vendor_*`.** Existing `vendor_owner`/`vendor_staff` permission grants keep working — new roles map to staff-level `can()` grants in roles-permissions.json.
+

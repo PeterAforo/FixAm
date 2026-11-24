@@ -21,6 +21,8 @@ const PLATFORM_TEMPLATES: Record<string, string> = {
     "FixAm: your {{plan}} plan — {{detail}} Choose or change your plan: {{link}}",
   subscription_payment_due:
     "FixAm: {{detail}} Pay to keep your account running: {{link}}",
+  workspace_invite:
+    "FixAm: {{workspace_name}} invited you to join as {{role}}. Open {{action_link}} to accept.",
 }
 
 export function smsIsLive() {

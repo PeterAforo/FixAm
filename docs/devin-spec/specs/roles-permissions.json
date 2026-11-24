@@ -64,6 +64,21 @@
       "principal": "vendor",
       "scope": "own"
     },
+    "vendor_manager": {
+      "label": "Parts Shop Manager",
+      "principal": "vendor",
+      "scope": "own"
+    },
+    "vendor_sales": {
+      "label": "Counter / Sales",
+      "principal": "vendor",
+      "scope": "own"
+    },
+    "vendor_dispatcher": {
+      "label": "Parts Dispatcher",
+      "principal": "vendor",
+      "scope": "own"
+    },
     "broker_owner": {
       "label": "Broker Owner",
       "principal": "broker",
@@ -74,6 +89,11 @@
       "principal": "broker",
       "scope": "own"
     },
+    "broker_accounts": {
+      "label": "Broker Accounts",
+      "principal": "broker",
+      "scope": "own"
+    },
     "tow_operator_owner": {
       "label": "Tow Operator Owner",
       "principal": "tow_operator",
@@ -81,6 +101,11 @@
     },
     "tow_operator_driver": {
       "label": "Tow Truck Driver",
+      "principal": "tow_operator",
+      "scope": "own"
+    },
+    "tow_operator_dispatcher": {
+      "label": "Tow Dispatcher",
       "principal": "tow_operator",
       "scope": "own"
     },
@@ -451,11 +476,16 @@
     ],
     "vendor.catalogue.manage": [
       "vendor_owner",
-      "vendor_staff"
+      "vendor_staff",
+      "vendor_manager",
+      "vendor_sales"
     ],
     "vendor.orders.fulfil": [
       "vendor_owner",
-      "vendor_staff"
+      "vendor_staff",
+      "vendor_manager",
+      "vendor_sales",
+      "vendor_dispatcher"
     ],
     "vendor.payouts.view": [
       "vendor_owner"

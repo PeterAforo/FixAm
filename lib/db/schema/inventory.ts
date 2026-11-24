@@ -173,7 +173,8 @@ export const vendorMembers = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id),
-    role: text("role").notNull(), // vendor_owner|vendor_staff
+    role: text("role").notNull(), // vendor_owner|vendor_manager|vendor_sales|vendor_dispatcher|vendor_staff legacy
+    status: text("status").notNull().default("active"), // active|paused
     ...timestamps,
   },
   (t) => [uniqueIndex("vendor_members_uniq").on(t.vendorId, t.userId)]

@@ -463,6 +463,23 @@
         ]
       ]
     },
+    "workspace_invites": {
+      "tenant": false,
+      "note": "Staff invites for non-garage workspaces (vendor|broker|tow). Garages use memberships.invite_token_hash. Roles per kind in lib/staff/workspace-shared.ts; 7-day expiry.",
+      "columns": {
+        "id": "uuid pk",
+        "kind": "text req (vendor|broker|tow)",
+        "workspace_id": "uuid req",
+        "full_name": "text",
+        "phone": "text (E.164)",
+        "email": "text",
+        "role": "text req",
+        "token_hash": "text req unique",
+        "status": "text req default:'pending' (pending|accepted|cancelled)",
+        "expires_at": "timestamptz req",
+        "invited_by": "uuid fk:users"
+      }
+    },
     "document_sequences": {
       "tenant": true,
       "columns": {
@@ -1013,7 +1030,8 @@
         "id": "uuid pk",
         "vendor_id": "uuid req fk:vendors",
         "user_id": "uuid req fk:users",
-        "role": "text req (vendor_owner|vendor_staff)"
+        "role": "text req (vendor_owner|vendor_manager|vendor_sales|vendor_dispatcher|vendor_staff legacy)",
+        "status": "text req default:'active' (active|paused)"
       }
     },
     "vendor_products": {
@@ -1752,7 +1770,8 @@
         "id": "uuid pk",
         "broker_id": "uuid req fk:brokers (cascade)",
         "user_id": "uuid req fk:users",
-        "role": "text req default:'owner' (owner|agent)",
+        "role": "text req default:'owner' (owner|agent|accounts)",
+        "status": "text req default:'active' (active|paused)",
         "created_at": "timestamptz req default:now()",
         "updated_at": "timestamptz req default:now()"
       },
@@ -2113,7 +2132,8 @@
       "columns": {
         "operator_id": "uuid fk",
         "user_id": "uuid fk",
-        "role": "owner|driver"
+        "role": "owner|dispatcher|driver",
+        "status": "text req default:'active' (active|paused)"
       }
     },
     "sos_requests": {

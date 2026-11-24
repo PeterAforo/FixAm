@@ -33,7 +33,13 @@ export async function resolveVendorMembership(userId: string) {
     .select({ vendor: vendors, role: vendorMembers.role })
     .from(vendorMembers)
     .innerJoin(vendors, eq(vendorMembers.vendorId, vendors.id))
-    .where(and(eq(vendorMembers.userId, userId), isNull(vendors.deletedAt)))
+    .where(
+      and(
+        eq(vendorMembers.userId, userId),
+        eq(vendorMembers.status, "active"),
+        isNull(vendors.deletedAt),
+      ),
+    )
     .limit(1);
   return row ?? null;
 }

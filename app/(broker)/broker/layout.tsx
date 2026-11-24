@@ -29,6 +29,7 @@ async function BrokerShell({ children }: { children: ReactNode }) {
         { label: "Overview", href: "/broker", icon: "gauge", exact: true },
         { label: "Requests", href: "/broker/requests", icon: "inbox", badge: Number(row?.n ?? 0) || undefined },
         { label: "Claims", href: "/broker/claims", icon: "shield" },
+        { label: "Staff", href: "/broker/staff", icon: "users" },
         { label: "Settings", href: "/broker/settings", icon: "settings" },
       ]}
     >

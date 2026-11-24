@@ -17,7 +17,10 @@ async function VendorShell({ children }: { children: ReactNode }) {
       workspaces={ctx.workspaces}
       currentKey={`vendor:${m.vendor.id}`}
       user={ctx.user}
-      nav={[{ label: "My shop", href: "/vendor", icon: "store", exact: true }]}
+      nav={[
+        { label: "My shop", href: "/vendor", icon: "store", exact: true },
+        { label: "Staff", href: "/vendor/staff", icon: "users" },
+      ]}
     >
       <SubscriptionGate owner={{ kind: "vendor", ownerId: m.vendor.id }}>{children}</SubscriptionGate>
     </WorkspaceShell>

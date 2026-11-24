@@ -26,6 +26,7 @@ async function TowShell({ children }: { children: ReactNode }) {
       user={ctx.user}
       nav={[
         { label: "Jobs", href: "/tow", icon: "truck", exact: true, badge: Number(row?.n ?? 0) || undefined },
+        { label: "Staff", href: "/tow/staff", icon: "users" },
         { label: "Settings", href: "/tow/settings", icon: "settings" },
       ]}
     >

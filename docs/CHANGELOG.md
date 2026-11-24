@@ -1,5 +1,35 @@
 # Changelog
 
+## Unreleased — shared staff & invites for all workspaces (in progress)
+
+### Staff management for parts sellers, brokers & tow companies
+- New `workspace_invites` table (migration 0038): one invites flow for
+  vendor, broker and tow workspaces — 7-day expiry, SMS link via
+  `sendDirectSms`, resend/cancel, auto-accept on sign-in when the
+  invitee's phone/email matches (same pattern as garage invites).
+- `vendor_members`, `broker_members` and `tow_operator_members` gained a
+  `status` column (`active|paused`); all membership lookups and the
+  workspace switcher now filter on it, so pausing/removing a member cuts
+  access on their next action.
+- New role vocabularies (owner never invitable — ownership transfer is a
+  separate, upcoming flow):
+  - Parts seller: `vendor_manager`, `vendor_sales`, `vendor_dispatcher`
+    (owner stays `vendor_owner`; legacy `vendor_staff` still maps to
+    staff-level permissions)
+  - Broker / DVLA: `agent`, `accounts` (owner `owner`)
+  - Tow: `dispatcher`, `driver` (owner `owner`)
+- New Staff screens at `/vendor/staff`, `/broker/staff`, `/tow/staff`
+  (shared `WorkspaceStaffSection`/`WorkspaceStaffPanel`): invite by
+  phone+role, member list with role change / pause / remove, pending
+  invites with resend/cancel. Owner-only management; plan `max_staff`
+  limit enforced against active members + pending invites; every change
+  is audit-logged.
+- `/invite/[token]` now falls back to workspace invites when no garage
+  invite matches, and routes the invitee to their workspace home.
+- `roles-permissions.json` gained the new role entries and extended the
+  `vendor.*` grants; `data-model.json` updated for the new table, role
+  vocabularies and status columns.
+
 ## Unreleased — subscriptions for every workspace (in progress)
 
 ### Paystack cleanup + subscription reconcile tests

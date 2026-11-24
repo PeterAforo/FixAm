@@ -67,7 +67,8 @@ export const brokerMembers = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id),
-    role: text("role").notNull().default("owner"), // owner|agent
+    role: text("role").notNull().default("owner"), // owner|agent|accounts
+    status: text("status").notNull().default("active"), // active|paused
     ...timestamps,
   },
   (t) => [

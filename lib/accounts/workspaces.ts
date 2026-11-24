@@ -69,12 +69,12 @@ export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
       .select({ id: vendors.id, name: vendors.businessName, city: vendors.city, status: vendors.status })
       .from(vendorMembers)
       .innerJoin(vendors, eq(vendorMembers.vendorId, vendors.id))
-      .where(and(eq(vendorMembers.userId, userId), isNull(vendors.deletedAt))),
+      .where(and(eq(vendorMembers.userId, userId), eq(vendorMembers.status, "active"), isNull(vendors.deletedAt))),
     db()
       .select({ id: brokers.id, name: brokers.businessName, kind: brokers.kind, city: brokers.city })
       .from(brokerMembers)
       .innerJoin(brokers, eq(brokerMembers.brokerId, brokers.id))
-      .where(and(eq(brokerMembers.userId, userId), isNull(brokers.deletedAt))),
+      .where(and(eq(brokerMembers.userId, userId), eq(brokerMembers.status, "active"), isNull(brokers.deletedAt))),
     me?.phone
       ? db().select({ fullName: portalProfiles.fullName }).from(portalProfiles).where(eq(portalProfiles.phone, me.phone)).limit(1)
       : Promise.resolve([]),
@@ -85,7 +85,7 @@ export async function listMyWorkspaces(userId: string): Promise<Workspace[]> {
       .select({ id: towOperators.id, name: towOperators.businessName, city: towOperators.city })
       .from(towOperatorMembers)
       .innerJoin(towOperators, eq(towOperatorMembers.operatorId, towOperators.id))
-      .where(and(eq(towOperatorMembers.userId, userId), isNull(towOperators.deletedAt))),
+      .where(and(eq(towOperatorMembers.userId, userId), eq(towOperatorMembers.status, "active"), isNull(towOperators.deletedAt))),
     db()
       .select({ id: riders.id, name: riders.fullName, status: riders.status })
       .from(riders)

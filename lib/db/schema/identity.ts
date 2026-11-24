@@ -8,6 +8,7 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  index,
   uuid,
 } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
@@ -177,6 +178,33 @@ export const memberships = pgTable(
       t.role,
       t.branchId
     ),
+  ]
+)
+
+/**
+ * workspace_invites — staff invites for non-garage workspaces (vendor, broker,
+ * tow operator). Garages use memberships.invite_token_hash instead.
+ * kind: vendor|broker|tow · role vocabulary lives in lib/staff/workspace-shared.ts.
+ */
+export const workspaceInvites = pgTable(
+  "workspace_invites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    kind: text("kind").notNull(),
+    workspaceId: uuid("workspace_id").notNull(),
+    fullName: text("full_name"),
+    phone: text("phone"), // E.164
+    email: text("email"),
+    role: text("role").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    status: text("status").notNull().default("pending"), // pending|accepted|cancelled
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    invitedBy: uuid("invited_by").references(() => users.id),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("workspace_invites_token_uniq").on(t.tokenHash),
+    index("workspace_invites_ws_idx").on(t.kind, t.workspaceId, t.status),
   ]
 )
 

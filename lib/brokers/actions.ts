@@ -45,7 +45,13 @@ async function myBroker(userId: string) {
     .select({ broker: brokers, role: brokerMembers.role })
     .from(brokerMembers)
     .innerJoin(brokers, eq(brokerMembers.brokerId, brokers.id))
-    .where(and(eq(brokerMembers.userId, userId), isNull(brokers.deletedAt)))
+    .where(
+      and(
+        eq(brokerMembers.userId, userId),
+        eq(brokerMembers.status, "active"),
+        isNull(brokers.deletedAt),
+      ),
+    )
     .limit(1);
   return row ?? null;
 }

@@ -45,7 +45,8 @@ export const towOperatorMembers = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     operatorId: uuid("operator_id").notNull().references(() => towOperators.id, { onDelete: "cascade" }),
     userId: uuid("user_id").notNull().references(() => users.id),
-    role: text("role").notNull().default("owner"), // owner|driver
+    role: text("role").notNull().default("owner"), // owner|dispatcher|driver
+    status: text("status").notNull().default("active"), // active|paused
     ...timestamps,
   },
   (t) => [uniqueIndex("tow_operator_members_uniq").on(t.operatorId, t.userId), index("tow_operator_members_user_idx").on(t.userId)]

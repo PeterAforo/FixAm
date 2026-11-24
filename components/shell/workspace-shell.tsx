@@ -25,6 +25,7 @@ import {
   ShoppingBag,
   Store,
   UserRound,
+  Users,
   Wallet,
   Wrench,
   type LucideIcon,
@@ -58,6 +59,7 @@ const ICONS: Record<string, LucideIcon> = {
   home: House,
   fileText: FileText,
   search: Search,
+  users: Users,
 }
 
 export type ShellNavItem = { label: string; href: string; icon: keyof typeof ICONS; exact?: boolean; badge?: number }

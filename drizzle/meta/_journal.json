@@ -267,6 +267,13 @@
       "when": 1795497985925,
       "tag": "0037_broker-location",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1795506200717,
+      "tag": "0038_hot_killraven",
+      "breakpoints": true
     }
   ]
 }

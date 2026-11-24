@@ -34,7 +34,7 @@ async function nextSosNumber(): Promise<string> {
 export async function operatorForUser(userId: string) {
   const [row] = await db().select({ op: towOperators, role: towOperatorMembers.role })
     .from(towOperatorMembers).innerJoin(towOperators, eq(towOperators.id, towOperatorMembers.operatorId))
-    .where(and(eq(towOperatorMembers.userId, userId), isNull(towOperators.deletedAt))).limit(1)
+    .where(and(eq(towOperatorMembers.userId, userId), eq(towOperatorMembers.status, "active"), isNull(towOperators.deletedAt))).limit(1)
   return row ?? null
 }
 

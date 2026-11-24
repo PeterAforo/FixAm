@@ -46,6 +46,8 @@ export async function ensureUser() {
       })
       .where(eq(users.id, user.id))
     await acceptPendingInvites(user.id, email ?? "", phone ?? existing[0].phone)
+    const { acceptPendingWorkspaceInvites } = await import("@/lib/staff/workspace")
+    await acceptPendingWorkspaceInvites(user.id, email ?? "", phone ?? existing[0].phone)
     return user.id
   }
 
@@ -62,6 +64,8 @@ export async function ensureUser() {
     .onConflictDoNothing()
 
   await acceptPendingInvites(user.id, email ?? "", phone)
+  const { acceptPendingWorkspaceInvites } = await import("@/lib/staff/workspace")
+  await acceptPendingWorkspaceInvites(user.id, email ?? "", phone)
   return user.id
 }
 
