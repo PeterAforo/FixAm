@@ -218,6 +218,7 @@ export async function brokerSignup(rawInput: unknown): Promise<ActionResult<{ br
       businessName: d.businessName,
       slug,
       kind: d.kind,
+      status: "pending",
       phone,
       email: d.email || null,
       address: d.address || null,
@@ -1051,7 +1052,7 @@ export async function adminUpdateBroker(rawInput: unknown): Promise<ActionResult
   const parsed = z
     .object({
       brokerId: z.string().uuid(),
-      status: z.enum(["active", "suspended"]).optional(),
+      status: z.enum(["pending", "active", "suspended"]).optional(),
       isVerified: z.boolean().optional(),
     })
     .safeParse(rawInput);

@@ -9,6 +9,7 @@ import {
   sosRequests,
   towOperatorMembers,
   towOperators,
+  users,
 } from "@/lib/db/schema";
 import { getSessionUserId } from "@/lib/auth/ensure-user";
 import { getPortalPhone } from "@/lib/portal/session";
@@ -451,6 +452,7 @@ export async function towSignup(raw: unknown): Promise<{ ok: true } | Fail> {
     await tx.insert(towOperators).values({
       id,
       businessName: d.businessName,
+      status: "pending",
       phone,
       city: d.city ?? null,
       region: d.region ?? null,
@@ -818,4 +820,78 @@ export async function markTowCashReceived(raw: unknown): Promise<{ ok: true } | 
     )
     .returning({ id: sosRequests.id });
   return u ? { ok: true } : { ok: false, error: "Payment is already settled" };
+}
+
+// ---------------------------------------------------------------------------
+// Platform admin
+// ---------------------------------------------------------------------------
+
+async function requireAdmin() {
+  const userId = await getSessionUserId();
+  if (!userId) return null;
+  const [u] = await db()
+    .select({ isPlatformAdmin: users.isPlatformAdmin })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return u?.isPlatformAdmin ? userId : null;
+}
+
+export type AdminTowOperatorView = {
+  id: string;
+  businessName: string;
+  phone: string;
+  city: string | null;
+  status: string;
+  isAvailable: boolean;
+  completedJobs: number;
+  createdAt: string;
+};
+
+export async function adminListTowOperators(): Promise<AdminTowOperatorView[]> {
+  if (!(await requireAdmin())) return [];
+  const rows = await db()
+    .select()
+    .from(towOperators)
+    .where(isNull(towOperators.deletedAt))
+    .orderBy(desc(towOperators.createdAt))
+    .limit(500);
+  return rows.map((o) => ({
+    id: o.id,
+    businessName: o.businessName,
+    phone: o.phone,
+    city: o.city,
+    status: o.status,
+    isAvailable: o.isAvailable,
+    completedJobs: o.completedJobs,
+    createdAt: o.createdAt.toISOString(),
+  }));
+}
+
+export async function adminUpdateTowOperator(
+  rawInput: unknown,
+): Promise<{ ok: true } | Fail> {
+  const adminId = await requireAdmin();
+  if (!adminId) return { ok: false, error: "Platform admin only" };
+  const parsed = z
+    .object({
+      operatorId: z.string().uuid(),
+      status: z.enum(["pending", "active", "suspended"]).optional(),
+    })
+    .safeParse(rawInput);
+  if (!parsed.success) return { ok: false, error: "Invalid input" };
+  const d = parsed.data;
+  await db()
+    .update(towOperators)
+    .set({ ...(d.status ? { status: d.status } : {}), updatedAt: new Date() })
+    .where(eq(towOperators.id, d.operatorId));
+  await writeAuditLog({
+    garageId: null,
+    actorUserId: adminId,
+    action: "tow.admin_update",
+    entityType: "tow_operator",
+    entityId: d.operatorId,
+    after: d as Record<string, unknown>,
+  }).catch(() => {});
+  return { ok: true };
 }

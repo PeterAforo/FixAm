@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased — approval-before-public for brokers & tow companies
+
+- Broker and tow-operator signups now start `status: "pending"` (vendors
+  and riders already did). Their workspaces remain fully usable during
+  the trial, but they stay out of public surfaces until a platform admin
+  approves them:
+  - `/brokers` finder and broker quote/claim acceptance already require
+    `status = 'active'`.
+  - SOS fan-out already requires `status = 'active'` + `is_available`.
+- `adminUpdateBroker` accepts `pending` as a status; new
+  `adminListTowOperators`/`adminUpdateTowOperator` actions and a Tow
+  companies section on `/admin/approvals` (approve / suspend /
+  reactivate), all audit-logged.
+
 ## Unreleased — RBAC unification for workspace staff (in progress)
 
 ### Member roles now resolve through `can()` / roles-permissions.json

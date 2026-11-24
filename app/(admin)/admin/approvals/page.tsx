@@ -2,6 +2,7 @@ import { Suspense } from "react"
 import { AdminVendorsSection } from "../admin-vendors-section"
 import { AdminBrokersSection } from "../admin-brokers-section"
 import { AdminRidersSection } from "../admin-riders-section"
+import { AdminTowSection } from "../admin-tow-section"
 import { AdminPageHeader } from "../admin-page-header"
 
 export const metadata = { title: "Approvals · Admin" }
@@ -18,6 +19,9 @@ export default function AdminApprovalsPage() {
       </div>
       <div id="riders" className="scroll-mt-6">
         <Suspense fallback={null}><AdminRidersSection /></Suspense>
+      </div>
+      <div id="tow" className="scroll-mt-6">
+        <Suspense fallback={null}><AdminTowSection /></Suspense>
       </div>
     </>
   )
