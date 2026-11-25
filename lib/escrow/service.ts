@@ -328,9 +328,15 @@ async function insertPayout(input: {
  * theTeller has no split payments). Books it to garage_payable and queues a
  * payout to the garage. Idempotent per key.
  */
-/** P8-15: a tow paid by MoMo (held by FixAm) is paid out to the operator once the job is done. */
-export async function queueTowSettlement(input: { operatorId: string; amount: bigint; key: string; memo: string }) {
+/**
+ * P8-15: a tow paid by MoMo (held by FixAm) is paid out to the operator once
+ * the job is done, less FixAm's tow fee (`commission`, booked to fixam_commission).
+ */
+export async function queueTowSettlement(input: { operatorId: string; amount: bigint; commission?: bigint; key: string; memo: string }) {
   if (input.amount <= 0n) return
+  if (input.commission && input.commission > 0n) {
+    await ledger({ debit: "customer_funds", credit: "fixam_commission", amount: input.commission, key: `${input.key}:commission`, memo: `${input.memo} — FixAm fee`, meta: { operatorId: input.operatorId } })
+  }
   await ledger({ debit: "customer_funds", credit: "tow_payable", amount: input.amount, key: `${input.key}:collected`, memo: input.memo, meta: { operatorId: input.operatorId } })
   const acct = await accountFor("tow_operator", input.operatorId)
   await insertPayout({ key: input.key, purpose: "tow_settlement", recipientType: "tow_operator", recipientId: input.operatorId, acct, amount: input.amount })

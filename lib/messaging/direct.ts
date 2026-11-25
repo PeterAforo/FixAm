@@ -25,9 +25,10 @@ const PLATFORM_TEMPLATES: Record<string, string> = {
     "FixAm: {{workspace_name}} invited you to join as {{role}}. Open {{action_link}} to accept.",
 }
 
-export function smsIsLive() {
-  const p = process.env.MESSAGING_SMS_PROVIDER
-  return p === "arkesel" || p === "hubtel"
+/** True when SMS really goes out (provider chosen in admin, or set in env). */
+export async function smsIsLive(): Promise<boolean> {
+  const { smsDeliveryLive } = await import("@/lib/integrations")
+  return smsDeliveryLive()
 }
 
 export async function sendDirectSms(

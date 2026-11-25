@@ -2,8 +2,8 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMemo, useState, useTransition } from "react"
-import { Loader2, MoreHorizontal, Search, ShieldCheck } from "lucide-react"
-import { adminSetGarageStatus, startImpersonation } from "@/lib/admin/actions"
+import { Gift, Loader2, MoreHorizontal, Search, ShieldCheck } from "lucide-react"
+import { adminSetGarageFree, adminSetGarageStatus, startImpersonation } from "@/lib/admin/actions"
 import { cn } from "@/lib/utils"
 
 export type GarageRow = {
@@ -20,12 +20,13 @@ export type GarageRow = {
   branchCount: number
 }
 
-type Filter = "all" | "active" | "trialing" | "past_due" | "suspended"
+type Filter = "all" | "active" | "trialing" | "past_due" | "free" | "suspended"
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "All" },
   { key: "active", label: "Active" },
   { key: "trialing", label: "On trial" },
   { key: "past_due", label: "Past due" },
+  { key: "free", label: "Free" },
   { key: "suspended", label: "Suspended" },
 ]
 
@@ -44,7 +45,15 @@ function statusPill(g: GarageRow) {
 }
 
 /** Garages table: search, status filter, "View as owner" and a ⋯ menu with a confirmed Suspend. */
-export function AdminGaragesPanel({ garages, compact = false }: { garages: GarageRow[]; compact?: boolean }) {
+export function AdminGaragesPanel({
+  garages,
+  compact = false,
+  freePlaces = null,
+}: {
+  garages: GarageRow[]
+  compact?: boolean
+  freePlaces?: { limit: number; used: number } | null
+}) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -60,6 +69,7 @@ export function AdminGaragesPanel({ garages, compact = false }: { garages: Garag
       if (term && !`${g.name} ${g.slug}`.toLowerCase().includes(term)) return false
       if (filter === "all") return true
       if (filter === "suspended") return g.status === "suspended"
+      if (filter === "free") return g.isComplimentary === true
       if (g.status === "suspended") return false
       if (filter === "active") return !g.subStatus || g.subStatus === "active"
       return g.subStatus === filter
@@ -77,6 +87,18 @@ export function AdminGaragesPanel({ garages, compact = false }: { garages: Garag
       else router.refresh()
     })
   }
+
+  const setFree = (g: GarageRow, free: boolean) => {
+    setMsg(null)
+    setBusyId(g.id)
+    startTransition(async () => {
+      const res = await adminSetGarageFree({ garageId: g.id, free })
+      setBusyId(null)
+      if (!res.ok) setMsg(res.error?.message ?? "Action failed")
+      else router.refresh()
+    })
+  }
+  const placesLeft = freePlaces ? Math.max(0, freePlaces.limit - freePlaces.used) : 0
 
   const impersonate = (g: GarageRow) => {
     setMsg(null)
@@ -98,9 +120,17 @@ export function AdminGaragesPanel({ garages, compact = false }: { garages: Garag
   return (
     <section className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
-        <h2 className="text-base font-semibold">
-          Garages <span className="font-normal text-muted-foreground">· {garages.length}</span>
-        </h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-base font-semibold">
+            Garages <span className="font-normal text-muted-foreground">· {garages.length}</span>
+          </h2>
+          {freePlaces && !compact && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E6F8F6] px-2.5 py-1 text-xs font-semibold text-[#00756F]">
+              <Gift className="size-3.5" aria-hidden />
+              Free places: {freePlaces.used} of {freePlaces.limit} used
+            </span>
+          )}
+        </div>
         {compact ? (
           <Link href="/admin/garages" className="text-[13px] font-medium text-primary hover:underline">All garages</Link>
         ) : (
@@ -170,7 +200,9 @@ export function AdminGaragesPanel({ garages, compact = false }: { garages: Garag
                     </td>
                     <td className="px-3 py-3.5">
                       {g.planName ?? "No plan"}
-                      {g.isComplimentary && <span className="text-muted-foreground"> · complimentary</span>}
+                      {g.isComplimentary && (
+                        <span className="ml-1.5 rounded-full bg-[#E6F8F6] px-2 py-0.5 text-[11px] font-semibold text-[#00756F]">Free</span>
+                      )}
                     </td>
                     <td className="px-3 py-3.5">
                       <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", pill.cls)}>{pill.label}</span>
@@ -203,10 +235,32 @@ export function AdminGaragesPanel({ garages, compact = false }: { garages: Garag
                         {menuFor === g.id && (
                           <>
                             <button className="fixed inset-0 z-40 cursor-default" aria-label="Close menu" onClick={() => setMenuFor(null)} />
-                            <div className="absolute right-0 top-11 z-50 w-48 overflow-hidden rounded-xl border border-border bg-card p-1 shadow-[0_18px_40px_-16px_rgba(22,19,15,0.35)]">
+                            <div className="absolute right-0 top-11 z-50 w-56 overflow-hidden rounded-xl border border-border bg-card p-1 shadow-[0_18px_40px_-16px_rgba(22,19,15,0.35)]">
                               <Link href={`/g/${g.slug}`} className="block rounded-lg px-3 py-2 text-sm hover:bg-surface-muted" onClick={() => setMenuFor(null)}>
                                 Open garage page
                               </Link>
+                              {g.isComplimentary ? (
+                                <button
+                                  type="button"
+                                  className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-surface-muted"
+                                  onClick={() => { setMenuFor(null); setFree(g, false) }}
+                                >
+                                  Remove free place
+                                  <span className="block text-xs text-muted-foreground">They get 7 days to pay</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled={!!freePlaces && placesLeft === 0}
+                                  className="block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-surface-muted disabled:opacity-50"
+                                  onClick={() => { setMenuFor(null); setFree(g, true) }}
+                                >
+                                  Make free
+                                  <span className="block text-xs text-muted-foreground">
+                                    {freePlaces ? `${placesLeft} free place${placesLeft === 1 ? "" : "s"} left` : "No payment needed"}
+                                  </span>
+                                </button>
+                              )}
                               {g.status === "suspended" ? (
                                 <button
                                   type="button"
@@ -239,7 +293,7 @@ export function AdminGaragesPanel({ garages, compact = false }: { garages: Garag
 
       <p className="flex items-center gap-2 border-t border-border px-5 py-3 text-[13px] text-muted-foreground">
         <ShieldCheck className="size-4 shrink-0" />
-        &ldquo;View as owner&rdquo; and suspending are recorded in the audit log.
+        &ldquo;View as owner&rdquo;, suspending and free places are recorded in the audit log.
       </p>
 
       {confirmFor && (

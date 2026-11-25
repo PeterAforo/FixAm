@@ -1,4 +1,5 @@
 "use server"
+import { vendorCommission } from "@/lib/platform/fees"
 import { z } from "zod"
 import { and, eq, ilike, isNull, ne, or, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
@@ -164,7 +165,7 @@ export async function orderPartForJob(rawInput: unknown): Promise<ActionResult<{
 
   const subtotal = product.price * BigInt(d.quantity)
   const deliveryFee = BigInt(Math.round((zone.fee ?? 0) * 100))
-  const commission = (subtotal * BigInt(vendor.commissionBp ?? 0)) / 10000n
+  const { amount: commission } = await vendorCommission(vendor.id, vendor.commissionBp, subtotal)
   const total = subtotal + deliveryFee
   const number = await nextDocNumber(d.garageId, d.branchId, "VO", "VO")
   const orderId = uuidv7()

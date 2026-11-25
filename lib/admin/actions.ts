@@ -59,6 +59,66 @@ export async function adminSetGarageStatus(rawInput: unknown): Promise<ActionRes
   return { ok: true, data: { ok: true as const } }
 }
 
+/** Free places: how many the admin may give and how many are in use. */
+export async function adminFreeGaragePlaces(): Promise<{ ok: true; data: { limit: number; used: number } } | { ok: false }> {
+  const userId = await getSessionUserId()
+  if (!userId || !(await requirePlatformAdmin(userId))) return { ok: false }
+  const { platformSettingsNow } = await import("@/lib/platform/settings")
+  const { freeGaragePlaces } = await platformSettingsNow()
+  const [r] = await db().select({ n: sql<number>`count(*)::int` }).from(subscriptions)
+    .innerJoin(garages, eq(subscriptions.garageId, garages.id))
+    .where(and(eq(subscriptions.isComplimentary, true), isNull(garages.deletedAt)))
+  return { ok: true, data: { limit: freeGaragePlaces, used: r?.n ?? 0 } }
+}
+
+/**
+ * Give a garage one of the free places (it keeps its plan without paying, during
+ * and after the trial), or take it back. Capped at the "free garage places" setting.
+ */
+export async function adminSetGarageFree(rawInput: unknown): Promise<ActionResult<{ ok: true }>> {
+  const userId = await getSessionUserId()
+  if (!userId) return { ok: false, error: { code: "UNAUTHENTICATED", message: "Sign in" } }
+  if (!(await requirePlatformAdmin(userId))) return { ok: false, error: { code: "FORBIDDEN", message: "Platform admin only" } }
+  const parsed = z.object({ garageId: z.string().uuid(), free: z.boolean(), note: z.string().max(200).optional() }).safeParse(rawInput)
+  if (!parsed.success) return { ok: false, error: { code: "VALIDATION", message: "Invalid input" } }
+  const d = parsed.data
+
+  const [sub] = await db().select().from(subscriptions).where(eq(subscriptions.garageId, d.garageId)).limit(1)
+  if (!sub) return { ok: false, error: { code: "NOT_FOUND", message: "This garage has no subscription yet" } }
+  if (sub.isComplimentary === d.free) return { ok: true, data: { ok: true as const } }
+
+  const now = new Date()
+  if (d.free) {
+    const places = await adminFreeGaragePlaces()
+    if (places.ok && places.data.used >= places.data.limit) {
+      return { ok: false, error: { code: "CONFLICT", message: `All ${places.data.limit} free places are in use. Raise the limit in Plans & pricing, or free one up first.` } }
+    }
+    await db().update(subscriptions).set({
+      isComplimentary: true,
+      complimentaryGrantedAt: now,
+      complimentaryNote: d.note || null,
+      // A garage already locked or in grace comes straight back.
+      status: sub.status === "trialing" ? "trialing" : "active",
+      updatedAt: now,
+    }).where(eq(subscriptions.id, sub.id))
+  } else {
+    // Back to paying: a 7-day window to pay starts now (grace, then read-only).
+    const trialStillRunning = sub.status === "trialing" && sub.trialEndsAt && sub.trialEndsAt > now
+    await db().update(subscriptions).set({
+      isComplimentary: false,
+      complimentaryGrantedAt: null,
+      complimentaryNote: null,
+      ...(trialStillRunning ? {} : { status: "past_due" as const, currentPeriodEnd: now }),
+      updatedAt: now,
+    }).where(eq(subscriptions.id, sub.id))
+  }
+  await writeAuditLog({
+    garageId: d.garageId, actorUserId: userId, action: d.free ? "garage.free_place_given" : "garage.free_place_removed",
+    entityType: "subscription", entityId: sub.id, before: { isComplimentary: sub.isComplimentary }, after: { isComplimentary: d.free, note: d.note ?? null },
+  })
+  return { ok: true, data: { ok: true as const } }
+}
+
 // ---------------------------------------------------------------------------
 // Impersonation
 // ---------------------------------------------------------------------------

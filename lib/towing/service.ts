@@ -191,7 +191,9 @@ async function completeSos(s: Sos) {
   if (s.operatorId) await db().update(towOperators).set({ completedJobs: sql`${towOperators.completedJobs} + 1`, updatedAt: new Date() }).where(eq(towOperators.id, s.operatorId))
   if (s.paymentStatus === "paid" && s.operatorId && s.quoteAmount) {
     const { queueTowSettlement } = await import("@/lib/escrow/service")
-    await queueTowSettlement({ operatorId: s.operatorId, amount: s.quoteAmount, key: `tow:${s.id}`, memo: `Tow ${s.number}` }).catch(() => undefined)
+    const { towSplit } = await import("@/lib/platform/fees")
+    const split = await towSplit(s.quoteAmount)
+    await queueTowSettlement({ operatorId: s.operatorId, amount: split.net, commission: split.commission, key: `tow:${s.id}`, memo: `Tow ${s.number}` }).catch(() => undefined)
   }
   if (s.destinationGarageId && !s.repairRequestId) await createTowRepairRequest(s).catch((e) => console.error("[sos] repair request failed:", (e as Error).message))
 }

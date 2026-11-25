@@ -1,4 +1,5 @@
 import "server-only"
+import { riderEarningFrom } from "@/lib/platform/fees"
 import { and, asc, desc, eq, isNull, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { deliveryOffers, deliveries, riders, users, vendorOrders, vendors } from "@/lib/db/schema"
@@ -72,7 +73,8 @@ export async function createDeliveryOffer(input: DispatchInput): Promise<Deliver
       pickupPin,
       dropoffPin,
       fee: input.fee,
-      riderEarning: input.fee,
+      // The rider keeps the fee less FixAm's rider fee (admin-set %).
+      riderEarning: await riderEarningFrom(input.fee),
       status: "offered",
       offerRadiusKm: offerRadiusKm(0),
       expiresAt,

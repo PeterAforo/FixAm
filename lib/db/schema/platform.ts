@@ -56,6 +56,9 @@ export const subscriptions = pgTable(
     paystackCustomerCode: text("paystack_customer_code"),
     pendingPaymentReference: text("pending_payment_reference"),
     isComplimentary: boolean("is_complimentary").default(false),
+    /** When an admin gave this garage one of the free places (null = not free). */
+    complimentaryGrantedAt: timestamp("complimentary_granted_at", { withTimezone: true }),
+    complimentaryNote: text("complimentary_note"),
     cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
     ...timestamps,
   },
@@ -225,3 +228,46 @@ export const vehicleModels = pgTable(
     index("vehicle_models_make_idx").on(t.makeId),
   ]
 )
+
+/**
+ * Platform-wide settings the admin can change without a deploy (commission
+ * rates, free garage places, broker quote allowance…). One row per key;
+ * `value` is JSON. Defaults live in lib/platform/settings.ts.
+ */
+export const platformSettings = pgTable("platform_settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
+  updatedBy: uuid("updated_by"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+})
+
+/**
+ * Third-party providers the admin configures in /admin/integrations
+ * (payment gateways, SMS gateways). Credentials are AES-256-GCM encrypted
+ * (lib/crypto/secret-box.ts); at most one row per category is active.
+ * When no row is active, the env-var configuration applies.
+ */
+export const integrationProviders = pgTable(
+  "integration_providers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    category: text("category").notNull(), // payments | sms
+    provider: text("provider").notNull(), // theteller | paystack | arkesel | hubtel | mnotify | custom_http
+    label: text("label"),
+    credentialsEncrypted: text("credentials_encrypted"),
+    isActive: boolean("is_active").notNull().default(false),
+    lastTestAt: timestamp("last_test_at", { withTimezone: true }),
+    lastTestOk: boolean("last_test_ok"),
+    lastTestMessage: text("last_test_message"),
+    updatedBy: uuid("updated_by"),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("integration_providers_cat_provider_uniq").on(t.category, t.provider)]
+)
+
+/** Which gateway took each payment reference, so verify/refund go back to it. */
+export const paymentGatewayRefs = pgTable("payment_gateway_refs", {
+  reference: text("reference").primaryKey(),
+  provider: text("provider").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+})

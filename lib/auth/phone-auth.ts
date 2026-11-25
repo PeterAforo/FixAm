@@ -49,7 +49,7 @@ async function issueCode(phone: string, purpose: "signin" | "link"): Promise<Act
   // In production the mock provider "succeeds" without delivering anything —
   // treat an unconfigured SMS provider as a failure so nobody waits for a
   // code that will never arrive.
-  const smsLive = smsIsLive()
+  const smsLive = await smsIsLive()
   if ((!sent.ok || !smsLive) && !isDev) {
     return {
       ok: false,
@@ -57,7 +57,7 @@ async function issueCode(phone: string, purpose: "signin" | "link"): Promise<Act
     }
   }
   // Local development without an SMS provider: show the code on screen.
-  return { ok: true, data: { sent: true as const, phone, ...(isDev && !smsIsLive() ? { devCode: code } : {}) } }
+  return { ok: true, data: { sent: true as const, phone, ...(isDev && !smsLive ? { devCode: code } : {}) } }
 }
 
 async function checkCode(key: string, code: string): Promise<string | null> {

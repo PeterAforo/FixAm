@@ -30,8 +30,17 @@ export class TellerError extends Error {
 
 type Env = { apiBase: string; checkoutUrl: string; reversalUrl: string }
 
-export function tellerEnv(): Env {
-  const live = process.env.THETELLER_ENV === "live"
+/** Credentials saved in /admin/integrations; anything left out falls back to env vars. */
+export type TellerConfig = {
+  env?: string
+  merchantId?: string
+  apiUser?: string
+  apiKey?: string
+  passCode?: string
+}
+
+export function tellerEnv(mode?: string): Env {
+  const live = (mode || process.env.THETELLER_ENV) === "live"
   return {
     apiBase: (process.env.THETELLER_API_BASE || (live ? "https://prod.theteller.net" : "https://test.theteller.net")).replace(/\/$/, ""),
     checkoutUrl: process.env.THETELLER_CHECKOUT_URL || (live ? "https://checkout.theteller.net/initiate" : "https://test.theteller.net/checkout/initiate"),
@@ -114,10 +123,10 @@ type TellerJson = {
   account_name?: string
 }
 
-function creds() {
-  const merchant = process.env.THETELLER_MERCHANT_ID
-  const user = process.env.THETELLER_API_USER
-  const key = process.env.THETELLER_API_KEY
+function creds(cfg: TellerConfig = {}) {
+  const merchant = cfg.merchantId || process.env.THETELLER_MERCHANT_ID
+  const user = cfg.apiUser || process.env.THETELLER_API_USER
+  const key = cfg.apiKey || process.env.THETELLER_API_KEY
   if (!merchant || !user || !key) throw new TellerError("NOT_CONFIGURED", "theTeller credentials are not set")
   return { merchant, auth: `Basic ${Buffer.from(`${user}:${key}`).toString("base64")}` }
 }
@@ -133,7 +142,7 @@ export function returnUrl(reference: string, returnPath?: string): string {
   return `${siteUrl()}/api/payments/return/${reference}/${enc}`
 }
 
-export function createTellerProvider(fetchImpl: typeof fetch = fetch): PaymentProvider & PayoutProvider {
+export function createTellerProvider(fetchImpl: typeof fetch = fetch, cfg: TellerConfig = {}): PaymentProvider & PayoutProvider {
   async function call(url: string, init: RequestInit): Promise<TellerJson> {
     let res: Response
     try {
@@ -158,8 +167,8 @@ export function createTellerProvider(fetchImpl: typeof fetch = fetch): PaymentPr
     name: "theteller",
 
     async initializeCheckout(input): Promise<PaymentInitResult> {
-      const { merchant, auth } = creds()
-      const json = await call(tellerEnv().checkoutUrl, {
+      const { merchant, auth } = creds(cfg)
+      const json = await call(tellerEnv(cfg.env).checkoutUrl, {
         method: "POST",
         headers: { Authorization: auth },
         body: JSON.stringify({
@@ -176,8 +185,8 @@ export function createTellerProvider(fetchImpl: typeof fetch = fetch): PaymentPr
     },
 
     async chargeMobileMoney(input): Promise<MoMoChargeResult> {
-      const { merchant, auth } = creds()
-      const json = await call(`${tellerEnv().apiBase}/v1.1/transaction/process`, {
+      const { merchant, auth } = creds(cfg)
+      const json = await call(`${tellerEnv(cfg.env).apiBase}/v1.1/transaction/process`, {
         method: "POST",
         headers: { Authorization: auth },
         body: JSON.stringify({
@@ -204,8 +213,8 @@ export function createTellerProvider(fetchImpl: typeof fetch = fetch): PaymentPr
     },
 
     async verify(reference): Promise<PaymentVerification> {
-      const { merchant } = creds()
-      const json = await call(`${tellerEnv().apiBase}/v1.1/users/transactions/${encodeURIComponent(assertTxnId(reference))}/status`, {
+      const { merchant } = creds(cfg)
+      const json = await call(`${tellerEnv(cfg.env).apiBase}/v1.1/users/transactions/${encodeURIComponent(assertTxnId(reference))}/status`, {
         method: "GET",
         headers: { "Merchant-Id": merchant },
       })
@@ -222,9 +231,9 @@ export function createTellerProvider(fetchImpl: typeof fetch = fetch): PaymentPr
 
     /** Card payments only (reversal). MoMo refunds are sent as float payouts by the escrow service. */
     async refund(input): Promise<RefundResult> {
-      const { merchant, auth } = creds()
+      const { merchant, auth } = creds(cfg)
       if (!input.amountPesewas) throw new TellerError("AMOUNT", "Refund amount required")
-      const json = await call(tellerEnv().reversalUrl, {
+      const json = await call(tellerEnv(cfg.env).reversalUrl, {
         method: "POST",
         headers: { Authorization: auth },
         body: JSON.stringify({ merchant_id: merchant, transaction_id: assertTxnId(input.reference), amount: tellerAmount(input.amountPesewas) }),
@@ -239,10 +248,10 @@ export function createTellerProvider(fetchImpl: typeof fetch = fetch): PaymentPr
     },
 
     async transferMomo(input): Promise<PayoutResult> {
-      const passCode = process.env.THETELLER_PASS_CODE
+      const passCode = cfg.passCode || process.env.THETELLER_PASS_CODE
       if (!passCode) return { status: "failed", code: "NOT_CONFIGURED", message: "THETELLER_PASS_CODE is not set", retryable: false }
-      const { merchant, auth } = creds()
-      const json = await call(`${tellerEnv().apiBase}/v1.1/transaction/process`, {
+      const { merchant, auth } = creds(cfg)
+      const json = await call(`${tellerEnv(cfg.env).apiBase}/v1.1/transaction/process`, {
         method: "POST",
         headers: { Authorization: auth },
         body: JSON.stringify({
@@ -261,10 +270,10 @@ export function createTellerProvider(fetchImpl: typeof fetch = fetch): PaymentPr
     },
 
     async transferBank(input): Promise<PayoutResult> {
-      const passCode = process.env.THETELLER_PASS_CODE
+      const passCode = cfg.passCode || process.env.THETELLER_PASS_CODE
       if (!passCode) return { status: "failed", code: "NOT_CONFIGURED", message: "THETELLER_PASS_CODE is not set", retryable: false }
-      const { merchant, auth } = creds()
-      const api = tellerEnv().apiBase
+      const { merchant, auth } = creds(cfg)
+      const api = tellerEnv(cfg.env).apiBase
       // 1. name enquiry
       const enquiry = await call(`${api}/v1.1/transaction/process`, {
         method: "POST",
@@ -300,8 +309,8 @@ export function createTellerProvider(fetchImpl: typeof fetch = fetch): PaymentPr
     },
 
     async verifyTransfer(transactionId): Promise<PayoutResult> {
-      const { merchant } = creds()
-      const json = await call(`${tellerEnv().apiBase}/v1.1/users/transactions/${encodeURIComponent(assertTxnId(transactionId))}/status`, {
+      const { merchant } = creds(cfg)
+      const json = await call(`${tellerEnv(cfg.env).apiBase}/v1.1/users/transactions/${encodeURIComponent(assertTxnId(transactionId))}/status`, {
         method: "GET",
         headers: { "Merchant-Id": merchant },
       }).catch((e: TellerError) => ({ code: e.code, reason: e.message }) as TellerJson)

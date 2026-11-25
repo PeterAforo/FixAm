@@ -281,6 +281,13 @@
       "when": 1795512403065,
       "tag": "0039_default-workspace",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1795595531121,
+      "tag": "0040_pricing-integrations",
+      "breakpoints": true
     }
   ]
 }

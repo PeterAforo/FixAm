@@ -1,27 +1,41 @@
-import { and, eq, isNull, lt, sql } from "drizzle-orm"
+import { and, eq, gte, isNull, lt, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { accountSubscriptions, garages, plans, subscriptions } from "@/lib/db/schema"
+import { accountSubscriptions, garages, jobs, payments, plans, subscriptions } from "@/lib/db/schema"
 import { sendDirectSms, appUrl } from "@/lib/messaging/direct"
 import { resolveOwnerContact, type BillingOwner } from "@/lib/billing/owners"
+import { reminderDetail, reminderStage, type ReminderStage } from "@/lib/billing/trial-schedule"
 import { inngest } from "../client"
 
 const DAY = 86_400_000
-const REMIND_BEFORE_MS = 3 * DAY
+const TEMPLATE: Record<ReminderStage, string> = {
+  midway: "subscription_trial_ending",
+  ending: "subscription_trial_ending",
+  last_day: "subscription_trial_ending",
+  ended: "subscription_payment_due",
+  grace_last: "subscription_payment_due",
+}
 
-async function remind(owner: BillingOwner, planName: string, priceGhs: number, phase: "ending" | "due") {
+async function remind(owner: BillingOwner, planName: string, priceGhs: number, stage: ReminderStage, stats?: string) {
   const contact = await resolveOwnerContact(owner)
   if (!contact.phone) return
-  const when = phase === "ending" ? "your trial ends soon" : "your trial has ended"
-  const price = priceGhs > 0 ? ` It is GH₵${priceGhs.toFixed(2)}/month after that.` : ""
-  await sendDirectSms(
-    contact.phone,
-    phase === "ending" ? "subscription_trial_ending" : "subscription_payment_due",
-    {
-      plan: planName,
-      detail: `${when}.${price}`,
-      link: appUrl(contact.returnPath),
-    }
-  )
+  await sendDirectSms(contact.phone, TEMPLATE[stage], {
+    plan: planName,
+    detail: reminderDetail(stage, planName, priceGhs, stats),
+    link: appUrl(contact.returnPath),
+  })
+}
+
+/** "23 jobs and GH₵4,860 collected" since the trial started, for the midway nudge. */
+async function garageTrialStats(garageId: string, since: Date): Promise<string | undefined> {
+  const [j] = await db().select({ n: sql<number>`count(*)::int` }).from(jobs)
+    .where(and(eq(jobs.garageId, garageId), gte(jobs.createdAt, since)))
+  const [p] = await db().select({ total: sql<string>`coalesce(sum(${payments.amount}), 0)::text` }).from(payments)
+    .where(and(eq(payments.garageId, garageId), eq(payments.status, "succeeded"), gte(payments.createdAt, since)))
+  const nJobs = j?.n ?? 0
+  const ghs = Number(p?.total ?? 0) / 100
+  if (nJobs === 0 && ghs === 0) return undefined
+  const money = ghs > 0 ? ` and GH₵${ghs.toLocaleString("en-GH", { maximumFractionDigits: 0 })} collected` : ""
+  return `${nJobs} job${nJobs === 1 ? "" : "s"}${money} so far`
 }
 
 /**
@@ -50,6 +64,9 @@ export const billingSweep = inngest.createFunction(
     })
 
     const trialsEnded = await step.run("end-trials", async () => {
+      // Garages an admin made free carry on as active; everyone else must pay (7-day grace, then read-only).
+      await db().update(subscriptions).set({ status: "active", updatedAt: now })
+        .where(and(eq(subscriptions.status, "trialing"), lt(subscriptions.trialEndsAt, now), eq(subscriptions.isComplimentary, true)))
       const r = await db().update(subscriptions).set({ status: "past_due", updatedAt: now })
         .where(and(
           eq(subscriptions.status, "trialing"),
@@ -74,6 +91,13 @@ export const billingSweep = inngest.createFunction(
         .where(and(eq(accountSubscriptions.status, "active"), lt(accountSubscriptions.currentPeriodEnd, now)))
     })
     const acctTrialsEnded = await step.run("acct-end-trials", async () => {
+      // Free entry plans (driver, seller, broker, tow, rider) simply stay on.
+      await db().update(accountSubscriptions).set({ status: "active", updatedAt: now })
+        .where(and(
+          eq(accountSubscriptions.status, "trialing"),
+          lt(accountSubscriptions.trialEndsAt, now),
+          sql`(${accountSubscriptions.isComplimentary} or ${accountSubscriptions.planId} in (select id from plans where price_monthly <= 0))`,
+        ))
       return db().update(accountSubscriptions).set({ status: "past_due", updatedAt: now })
         .where(and(eq(accountSubscriptions.status, "trialing"), lt(accountSubscriptions.trialEndsAt, now)))
     })
@@ -83,15 +107,15 @@ export const billingSweep = inngest.createFunction(
         .where(and(eq(accountSubscriptions.status, "past_due"), lt(accountSubscriptions.currentPeriodEnd, cutoff)))
     })
 
-    // --- reminders ---------------------------------------------------------
+    // --- reminders: day 7, 2 days left, last day, trial ended, 2 days before read-only
     const reminded = await step.run("trial-reminders", async () => {
-      const horizon = new Date(now.getTime() + REMIND_BEFORE_MS)
       let sent = 0
 
       const garageRows = await db()
         .select({
           garageId: subscriptions.garageId,
           trialEndsAt: subscriptions.trialEndsAt,
+          createdAt: subscriptions.createdAt,
           planName: plans.name,
           priceMonthly: plans.priceMonthly,
           status: subscriptions.status,
@@ -107,50 +131,38 @@ export const billingSweep = inngest.createFunction(
           )
         )
 
-      // Garage trialing subs ending within the window
-      const gEnding = garageRows.filter((g) => g.status === "trialing" && g.trialEndsAt && g.trialEndsAt > now && g.trialEndsAt <= horizon)
-      for (const g of gEnding) {
-        await remind({ kind: "garage", garageId: g.garageId }, g.planName, Number(g.priceMonthly) / 100, "ending")
-        sent++
-      }
-      // Garage subs whose trial just ended (past_due within last 24h of trial end)
-      const gDue = garageRows.filter((g) => {
-        if (g.status !== "past_due" || !g.trialEndsAt) return false
-        const endedAgo = now.getTime() - g.trialEndsAt.getTime()
-        return endedAgo >= 0 && endedAgo <= DAY
-      })
-      for (const g of gDue) {
-        await remind({ kind: "garage", garageId: g.garageId }, g.planName, Number(g.priceMonthly) / 100, "due")
+      for (const g of garageRows) {
+        const stage = reminderStage(g.status, g.trialEndsAt, now)
+        if (!stage) continue
+        const stats = stage === "midway" ? await garageTrialStats(g.garageId, g.createdAt).catch(() => undefined) : undefined
+        await remind({ kind: "garage", garageId: g.garageId }, g.planName, Number(g.priceMonthly) / 100, stage, stats)
         sent++
       }
 
-      // Account subscriptions
+      // Account subscriptions on paid plans (Seller Pro, Broker Pro…)
       const acctRows = await db()
         .select({
           ownerKind: accountSubscriptions.ownerKind,
           ownerId: accountSubscriptions.ownerId,
           trialEndsAt: accountSubscriptions.trialEndsAt,
-          currentPeriodEnd: accountSubscriptions.currentPeriodEnd,
           status: accountSubscriptions.status,
           planName: plans.name,
           priceMonthly: plans.priceMonthly,
         })
         .from(accountSubscriptions)
         .innerJoin(plans, eq(accountSubscriptions.planId, plans.id))
-        .where(and(eq(accountSubscriptions.isComplimentary, false), sql`${accountSubscriptions.status} in ('trialing','past_due')`))
+        .where(and(
+          eq(accountSubscriptions.isComplimentary, false),
+          sql`${accountSubscriptions.status} in ('trialing','past_due')`,
+          sql`${plans.priceMonthly} > 0`,
+        ))
 
       for (const a of acctRows) {
+        const stage = reminderStage(a.status, a.trialEndsAt, now)
+        if (!stage || stage === "midway") continue
         const owner: BillingOwner = { kind: a.ownerKind as never, ownerId: a.ownerId }
-        if (a.status === "trialing" && a.trialEndsAt && a.trialEndsAt > now && a.trialEndsAt <= horizon) {
-          await remind(owner, a.planName, Number(a.priceMonthly) / 100, "ending")
-          sent++
-        } else if (a.status === "past_due" && a.trialEndsAt) {
-          const endedAgo = now.getTime() - a.trialEndsAt.getTime()
-          if (endedAgo >= 0 && endedAgo <= DAY) {
-            await remind(owner, a.planName, Number(a.priceMonthly) / 100, "due")
-            sent++
-          }
-        }
+        await remind(owner, a.planName, Number(a.priceMonthly) / 100, stage)
+        sent++
       }
       return sent
     })

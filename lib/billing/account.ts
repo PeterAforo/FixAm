@@ -79,6 +79,7 @@ export async function accountBilling(
       maxBranches: plans.maxBranches,
       status: accountSubscriptions.status,
       isComplimentary: accountSubscriptions.isComplimentary,
+      priceMonthly: plans.priceMonthly,
       trialEndsAt: accountSubscriptions.trialEndsAt,
       currentPeriodEnd: accountSubscriptions.currentPeriodEnd,
     })
@@ -101,6 +102,7 @@ export async function accountBilling(
     isComplimentary: row.isComplimentary ?? false,
     trialEndsAt: row.trialEndsAt,
     currentPeriodEnd: row.currentPeriodEnd,
+    isFreePlan: Number(row.priceMonthly ?? 0) <= 0,
   };
 }
 

@@ -1,4 +1,5 @@
 "use server"
+import { vendorCommission } from "@/lib/platform/fees"
 import { z } from "zod"
 import { and, desc, eq, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm"
 import { db } from "@/lib/db"
@@ -245,7 +246,8 @@ export async function createVendorOrder(rawInput: unknown): Promise<
     const zone = zoneFor(vendor, garage[0])!
     const subtotal = lines.reduce((s, l) => s + BigInt(l.product.price) * BigInt(l.qty), 0n)
     const deliveryFee = BigInt(Math.round((zone.fee ?? 0) * 100))
-    const commission = (subtotal * BigInt(vendor.commissionBp ?? 0)) / 10000n
+    // Standard / Seller Pro rate unless an admin set a rate for this seller.
+    const { amount: commission } = await vendorCommission(vendorId, vendor.commissionBp, subtotal)
     const total = subtotal + deliveryFee
     grandTotal += total
 

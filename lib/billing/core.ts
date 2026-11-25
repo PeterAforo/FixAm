@@ -16,6 +16,8 @@ export type GarageBilling = {
   isComplimentary: boolean
   trialEndsAt: Date | null
   currentPeriodEnd: Date | null
+  /** Plan costs nothing (driver, seller, broker, tow, rider entry plans): never locks. */
+  isFreePlan?: boolean
 }
 
 export async function garageBilling(garageId: string): Promise<GarageBilling | null> {
@@ -25,16 +27,19 @@ export async function garageBilling(garageId: string): Promise<GarageBilling | n
       maxStaff: plans.maxStaff, maxBranches: plans.maxBranches,
       status: subscriptions.status, isComplimentary: subscriptions.isComplimentary,
       trialEndsAt: subscriptions.trialEndsAt, currentPeriodEnd: subscriptions.currentPeriodEnd,
+      priceMonthly: plans.priceMonthly,
     })
     .from(subscriptions)
     .innerJoin(plans, eq(subscriptions.planId, plans.id))
     .where(eq(subscriptions.garageId, garageId))
     .limit(1)
   if (!row) return null
+  const { priceMonthly, ...rest } = row
   return {
-    ...row,
+    ...rest,
     features: row.features ?? [],
     isComplimentary: row.isComplimentary ?? false,
+    isFreePlan: Number(priceMonthly ?? 0) <= 0,
   }
 }
 
@@ -48,7 +53,7 @@ export type AccessState = "ok" | "grace" | "readonly"
  */
 export function accessState(b: GarageBilling | null, now = new Date()): { state: AccessState; reason: string | null } {
   if (!b) return { state: "ok", reason: null }
-  if (b.isComplimentary) return { state: "ok", reason: null }
+  if (b.isComplimentary || b.isFreePlan) return { state: "ok", reason: null }
 
   const limit =
     b.status === "trialing" ? b.trialEndsAt

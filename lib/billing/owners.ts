@@ -107,6 +107,7 @@ export async function ownerBilling(owner: BillingOwner): Promise<OwnerBilling | 
     trialEndsAt: row.trialEndsAt,
     currentPeriodEnd: row.currentPeriodEnd,
     priceGhs: Number(row.priceMonthly) / 100,
+    isFreePlan: Number(row.priceMonthly ?? 0) <= 0,
     returnPath: contact.returnPath,
     contactPhone: contact.phone,
     contactName: contact.name,

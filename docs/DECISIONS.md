@@ -244,3 +244,28 @@ Earlier spec files win on conflict (see `docs/devin-spec/specs/prompt.json`).
 - **Links go through `/switch`** (a route handler) so the move is remembered
   without a client round-trip; it only opens pages inside the target
   workspace.
+
+## Pricing, trial end and integrations (25 Nov 2026)
+
+- **Garages pay; everyone else joins free.** Garage plans Starter GH₵149,
+  Growth GH₵349, Pro GH₵799 a month. Drivers free. Parts sellers free + 6% per
+  paid order (Seller Pro GH₵99: 3% and top placement). Brokers free with 5
+  quotes a month (Broker Pro GH₵149: unlimited). Tow 10% of each MoMo-paid
+  tow; riders 10% of each delivery fee. Rates live in `platform_settings`
+  (admin → Plans & pricing → Fees & free places), not in code.
+- **Paid plans only for garages; read-only after the trial.** 14-day trial →
+  7 days' grace → read-only (data kept, export allowed). No free garage tier.
+  Reminders at 7 days left (with jobs/money so far), 2 days, last day, trial
+  end, and 2 days before read-only.
+- **Free places are admin-granted and capped.** "Make free" on a garage sets
+  `is_complimentary`; capped by `free_garage_places` (default 10). Removing a
+  free place gives 7 days to pay.
+- **Plans that cost nothing never lock.** `accessState` treats price-0 plans as
+  always OK, and the billing sweep moves them to active at trial end.
+- **Providers are data, not deploys.** `/admin/integrations` saves payment and
+  SMS provider keys AES-256-GCM encrypted (`PAYOUT_ENCRYPTION_KEY`); one active
+  per category; none active → env vars as before. theTeller stays the default
+  gateway and the only payout rail. Paystack added for collections; SMS:
+  Arkesel, Hubtel, mNotify, or any HTTP API via a URL + body template.
+- **Payments remember their gateway.** `payment_gateway_refs` records which
+  gateway took each reference so verify/refund go back to it after a switch.

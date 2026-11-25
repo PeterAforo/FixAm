@@ -42,6 +42,15 @@
 
 ## Unreleased — RBAC unification for workspace staff (in progress)
 
+### 2026-11-25 — Pricing, trial end, free garages, admin integrations
+- **Migration 0040** (`drizzle/0040_pricing-integrations.sql`): `platform_settings`, `integration_providers`, `payment_gateway_refs` (RLS on, server-only); `subscriptions.complimentary_granted_at` / `complimentary_note`; launch prices for Starter/Growth/Pro (only where still unset); free entry plans renamed; new `vendor_pro` and `broker_pro` plans; default fee settings.
+- **Fees:** parts orders use the standard or Seller Pro rate unless an admin set one for that seller (`lib/platform/fees.ts`); tows pay the operator net of the tow fee (booked to `fixam_commission`); rider earning = delivery fee less the rider fee. Free brokers are stopped after their monthly quote allowance (re-quoting is free).
+- **Trial end:** `lib/billing/trial-schedule.ts` (+ tests) drives reminders at 7 days left (with jobs and money collected so far), 2 days, last day, trial end and 2 days before read-only. Free garages become active at trial end; price-0 plans never lock.
+- **Free garages:** admin Garages table — "Free places: X of 10 used", a Free filter, ⋯ → Make free / Remove free place (audited).
+- **Admin → Plans & pricing → Fees & free places:** edit order fees, tow and rider fees, broker free quotes and the number of free garage places.
+- **Admin → Integrations (new):** set up payment gateways (theTeller, Paystack) and SMS providers (Arkesel, Hubtel, mNotify, any HTTP SMS API), keys encrypted, switch one on per category, send a test SMS. Payments and SMS now route through the active provider (env as fallback); `smsIsLive()` is async.
+- **Pricing page:** shows garage plans only, plus a "Not a garage?" section with live fees for drivers, sellers, brokers, tow operators and riders; FAQ on what happens after the trial.
+
 ### 2026-11-25 — New logo: crossed spanners
 - Logo: two white crossed spanners on the ignition-orange gradient tile (#FF7A3D → #D93E0B, corner radius 23.5%). `LogoMark` (`components/marketing/logo.tsx`) draws it; the three sidebar overrides of its radius were dropped so every size matches.
 - Master files: `public/brand/` — `fixam-mark.svg` (rounded tile), `fixam-mark-square.svg` (full-bleed), `fixam-glyph-white|ink|orange.svg` (spanners only), `fixam-mark-1024.png`.

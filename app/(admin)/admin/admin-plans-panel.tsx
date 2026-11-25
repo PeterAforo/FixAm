@@ -35,6 +35,9 @@ const FEATURE_LABELS: Record<string, string> = {
   custom_branding: "Custom branding",
   priority_support: "Priority support",
   directory_listing: "Directory listing",
+  featured_listing: "Featured listing",
+  reduced_commission: "Reduced order fee",
+  unlimited_quotes: "Unlimited quotes",
 }
 const FEATURE_KEYS = Object.keys(FEATURE_LABELS)
 

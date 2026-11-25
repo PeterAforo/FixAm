@@ -462,6 +462,17 @@ export async function brokerQuote(rawInput: unknown): Promise<ActionResult<{ ok:
   if (!["requested", "quoted"].includes(r.status))
     return fail("CONFLICT", "This request can no longer be quoted");
 
+  // Free Broker plan: a monthly quote allowance (changing a quote already sent is free).
+  if (r.status === "requested") {
+    const { brokerQuotesLeft } = await import("@/lib/platform/fees");
+    const q = await brokerQuotesLeft(ctx.broker.id);
+    if (q.left !== null && q.left <= 0)
+      return fail(
+        "FORBIDDEN",
+        `You've used your ${q.allowance} free quotes this month. Upgrade to Broker Pro for unlimited quotes.`,
+      );
+  }
+
   const official = pes(d.officialFee);
   const service = pes(d.serviceFee);
   const total = official + service;

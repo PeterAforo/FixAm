@@ -1,12 +1,14 @@
 import Link from "next/link"
 import { Suspense } from "react"
-import { asc, eq } from "drizzle-orm"
+import { and, asc, eq, inArray } from "drizzle-orm"
 import { Check, Minus } from "lucide-react"
 import { db } from "@/lib/db"
 import { plans } from "@/lib/db/schema"
 import { cn } from "@/lib/utils"
 import { SiteFooter, SiteHeader } from "@/components/marketing/site-chrome"
 import { PhoneCollapse } from "@/components/marketing/mobile-fold"
+import { connection } from "next/server"
+import { platformSettingsNow } from "@/lib/platform/settings"
 
 export const metadata = { title: "Pricing" }
 
@@ -67,7 +69,8 @@ function Price({ pesewas, dark }: { pesewas: number | bigint | null; dark?: bool
 type PlanRow = typeof plans.$inferSelect
 
 async function PlansAndCompare() {
-  const rows: PlanRow[] = await db().select().from(plans).where(eq(plans.isActive, true)).orderBy(asc(plans.priceMonthly))
+  // Garage plans only — drivers, sellers, brokers, tow operators and riders are below.
+  const rows: PlanRow[] = await db().select().from(plans).where(and(eq(plans.isActive, true), eq(plans.audience, "garage"))).orderBy(asc(plans.priceMonthly))
   const featuredIdx = rows.length >= 3 ? 1 : -1
   const allFeatures = Array.from(new Set(rows.flatMap((p) => (p.features as string[] | null) ?? [])))
 
@@ -209,9 +212,72 @@ async function PlansAndCompare() {
   )
 }
 
+const pct = (bp: number) => `${(bp / 100).toLocaleString("en-GH", { maximumFractionDigits: 1 })}%`
+const ghs = (pesewas: bigint | number | undefined) =>
+  pesewas == null ? "" : `GH₵ ${(Number(pesewas) / 100).toLocaleString("en-GH", { maximumFractionDigits: 2 })}`
+
+/** Everyone else on FixAm: free to join, small fees only when they earn. */
+async function MarketplaceFees() {
+  await connection() // fees are admin-editable: render per request
+  const s = await platformSettingsNow()
+  const paid = await db().select({ code: plans.code, priceMonthly: plans.priceMonthly }).from(plans)
+    .where(and(eq(plans.isActive, true), inArray(plans.code, ["vendor_pro", "broker_pro"])))
+  const price = (code: string) => paid.find((p) => p.code === code)?.priceMonthly
+  const cards = [
+    { who: "Drivers", price: "Free", lines: ["Find garages, parts and brokers near you", "Track repairs and pay by MoMo", "Oil, insurance and DVLA reminders"], href: "/signup/driver" },
+    {
+      who: "Parts sellers",
+      price: "Free to list",
+      lines: [
+        `${pct(s.vendorCommissionBp)} fee on each paid order — nothing if you don't sell`,
+        price("vendor_pro") ? `Seller Pro ${ghs(price("vendor_pro"))}/month: ${pct(s.vendorProCommissionBp)} fee and first place in "parts near me"` : null,
+      ],
+      href: "/signup/parts-seller",
+    },
+    {
+      who: "Insurance & DVLA brokers",
+      price: "Free to list",
+      lines: [
+        `${s.brokerFreeQuotesPerMonth} quote requests a month included`,
+        price("broker_pro") ? `Broker Pro ${ghs(price("broker_pro"))}/month: unlimited quotes and top placement` : null,
+      ],
+      href: "/signup/insurance-broker",
+    },
+    {
+      who: "Tow operators & riders",
+      price: "Free to join",
+      lines: [`${pct(s.towCommissionBp)} of each paid tow`, `${pct(s.riderCommissionBp)} of each delivery fee`, "Paid out to your MoMo when the job is done"],
+      href: "/signup/tow-operator",
+    },
+  ]
+  return (
+    <section className="mx-auto max-w-[1200px] px-5 pt-12 sm:px-6 md:px-8 md:pt-24">
+      <h2 className="font-display text-[28px] font-bold tracking-[-0.03em] md:text-4xl">Not a garage?</h2>
+      <p className="mt-2 max-w-[620px] text-base text-muted-foreground">Joining is free. You only pay a small fee when FixAm brings you work.</p>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {cards.map((c) => (
+          <article key={c.who} className="flex flex-col rounded-3xl border border-border bg-card p-6 shadow-1">
+            <h3 className="text-lg font-semibold">{c.who}</h3>
+            <p className="mt-1 font-display text-2xl font-bold">{c.price}</p>
+            <ul className="mt-4 flex-1 space-y-2 text-[15px] text-[#3F3A34]">
+              {c.lines.filter(Boolean).map((l) => (
+                <li key={l} className="flex gap-2"><Check className="mt-0.5 size-4 shrink-0 text-[#4E6B07]" strokeWidth={2.4} />{l}</li>
+              ))}
+            </ul>
+            <Link href={c.href} className="mt-5 rounded-full border border-border py-3 text-center text-sm font-semibold hover:bg-surface-muted">
+              Join free
+            </Link>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 const FAQ = [
   { q: "What counts as a message?", a: "Each SMS or WhatsApp reminder or notification to a customer. Push and email are free and unlimited." },
-  { q: "How do I pay for FixAm?", a: "Monthly, by Mobile Money or card. Cancel any time." },
+  { q: "How do I pay for FixAm?", a: "Monthly or yearly, by Mobile Money or card. We send a payment link a few days before each period ends. Cancel any time." },
+  { q: "What happens when my free trial ends?", a: "You get 7 more days to pay. After that your garage becomes read-only: you can still see everything and export it, but you can't add new jobs until you pay. Nothing is ever deleted." },
   { q: "Can you import my customers and parts?", a: "Yes — upload a spreadsheet and we'll help you map it during setup." },
   { q: "Do my customers need to download an app?", a: "No. They get secure links by WhatsApp or SMS, and can sign in to the portal with their phone number." },
 ]
@@ -247,6 +313,7 @@ export default function PricingPage() {
         }
       >
         <PlansAndCompare />
+        <MarketplaceFees />
       </Suspense>
 
       <section className="mx-auto max-w-[1200px] px-5 py-12 sm:px-6 md:px-8 md:py-24">
