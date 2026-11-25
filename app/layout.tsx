@@ -10,6 +10,7 @@ import { TableCardLabels } from "@/components/shell/table-card-labels"
 import { NextIntlClientProvider } from "next-intl"
 import { getMessages } from "next-intl/server"
 import "./globals.css"
+import "./table-cards.css"
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",

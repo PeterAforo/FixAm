@@ -1,0 +1,61 @@
+/* ── Tables as cards on phones ──────────────────────────────────────────
+   Add `table-cards` to a <table>: below md each row becomes a stacked
+   block (first cell as its title, the rest as "label … value" lines).
+   Labels come from the header via <TableCardLabels /> in the root layout. */
+@media (max-width: 767.98px) {
+  table.table-cards {
+    min-width: 0 !important;
+  }
+  table.table-cards thead {
+    display: none;
+  }
+  table.table-cards,
+  table.table-cards tbody,
+  table.table-cards tfoot,
+  table.table-cards tr {
+    display: block;
+    width: 100%;
+  }
+  table.table-cards tr {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+  table.table-cards tbody tr:first-child {
+    border-top: 0;
+  }
+  table.table-cards td,
+  table.table-cards tbody th {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.2rem 0;
+    border: 0;
+    text-align: right;
+    white-space: normal;
+  }
+  table.table-cards td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    text-align: left;
+    font-size: 0.75rem;
+    color: var(--color-muted-foreground);
+  }
+  table.table-cards td:first-child {
+    justify-content: flex-start;
+    text-align: left;
+    font-weight: 600;
+  }
+  table.table-cards td:first-child::before,
+  table.table-cards td[colspan]::before {
+    content: none;
+  }
+  table.table-cards td[colspan] {
+    justify-content: center;
+    text-align: center;
+    font-weight: 400;
+  }
+  table.table-cards td:empty {
+    display: none;
+  }
+}
