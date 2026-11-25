@@ -42,6 +42,10 @@
 
 ## Unreleased — RBAC unification for workspace staff (in progress)
 
+### 2026-11-25 — Garage sidebar groups as an accordion
+- Garage sidebar: Workshop, Customers, Inventory and Business are collapsible group headers; opening one closes the other. The group holding the current page opens on load and follows navigation; a closed group with the current page shows a dot. Roles with a single group see a flat list.
+- "Your other workspaces" (all sidebars): every workspace starts collapsed and only one opens at a time.
+
 ### 2026-11-25 — Desktop: no sidebar scrollbar, job board without sideways scroll
 - Sidebars (garage, driver/vendor/broker/tow/rider, admin): the scrollbar is hidden; the list still scrolls with the wheel or trackpad when it is taller than the screen.
 - Job board on desktop: status columns wrap onto as many rows as the width needs (grid, min 230 px each) instead of one row you scroll sideways; columns grow with their jobs instead of scrolling inside. Swimlane view wraps the same way. Drag and drop unchanged.

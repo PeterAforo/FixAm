@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, type ReactNode } from "react"
+import { ChevronDown } from "lucide-react"
 import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -66,7 +67,7 @@ const ICONS: Record<string, LucideIcon> = {
 
 /** Sidebar grouping (by spec nav label). Anything not listed falls into the first group. */
 const GROUPS: { title: string | null; labels: string[] }[] = [
-  { title: null, labels: ["Dashboard", "Job board", "My jobs", "Bookings", "Leads", "Claims", "Inbox", "Inspections"] },
+  { title: "Workshop", labels: ["Dashboard", "Job board", "My jobs", "Bookings", "Leads", "Claims", "Inbox", "Inspections"] },
   { title: "Customers", labels: ["Vehicles", "Customers", "Reminders", "Renewals"] },
   { title: "Inventory", labels: ["Parts & stock", "POS", "Marketplace"] },
   { title: "Business", labels: ["Money", "Reports", "My stats"] },
@@ -180,6 +181,17 @@ export function AppShell({
     (i) => i.label !== "Settings" && !GROUPS.some((g) => g.labels.includes(i.label))
   )
   if (leftovers.length) grouped[0]!.items.push(...leftovers)
+  const shownGroups = grouped.filter((g) => g.items.length > 0)
+
+  // Sidebar groups work as an accordion: one open at a time, starting with the
+  // group of the page you're on, and following you when you navigate.
+  const activeGroup = shownGroups.find((g) => g.items.some(isActive))?.title ?? shownGroups[0]?.title ?? null
+  const [openGroup, setOpenGroup] = useState<string | null>(activeGroup)
+  const [prevActiveGroup, setPrevActiveGroup] = useState(activeGroup)
+  if (activeGroup !== prevActiveGroup) {
+    setPrevActiveGroup(activeGroup)
+    setOpenGroup(activeGroup)
+  }
 
   // Cmd/Ctrl+K
   useEffect(() => {
@@ -282,15 +294,30 @@ export function AppShell({
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Main navigation">
-          {grouped.map((g, gi) =>
-            g.items.length ? (
-              <div key={gi} className={gi > 0 ? "mt-5" : "mt-1"}>
-                {g.title && (
-                  <p className="mb-1.5 px-2.5 text-xs font-medium text-muted-foreground">{g.title}</p>
-                )}
-                <ul className="space-y-0.5">{g.items.map(renderItem)}</ul>
-              </div>
-            ) : null
+          {shownGroups.length === 1 ? (
+            <ul className="mt-1 space-y-0.5">{shownGroups[0]!.items.map(renderItem)}</ul>
+          ) : (
+            shownGroups.map((g, gi) => {
+              const open = openGroup === g.title
+              const hasActive = g.items.some(isActive)
+              return (
+                <div key={g.title ?? gi} className="mt-1">
+                  <button
+                    type="button"
+                    aria-expanded={open}
+                    onClick={() => setOpenGroup(open ? null : g.title)}
+                    className="flex h-8 w-full items-center justify-between rounded-lg px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-surface-muted/70 hover:text-foreground"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      {g.title}
+                      {!open && hasActive && <span className="size-1.5 rounded-full bg-primary" aria-hidden />}
+                    </span>
+                    <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} />
+                  </button>
+                  {open && <ul className="mb-2 mt-0.5 space-y-0.5">{g.items.map(renderItem)}</ul>}
+                </div>
+              )
+            })
           )}
           {workspaces.length > 0 && (
             <div className="-mx-3 mt-5">

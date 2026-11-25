@@ -24,10 +24,8 @@ export function OtherWorkspaces({
   defaultKey: string | null
 }) {
   const others = workspaces.filter((w) => w.key !== currentKey)
-  // Few others → open by default; many → collapsed so the sidebar stays short.
-  const [open, setOpen] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(others.map((w) => [w.key, others.length <= 2]))
-  )
+  // Collapsed by default, one open at a time, so the sidebar stays short.
+  const [open, setOpen] = useState<Record<string, boolean>>({})
   const [savedDefault, setSavedDefault] = useState(defaultKey)
   const [pending, start] = useTransition()
   const isDefault = savedDefault === currentKey
@@ -47,7 +45,7 @@ export function OtherWorkspaces({
                   <button
                     type="button"
                     aria-expanded={expanded}
-                    onClick={() => setOpen((o) => ({ ...o, [w.key]: !o[w.key] }))}
+                    onClick={() => setOpen((o) => (o[w.key] ? {} : { [w.key]: true }))}
                     className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left hover:bg-surface-muted"
                   >
                     <span className={cn("flex size-7 shrink-0 items-center justify-center rounded-lg", WORKSPACE_TINT[w.type])}>
