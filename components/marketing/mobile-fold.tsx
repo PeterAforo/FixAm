@@ -79,3 +79,32 @@ export function PhoneShowMore({
     </>
   )
 }
+
+/**
+ * Hides its content behind a button on phones; always open from `md` up.
+ */
+export function PhoneCollapse({
+  children,
+  label,
+  className,
+}: {
+  children: ReactNode
+  label: string
+  className?: string
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className={className}>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-12 w-full items-center justify-between rounded-2xl border border-border bg-card px-4 text-[15px] font-semibold md:hidden"
+      >
+        {label}
+        <ChevronDown className={cn("size-4 transition-transform", open && "rotate-180")} />
+      </button>
+      <div className={cn(!open && "max-md:hidden", open && "max-md:mt-3")}>{children}</div>
+    </div>
+  )
+}

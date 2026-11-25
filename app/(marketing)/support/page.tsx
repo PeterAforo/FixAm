@@ -14,6 +14,7 @@ import { SiteFooter } from "@/components/marketing/site-chrome"
 import { PageHero } from "@/components/marketing/page-hero"
 import { site, whatsappLink } from "@/lib/site"
 import { HelpSearch, type HelpTopic } from "./help-search"
+import { HelpTopics } from "./help-topics"
 import { photos } from "@/lib/images"
 
 export const metadata = {
@@ -117,64 +118,22 @@ export default function SupportPage() {
         eyebrow="Help centre"
         title="How can we help?"
         subtitle="Answers for garages and drivers — from your first check-in to MoMo payments and DVLA renewals."
-        className="pb-24"
+        className="pb-16 md:pb-24"
       />
 
-      <div className="mx-auto max-w-[1200px] px-6 pb-24 md:px-8">
+      <div className="mx-auto max-w-[1200px] px-5 pb-12 sm:px-6 md:px-8 md:pb-24">
         <HelpSearch topics={TOPICS.map((t) => ({ id: t.id, title: t.title, summary: t.summary, faqs: t.faqs }))} />
 
-        <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {TOPICS.map((t) => (
-            <a key={t.id} href={`#${t.id}`} className="group rounded-[20px] border border-border bg-card p-5 transition-colors hover:border-border-strong">
-              <span className="flex size-10 items-center justify-center rounded-xl bg-primary-subtle text-primary"><t.icon className="size-5" /></span>
-              <p className="mt-4 text-[15px] font-semibold">{t.title}</p>
-              <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{t.summary}</p>
-              <p className="mt-3 text-xs font-medium text-muted-foreground">{t.faqs.length} articles</p>
-            </a>
-          ))}
-        </div>
-
-        <div className="mt-16 grid gap-10 lg:grid-cols-[220px_minmax(0,1fr)]">
-          <nav aria-label="Help topics" className="hidden lg:block">
-            <ul className="sticky top-24 space-y-1 text-sm">
-              {TOPICS.map((t) => (
-                <li key={t.id}>
-                  <a href={`#${t.id}`} className="block rounded-lg px-3 py-2 text-muted-foreground hover:bg-card hover:text-foreground">{t.title}</a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          <div className="space-y-12">
-            {TOPICS.map((t) => (
-              <section key={t.id} id={t.id} className="scroll-mt-24">
-                <div className="flex items-center gap-3">
-                  <span className="flex size-9 items-center justify-center rounded-xl bg-card text-primary shadow-1"><t.icon className="size-[18px]" /></span>
-                  <h2 className="font-display text-2xl font-semibold tracking-[-0.02em]">{t.title}</h2>
-                </div>
-                <div className="mt-5 overflow-hidden rounded-[20px] border border-border bg-card">
-                  {t.faqs.map((f, i) => (
-                    <details key={f.q} className={`group ${i > 0 ? "border-t border-border" : ""}`}>
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 text-[15px] font-medium [&::-webkit-details-marker]:hidden">
-                        {f.q}
-                        <span aria-hidden className="flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-muted text-muted-foreground transition-transform group-open:rotate-45">+</span>
-                      </summary>
-                      <p className="px-6 pb-6 text-[15px] leading-relaxed text-muted-foreground">{f.a}</p>
-                    </details>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        </div>
+        <HelpTopics topics={TOPICS.map((t) => ({ id: t.id, title: t.title, summary: t.summary, faqs: t.faqs, icon: <t.icon /> }))} />
 
         {/* Still need help */}
-        <div className="mt-20 grid gap-4 md:grid-cols-3">
-          <div className="rounded-[22px] bg-[#0B0F1A] p-7 text-[#F4F2EE] md:col-span-1">
+        <div className="mt-12 grid gap-3 md:mt-20 md:grid-cols-3 md:gap-4">
+          <div className="rounded-[22px] bg-[#0B0F1A] p-5 text-[#F4F2EE] md:col-span-1 md:p-7">
             <h2 className="font-display text-2xl font-semibold tracking-[-0.02em]">Still need help?</h2>
             <p className="mt-2 text-sm leading-relaxed text-[#AEB5C8]">Our team in Accra answers {site.supportHours.toLowerCase()}.</p>
           </div>
           {wa && (
-            <a href={wa} target="_blank" rel="noreferrer" className="flex items-start gap-4 rounded-[22px] border border-border bg-card p-7 transition-colors hover:border-border-strong">
+            <a href={wa} target="_blank" rel="noreferrer" className="flex items-start gap-4 rounded-[22px] border border-border bg-card p-5 transition-colors md:p-7 hover:border-border-strong">
               <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-subtle text-primary"><MessageCircle className="size-5" /></span>
               <span>
                 <span className="block text-[15px] font-semibold">Chat on WhatsApp</span>
@@ -182,7 +141,7 @@ export default function SupportPage() {
               </span>
             </a>
           )}
-          <a href={`mailto:${site.supportEmail}`} className="flex items-start gap-4 rounded-[22px] border border-border bg-card p-7 transition-colors hover:border-border-strong">
+          <a href={`mailto:${site.supportEmail}`} className="flex items-start gap-4 rounded-[22px] border border-border bg-card p-5 transition-colors md:p-7 hover:border-border-strong">
             <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-subtle text-primary"><Mail className="size-5" /></span>
             <span>
               <span className="block text-[15px] font-semibold">Email support</span>
@@ -190,7 +149,7 @@ export default function SupportPage() {
             </span>
           </a>
           {!wa && (
-            <Link href="/contact" className="flex items-start gap-4 rounded-[22px] border border-border bg-card p-7 transition-colors hover:border-border-strong">
+            <Link href="/contact" className="flex items-start gap-4 rounded-[22px] border border-border bg-card p-5 transition-colors md:p-7 hover:border-border-strong">
               <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary-subtle text-primary"><MessageCircle className="size-5" /></span>
               <span>
                 <span className="block text-[15px] font-semibold">Contact the team</span>

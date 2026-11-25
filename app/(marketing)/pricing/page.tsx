@@ -6,6 +6,7 @@ import { db } from "@/lib/db"
 import { plans } from "@/lib/db/schema"
 import { cn } from "@/lib/utils"
 import { SiteFooter, SiteHeader } from "@/components/marketing/site-chrome"
+import { PhoneCollapse } from "@/components/marketing/mobile-fold"
 
 export const metadata = { title: "Pricing" }
 
@@ -48,7 +49,7 @@ function Price({ pesewas, dark }: { pesewas: number | bigint | null; dark?: bool
   if (value <= 0) {
     return (
       <div>
-        <div className="font-display text-[40px] font-bold leading-none tracking-[-0.03em]">Free during pilot</div>
+        <div className="font-display text-[32px] font-bold leading-none tracking-[-0.03em] md:text-[40px]">Free during pilot</div>
         <div className={cn("mt-2 text-sm", sub)}>Monthly price announced at launch</div>
       </div>
     )
@@ -72,8 +73,10 @@ async function PlansAndCompare() {
 
   return (
     <>
-      <section className="mx-auto max-w-[1200px] px-6 pt-16 md:px-8">
-        <div className="flex flex-wrap items-stretch gap-5">
+      <section className="mx-auto max-w-[1200px] px-5 pt-8 sm:px-6 md:px-8 md:pt-16">
+        <p className="mb-3 text-center text-[13px] text-muted-foreground md:hidden">Swipe to see every plan →</p>
+        {/* Phones: plans in a swipe row, one card per screen. */}
+        <div className="-mx-5 flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] sm:-mx-6 sm:px-6 md:mx-0 md:flex-wrap md:gap-5 md:overflow-visible md:px-0 md:pb-0">
           {rows.map((p, i) => {
             const features = (p.features as string[] | null) ?? []
             const prev = i > 0 ? new Set(((rows[i - 1]!.features as string[] | null) ?? [])) : null
@@ -89,7 +92,7 @@ async function PlansAndCompare() {
               <article
                 key={p.code}
                 className={cn(
-                  "relative flex min-w-0 flex-[1_1_320px] flex-col gap-6 overflow-hidden rounded-3xl p-8",
+                  "relative flex w-[86%] min-w-0 shrink-0 snap-center flex-col gap-5 overflow-hidden rounded-3xl p-6 md:w-auto md:flex-[1_1_320px] md:shrink md:gap-6 md:p-8",
                   dark
                     ? "bg-[#0B0F1A] text-[#F4F2EE] shadow-[0_30px_60px_-24px_rgba(11,15,26,0.55)]"
                     : "border border-border bg-card shadow-1"
@@ -147,8 +150,9 @@ async function PlansAndCompare() {
       </section>
 
       {rows.length > 0 && (
-        <section className="mx-auto max-w-[1200px] px-6 pt-24 md:px-8">
-          <h2 className="mb-7 font-display text-4xl font-bold tracking-[-0.03em]">Compare plans</h2>
+        <section className="mx-auto max-w-[1200px] px-5 pt-8 sm:px-6 md:px-8 md:pt-24">
+          <h2 className="mb-7 hidden font-display text-4xl font-bold tracking-[-0.03em] md:block">Compare plans</h2>
+          <PhoneCollapse label="Compare every feature">
           <div className="overflow-x-auto rounded-[20px] border border-border bg-card">
             <table className="w-full min-w-[720px] border-collapse text-[15px]">
               <thead>
@@ -198,6 +202,7 @@ async function PlansAndCompare() {
               </tbody>
             </table>
           </div>
+          </PhoneCollapse>
         </section>
       )}
     </>
@@ -216,16 +221,16 @@ export default function PricingPage() {
     <main className="min-h-dvh bg-background text-foreground">
       <SiteHeader active="Pricing" />
 
-      <section className="mx-auto max-w-[1200px] px-6 pt-20 text-center md:px-8 md:pt-[88px]">
+      <section className="mx-auto max-w-[1200px] px-5 pt-8 text-center sm:px-6 md:px-8 md:pt-[88px]">
         <div className="text-[13px] font-semibold text-[#B8390A]">Pricing</div>
-        <h1 className="mx-auto mt-3.5 max-w-[820px] font-display text-5xl font-bold leading-[1.02] tracking-[-0.035em] md:text-[64px]">
+        <h1 className="mx-auto mt-3.5 max-w-[820px] font-display text-[34px] font-bold leading-[1.04] sm:text-5xl tracking-[-0.035em] md:text-[64px]">
           One plan for every size of garage.
         </h1>
-        <p className="mx-auto mt-5 max-w-[600px] text-lg leading-relaxed text-muted-foreground">
-          Every plan includes the full workshop, MoMo payments, reminders and the customer portal. SMS and WhatsApp
-          messages are included — no surprise bills.
+        <p className="mx-auto mt-4 max-w-[600px] text-base leading-relaxed text-muted-foreground sm:mt-5 sm:text-lg">
+          Every plan includes the full workshop, MoMo payments, reminders and the customer portal.
+          <span className="hidden sm:inline"> SMS and WhatsApp messages are included — no surprise bills.</span>
         </p>
-        <div className="mt-7 inline-flex flex-wrap justify-center gap-[18px] text-sm text-[#3F3A34]">
+        <div className="mt-5 inline-flex flex-wrap justify-center gap-x-[18px] gap-y-2 text-[13px] text-[#3F3A34] sm:mt-7 sm:text-sm">
           {["14-day free trial", "No card needed", "Pay monthly by MoMo or card"].map((t) => (
             <span key={t} className="inline-flex items-center gap-2"><Check className="size-4 text-[#4E6B07]" strokeWidth={2.4} />{t}</span>
           ))}
@@ -234,7 +239,7 @@ export default function PricingPage() {
 
       <Suspense
         fallback={
-          <section className="mx-auto flex max-w-[1200px] flex-wrap gap-5 px-6 pt-16 md:px-8">
+          <section className="mx-auto flex max-w-[1200px] flex-wrap gap-5 px-5 pt-8 sm:px-6 md:px-8 md:pt-16">
             {[0, 1, 2].map((i) => (
               <div key={i} className="h-[560px] flex-[1_1_320px] animate-pulse rounded-3xl border border-border bg-card" />
             ))}
@@ -244,18 +249,18 @@ export default function PricingPage() {
         <PlansAndCompare />
       </Suspense>
 
-      <section className="mx-auto max-w-[1200px] px-6 py-24 md:px-8">
-        <div className="flex flex-wrap gap-14">
+      <section className="mx-auto max-w-[1200px] px-5 py-12 sm:px-6 md:px-8 md:py-24">
+        <div className="flex flex-wrap gap-5 md:gap-14">
           <div className="flex-[1_1_300px]">
-            <h2 className="font-display text-4xl font-bold tracking-[-0.03em]">Questions, answered</h2>
+            <h2 className="font-display text-[28px] font-bold tracking-[-0.03em] md:text-4xl">Questions, answered</h2>
             <p className="mt-3 text-base leading-relaxed text-muted-foreground">
               Still unsure? <Link href="/garages" className="font-semibold text-[#B8390A]">See garages already on FixAm</Link>.
             </p>
           </div>
           <div className="flex flex-[2_1_560px] flex-col">
             {FAQ.map((f, i) => (
-              <details key={f.q} open={i === 0} className={cn("border-t border-border py-[22px]", i === FAQ.length - 1 && "border-b")}>
-                <summary className="cursor-pointer text-[17px] font-semibold">{f.q}</summary>
+              <details key={f.q} open={i === 0} className={cn("border-t border-border py-4 md:py-[22px]", i === FAQ.length - 1 && "border-b")}>
+                <summary className="cursor-pointer text-base font-semibold md:text-[17px]">{f.q}</summary>
                 <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">{f.a}</p>
               </details>
             ))}

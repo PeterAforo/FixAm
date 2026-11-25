@@ -42,6 +42,11 @@
 
 ## Unreleased — RBAC unification for workspace staff (in progress)
 
+### 2026-11-25 — Mobile-first pass: About, Support, Pricing (fix plan step 3)
+- About on phones: story photo and middle paragraph hidden, before/after rows stacked, values as a swipe row, smaller "who it's for" cards, one CTA button.
+- Support on phones: topic cards become a swipe row of tabs and only the chosen topic's questions show (a `#topic` link still opens its topic). New `support/help-topics.tsx`.
+- Pricing on phones: plans in a swipe row, the compare table behind a "Compare every feature" button, tighter hero and FAQ. New `PhoneCollapse` in `mobile-fold.tsx`.
+
 ### 2026-11-25 — Mobile-first pass: site-wide + home page (fix plan steps 1–2)
 - Footer: on phones the link groups fold (tap to open) and the logo sits in one row with "Start free trial".
 - `PageHero`, `Section`, `SectionIntro`, `CtaBand`: about half the spacing and smaller headings on phones; desktop unchanged.
