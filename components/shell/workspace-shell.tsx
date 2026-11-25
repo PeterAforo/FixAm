@@ -110,7 +110,7 @@ export function WorkspaceShell({
       <aside className="sticky top-0 hidden h-dvh w-[272px] shrink-0 flex-col border-r border-border bg-card md:flex">
         <div className="px-4 pb-3 pt-4">
           <Link href={current?.href ?? "/account"} className="flex items-center gap-2.5 px-1">
-            <LogoMark className="size-7 rounded-[9px]" />
+            <LogoMark className="size-7" />
             <span className="font-display text-[19px] font-bold tracking-[-0.02em]">FixAm</span>
           </Link>
           <WorkspaceSwitcher workspaces={workspaces} currentKey={currentKey} className="mt-4" />

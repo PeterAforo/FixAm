@@ -21,6 +21,11 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
+  // Absolute base for the share image (app/opengraph-image.jpg) and icons.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://fix-am-virid.vercel.app"),
+  applicationName: "FixAm",
+  openGraph: { siteName: "FixAm", type: "website", locale: "en_GH" },
+  twitter: { card: "summary_large_image" },
   title: {
     default: "FixAm — Garage operating system for Ghana",
     template: "%s · FixAm",

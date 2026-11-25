@@ -49,7 +49,7 @@ export function AdminNav({
   return (
     <aside className="border-b border-border bg-card md:sticky md:top-0 md:flex md:h-dvh md:w-[272px] md:shrink-0 md:flex-col md:border-b-0 md:border-r">
       <div className="flex items-center gap-2.5 px-5 pb-3 pt-4">
-        <LogoMark className="size-7 rounded-[9px]" />
+        <LogoMark className="size-7" />
         <span className="font-display text-[19px] font-bold tracking-[-0.02em]">FixAm</span>
         <span className="ml-auto rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold text-secondary-foreground">Admin</span>
       </div>

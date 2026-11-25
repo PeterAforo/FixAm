@@ -42,6 +42,13 @@
 
 ## Unreleased — RBAC unification for workspace staff (in progress)
 
+### 2026-11-25 — New logo: crossed spanners
+- Logo: two white crossed spanners on the ignition-orange gradient tile (#FF7A3D → #D93E0B, corner radius 23.5%). `LogoMark` (`components/marketing/logo.tsx`) draws it; the three sidebar overrides of its radius were dropped so every size matches.
+- Master files: `public/brand/` — `fixam-mark.svg` (rounded tile), `fixam-mark-square.svg` (full-bleed), `fixam-glyph-white|ink|orange.svg` (spanners only), `fixam-mark-1024.png`.
+- Device icons: `app/icon.svg` + `app/favicon.ico` (16/32/48) for browser tabs, `app/apple-icon.png` (180, iOS home screen), `public/icon-192.png` / `icon-512.png` replaced, new `icon-maskable-512.png` in the manifest (Android adaptive icon), `icon-badge-96.png` as the push-notification badge in `public/sw.js`.
+- Link previews: `app/opengraph-image.jpg` and `app/twitter-image.jpg` (1200×630: logo, headline, workshop photo, red-gold-green band); root metadata gains `metadataBase`, `openGraph` and `twitter` card settings.
+- Brand sheet (logo use, clear space, colours, type, don'ts): the "FixAm logo concepts" design canvas.
+
 ### 2026-11-25 — Ghanaian photography, hero carousel, wider sidebar, header search
 - Photos: the site now uses FixAm's own Ghanaian set from `docs/images`, exported to `public/images/<slug>-{640,1280,1920}.webp` (3.7 MB total). `lib/images.ts` serves local files (same `photos.*` keys, plus new ones: partsShop, driverTracker, insuranceOffice, insuranceSigning, engineYard, technicianTablet…); Unsplash removed. Parts page, brokers page and onboarding roles use photos that match them. DVLA-branded images were left out to avoid implying an official link.
 - Home hero: background photo carousel (5 slides, 6 s, cross-fade, pauses on hover, still for reduced-motion) with the headline changing per slide ("Run your garage. / Keep every customer.", "Show the work. / Approve on WhatsApp."…), dots to pick a slide, and a thin red-gold-green band at the bottom. New `components/marketing/hero-carousel.tsx`, `app/motion.css`.
