@@ -42,6 +42,10 @@
 
 ## Unreleased — RBAC unification for workspace staff (in progress)
 
+### 2026-11-25 — Mobile-first pass: Privacy, Terms, Support links (fix plan step 4)
+- Legal pages on phones: each numbered section folds to its heading (new `components/marketing/legal-section.tsx`), so the page reads like a contents list. Desktop and the server render keep every section open; a #section link opens its section.
+- Support on phones: a `#topic` link now shows only that topic instead of the first topic plus the linked one.
+
 ### 2026-11-25 — Mobile-first pass: About, Support, Pricing (fix plan step 3)
 - About on phones: story photo and middle paragraph hidden, before/after rows stacked, values as a swipe row, smaller "who it's for" cards, one CTA button.
 - Support on phones: topic cards become a swipe row of tabs and only the chosen topic's questions show (a `#topic` link still opens its topic). New `support/help-topics.tsx`.

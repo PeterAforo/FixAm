@@ -18,6 +18,8 @@ export type HelpTopicView = {
  */
 export function HelpTopics({ topics }: { topics: HelpTopicView[] }) {
   const [active, setActive] = useState(topics[0]?.id ?? "")
+  // Until a tab is tapped, a #topic link wins over the default first topic.
+  const [picked, setPicked] = useState(false)
   return (
     <>
       <div className="-mx-5 mt-6 flex gap-2 overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:mt-12 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
@@ -25,7 +27,10 @@ export function HelpTopics({ topics }: { topics: HelpTopicView[] }) {
           <a
             key={t.id}
             href={`#${t.id}`}
-            onClick={() => setActive(t.id)}
+            onClick={() => {
+              setActive(t.id)
+              setPicked(true)
+            }}
             aria-current={active === t.id ? "true" : undefined}
             className={cn(
               "group flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-semibold transition-colors",
@@ -58,7 +63,7 @@ export function HelpTopics({ topics }: { topics: HelpTopicView[] }) {
             <section
               key={t.id}
               id={t.id}
-              className={cn("scroll-mt-24", active !== t.id && "max-md:hidden max-md:target:block")}
+              className={cn("scroll-mt-24", active !== t.id && "max-md:hidden max-md:target:block", active === t.id && !picked && "max-md:[:has(section:target)>&:not(:target)]:hidden")}
             >
               <div className="flex items-center gap-3">
                 <span className="flex size-9 items-center justify-center rounded-xl bg-card text-primary shadow-1 [&>svg]:size-[18px]">{t.icon}</span>

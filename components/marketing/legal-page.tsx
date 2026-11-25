@@ -2,6 +2,7 @@ import Link from "next/link"
 import type { ReactNode } from "react"
 import { SiteFooter } from "./site-chrome"
 import { PageHero } from "./page-hero"
+import { LegalSectionFold } from "./legal-section"
 
 export type LegalSection = { id: string; title: string; body: ReactNode }
 
@@ -24,7 +25,7 @@ export function LegalPage({
   return (
     <main className="min-h-dvh bg-background text-foreground">
       <PageHero eyebrow="Legal" title={title} subtitle={intro} />
-      <div className="mx-auto grid max-w-[1200px] gap-12 px-6 py-16 md:px-8 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <div className="mx-auto grid max-w-[1200px] gap-12 px-5 py-8 sm:px-6 md:px-8 md:py-16 lg:grid-cols-[240px_minmax(0,1fr)]">
         <nav aria-label="On this page" className="hidden lg:block">
           <div className="sticky top-24">
             <p className="px-3 text-xs font-medium text-muted-foreground">On this page</p>
@@ -39,20 +40,14 @@ export function LegalPage({
         </nav>
         <article className="max-w-[720px]">
           <p className="text-sm text-muted-foreground">Last updated {updated}</p>
-          <div className="mt-8 space-y-12">
+          <div className="mt-4 border-t border-border md:mt-8 md:space-y-12 md:border-0">
             {sections.map((s, i) => (
-              <section key={s.id} id={s.id} className="scroll-mt-24">
-                <h2 className="font-display text-2xl font-semibold tracking-[-0.02em]">
-                  <span className="mr-2 text-muted-foreground">{i + 1}.</span>
-                  {s.title}
-                </h2>
-                <div className="mt-4 space-y-4 text-[16px] leading-[1.75] text-[#3F3A34] [&_a]:font-medium [&_a]:text-[#B8390A] [&_li]:pl-1 [&_strong]:text-foreground [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-5">
-                  {s.body}
-                </div>
-              </section>
+              <LegalSectionFold key={s.id} id={s.id} index={i + 1} title={s.title}>
+                {s.body}
+              </LegalSectionFold>
             ))}
           </div>
-          <div className="mt-16 rounded-[20px] border border-border bg-card p-6 text-sm text-muted-foreground">
+          <div className="mt-8 rounded-[20px] border border-border bg-card p-5 text-sm md:mt-16 md:p-6 text-muted-foreground">
             Questions about this policy? <Link href="/contact" className="font-semibold text-foreground underline-offset-4 hover:underline">Contact us</Link> and we&apos;ll be happy to help.
           </div>
         </article>
