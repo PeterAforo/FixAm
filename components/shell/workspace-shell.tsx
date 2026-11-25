@@ -129,7 +129,7 @@ export function WorkspaceShell({
             </Link>
           )}
         </div>
-        <nav className="flex-1 overflow-y-auto px-3 pb-3" aria-label="Main navigation">
+        <nav className="flex-1 overflow-y-auto px-3 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Main navigation">
           <ul className="mt-1 space-y-0.5">
             {nav.map((item) => {
               const Icon = ICONS[item.icon] ?? Gauge

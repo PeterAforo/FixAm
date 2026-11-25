@@ -305,14 +305,15 @@ export function JobsBoard({
       </div>
 
       {/* Board */}
-      <div className="pb-4 md:overflow-x-auto">
-        <div className="md:flex md:min-w-max md:gap-3">
+      {/* Desktop: columns wrap onto as many rows as needed — no sideways scroll. */}
+      <div className="pb-4">
+        <div className="md:grid md:grid-cols-[repeat(auto-fill,minmax(230px,1fr))] md:gap-3">
           {statuses.map((status) => {
             const colJobs = swimlanes.flatMap((l) => l.jobs).filter((j) => j.status === status)
             return (
               <div
                 key={status}
-                className={`${phoneStatus === status ? "flex" : "hidden md:flex"} w-full shrink-0 flex-col rounded-xl border md:w-64 bg-surface-muted/40 transition-colors ${COLUMN_TINT[status] ?? ""} ${
+                className={`${phoneStatus === status ? "flex" : "hidden md:flex"} w-full shrink-0 flex-col rounded-xl border md:w-auto bg-surface-muted/40 transition-colors ${COLUMN_TINT[status] ?? ""} ${
                   dragOver === status ? "border-primary bg-primary/10 ring-2 ring-primary/30" : "border-transparent"
                 }`}
                 onDragOver={(e) => {
@@ -333,7 +334,7 @@ export function JobsBoard({
                   </span>
                   <span className="rounded-pill bg-surface px-2 py-0.5 text-xs font-semibold">{colJobs.length}</span>
                 </div>
-                <div className="min-h-[120px] flex-1 space-y-2 px-2 pb-2 md:max-h-[calc(100dvh-320px)] md:overflow-y-auto">
+                <div className="min-h-[72px] flex-1 space-y-2 px-2 pb-2">
                   {colJobs.map((j) => (
                     <JobCard
                       key={j.id}
@@ -345,7 +346,7 @@ export function JobsBoard({
                     />
                   ))}
                   {colJobs.length === 0 && (
-                    <p className="px-2 py-6 text-center text-xs text-muted-foreground"><span className="md:hidden">No jobs here right now</span><span className="hidden md:inline">Drop jobs here</span></p>
+                    <p className="px-2 py-4 text-center text-xs text-muted-foreground"><span className="md:hidden">No jobs here right now</span><span className="hidden md:inline">Drop jobs here</span></p>
                   )}
                 </div>
               </div>
@@ -360,12 +361,12 @@ export function JobsBoard({
           {swimlanes.map((lane) => (
             <div key={lane.key}>
               <h2 className="mb-2 text-[15px] font-semibold">{lane.label}</h2>
-              <div className="flex gap-3 overflow-x-auto pb-2">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 pb-2">
                 {statuses.map((status) => {
                   const laneJobs = lane.jobs.filter((j) => j.status === status)
                   if (laneJobs.length === 0 && swimlanes.length > 3) return null
                   return (
-                    <div key={status} className="w-56 shrink-0 rounded-lg border border-dashed border-border p-2">
+                    <div key={status} className="min-w-0 rounded-lg border border-dashed border-border p-2">
                       <p className="mb-2 text-[10px] font-semibold text-muted-foreground">
                         {COLUMN_LABEL[status]} · {laneJobs.length}
                       </p>

@@ -59,7 +59,7 @@ export function AdminNav({
           <WorkspaceSwitcher workspaces={workspaces} currentKey="platform" />
         </div>
       )}
-      <nav aria-label="Admin" className="overflow-x-auto px-3 pb-3 md:flex-1 md:overflow-y-auto">
+      <nav aria-label="Admin" className="overflow-x-auto px-3 pb-3 md:flex-1 md:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <ul className="flex gap-1 md:mt-1 md:flex-col md:gap-0.5">
           {items.map((i) => {
             const on = isOn(i)

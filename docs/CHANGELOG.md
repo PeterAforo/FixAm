@@ -42,6 +42,10 @@
 
 ## Unreleased — RBAC unification for workspace staff (in progress)
 
+### 2026-11-25 — Desktop: no sidebar scrollbar, job board without sideways scroll
+- Sidebars (garage, driver/vendor/broker/tow/rider, admin): the scrollbar is hidden; the list still scrolls with the wheel or trackpad when it is taller than the screen.
+- Job board on desktop: status columns wrap onto as many rows as the width needs (grid, min 230 px each) instead of one row you scroll sideways; columns grow with their jobs instead of scrolling inside. Swimlane view wraps the same way. Drag and drop unchanged.
+
 ### 2026-11-25 — Mobile-first pass: workspaces on phones, dashboard, settings (fix plan steps 6–7)
 - Other workspaces on phones: the garage header shows a workspace switcher in place of the garage name; the driver/vendor/broker/tow/rider "More" sheet lists the other workspaces with their menus; admin shows a switcher under its logo. (The sidebar that held them is hidden below `md`.)
 - Garage dashboard on phones: quick actions in one swipe row, "Ready for pickup" and "Reminders this week" show the first 3 (the card's "View all" opens the rest), 7-day bar chart hidden (total and cash in hand stay).

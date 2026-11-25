@@ -281,7 +281,7 @@ export function AppShell({
           )}
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 pb-3" aria-label="Main navigation">
+        <nav className="flex-1 overflow-y-auto px-3 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Main navigation">
           {grouped.map((g, gi) =>
             g.items.length ? (
               <div key={gi} className={gi > 0 ? "mt-5" : "mt-1"}>
