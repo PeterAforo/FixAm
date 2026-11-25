@@ -26,9 +26,10 @@ export function HeroCarousel({ children, className }: { children: ReactNode; cla
   const [paused, setPaused] = useState(false)
 
   useEffect(() => {
-    if (paused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
-    const t = setInterval(() => setIndex((i) => (i + 1) % heroSlides.length), SLIDE_MS)
-    return () => clearInterval(t)
+    if (paused) return
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    const t = setTimeout(() => setIndex((i) => (i + 1) % heroSlides.length), SLIDE_MS)
+    return () => clearTimeout(t)
   }, [paused, index])
 
   return (
