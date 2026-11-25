@@ -42,6 +42,24 @@
 
 ## Unreleased — RBAC unification for workspace staff (in progress)
 
+### 2026-11-25 — Mobile-first pass: site-wide + home page (fix plan steps 1–2)
+- Footer: on phones the link groups fold (tap to open) and the logo sits in one row with "Start free trial".
+- `PageHero`, `Section`, `SectionIntro`, `CtaBand`: about half the spacing and smaller headings on phones; desktop unchanged.
+- Home page on phones: short faded peek of the job board, payment chips in one swipe row, photo cards as a swipe carousel, "For garages / For drivers" as tabs, first 3 feature cards plus "See all features", steps as a compact list, CTA with one button. Roughly 11.8 → about 6 screens tall.
+- New `components/marketing/mobile-fold.tsx` (`AudienceTabs`, `PhoneShowMore`).
+
+### Public site on phones: menu button, footer, hero
+- **Menu button replaces the scrolling link row.** On screens below `lg` the
+  header shows the logo, "Start free trial" and a menu button; the menu opens
+  a panel with every site link plus Sign in / Start free trial (closes on
+  Escape, outside tap or navigation; page scroll locked while open)
+  (`components/marketing/mobile-menu.tsx`). The old row was cut off and
+  showed a scrollbar.
+- **Footer stacks on phones**: brand block on top, link groups in a 2-column
+  grid (3 on tablets, 5 on desktop) instead of squeezed narrow columns.
+- Home hero buttons stack full-width on phones; the "Collected today" tile no
+  longer wraps its amount.
+
 ### Member roles now resolve through `can()` / roles-permissions.json
 - `Principal` gained `broker` and `tow` kinds, and `vendorRole` now carries
   the raw stored role. New `workspacePrincipal(kind, role)` maps a member
