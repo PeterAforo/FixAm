@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useSyncExternalStore, type ReactNode } from "react"
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react"
 import { ChevronDown } from "lucide-react"
 
 const DESKTOP = "(min-width: 768px)"
@@ -22,8 +22,8 @@ function useIsDesktop() {
 
 /**
  * One numbered legal section. Always open on desktop; on phones it folds
- * to its heading so the page reads like a contents list. Jumping to the
- * section's #id opens it (browsers expand <details> on fragment links).
+ * to its heading so the page reads like a contents list. A link to the
+ * section's #id opens it.
  */
 export function LegalSectionFold({
   id,
@@ -37,7 +37,15 @@ export function LegalSectionFold({
   children: ReactNode
 }) {
   const desktop = useIsDesktop()
-  const [open, setOpen] = useState(false)
+  // A #section link (on load or later) opens that section on phones.
+  const [open, setOpen] = useState(() => typeof window !== "undefined" && window.location.hash === `#${id}`)
+  useEffect(() => {
+    const onHash = () => {
+      if (window.location.hash === `#${id}`) setOpen(true)
+    }
+    window.addEventListener("hashchange", onHash)
+    return () => window.removeEventListener("hashchange", onHash)
+  }, [id])
   return (
     <details
       id={id}
