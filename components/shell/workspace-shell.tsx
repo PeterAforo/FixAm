@@ -107,7 +107,7 @@ export function WorkspaceShell({
 
   return (
     <div className="flex min-h-dvh bg-background">
-      <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-border bg-card md:flex">
+      <aside className="sticky top-0 hidden h-dvh w-[272px] shrink-0 flex-col border-r border-border bg-card md:flex">
         <div className="px-4 pb-3 pt-4">
           <Link href={current?.href ?? "/account"} className="flex items-center gap-2.5 px-1">
             <LogoMark className="size-7 rounded-[9px]" />

@@ -46,7 +46,7 @@ export default function BrokersPage({ searchParams }: { searchParams: Promise<SP
   return (
     <main className="min-h-dvh bg-background text-foreground">
       <PageHero
-        image={photos.accraCity}
+        image={photos.insuranceOffice}
         active="Insurance & DVLA"
         eyebrow="Renew without the queue"
         title={

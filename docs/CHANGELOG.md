@@ -42,6 +42,12 @@
 
 ## Unreleased — RBAC unification for workspace staff (in progress)
 
+### 2026-11-25 — Ghanaian photography, hero carousel, wider sidebar, header search
+- Photos: the site now uses FixAm's own Ghanaian set from `docs/images`, exported to `public/images/<slug>-{640,1280,1920}.webp` (3.7 MB total). `lib/images.ts` serves local files (same `photos.*` keys, plus new ones: partsShop, driverTracker, insuranceOffice, insuranceSigning, engineYard, technicianTablet…); Unsplash removed. Parts page, brokers page and onboarding roles use photos that match them. DVLA-branded images were left out to avoid implying an official link.
+- Home hero: background photo carousel (5 slides, 6 s, cross-fade, pauses on hover, still for reduced-motion) with the headline changing per slide ("Run your garage. / Keep every customer.", "Show the work. / Approve on WhatsApp."…), dots to pick a slide, and a thin red-gold-green band at the bottom. New `components/marketing/hero-carousel.tsx`, `app/motion.css`.
+- Sidebars 248/256 px → 272 px (garage, workspace, admin).
+- Garage header: the search is a real field that fills the space between the breadcrumb and the icons; typing opens the search panel with the text carried over (plates, phone numbers, customers, pages). Ctrl K unchanged.
+
 ### 2026-11-25 — Garage sidebar groups as an accordion
 - Garage sidebar: Workshop, Customers, Inventory and Business are collapsible group headers; opening one closes the other. The group holding the current page opens on load and follows navigation; a closed group with the current page shows a dot. Roles with a single group see a flat list.
 - "Your other workspaces" (all sidebars): every workspace starts collapsed and only one opens at a time.

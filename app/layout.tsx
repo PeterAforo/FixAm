@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next"
 import type { ReactNode } from "react"
-import { Bricolage_Grotesque } from "next/font/google"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
@@ -11,12 +10,9 @@ import { NextIntlClientProvider } from "next-intl"
 import { getMessages } from "next-intl/server"
 import "./globals.css"
 import "./table-cards.css"
+import "./motion.css"
 
-const bricolage = Bricolage_Grotesque({
-  variable: "--font-bricolage",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-})
+const bricolage = { variable: "", className: "" }
 
 export const viewport: Viewport = {
   width: "device-width",

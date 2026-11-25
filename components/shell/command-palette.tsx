@@ -54,12 +54,15 @@ export function CommandPalette({
   role,
   garageSlug,
   garageId,
+  initialQuery = "",
 }: {
   open: boolean
   onClose: () => void
   role: StaffRole
   garageSlug: string
   garageId: string
+  /** Text typed into the header search before the palette opened. */
+  initialQuery?: string
 }) {
   useEffect(() => {
     if (!open) return
@@ -72,7 +75,7 @@ export function CommandPalette({
 
   if (!open) return null
   // Fresh mount each open → query state resets naturally
-  return <PaletteDialog role={role} garageSlug={garageSlug} garageId={garageId} onClose={onClose} />
+  return <PaletteDialog role={role} garageSlug={garageSlug} garageId={garageId} onClose={onClose} initialQuery={initialQuery} />
 }
 
 function PaletteDialog({
@@ -80,14 +83,16 @@ function PaletteDialog({
   garageSlug,
   garageId,
   onClose,
+  initialQuery,
 }: {
   role: StaffRole
   garageSlug: string
   garageId: string
   onClose: () => void
+  initialQuery: string
 }) {
   const router = useRouter()
-  const [query, setQuery] = useState("")
+  const [query, setQuery] = useState(initialQuery)
   const inputRef = useRef<HTMLInputElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   useFocusTrap(panelRef, onClose)

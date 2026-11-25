@@ -29,7 +29,8 @@ export function ShellHeader({
   garageId: string
   userId: string
   notifications: ShellNotification[]
-  onOpenPalette: () => void
+  /** Opens the search palette, optionally with text already typed. */
+  onOpenPalette: (query?: string) => void
   /** Replaces the garage name on phones, e.g. a workspace switcher. */
   mobileTitle?: ReactNode
 }) {
@@ -51,7 +52,7 @@ export function ShellHeader({
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-xl md:gap-3 md:px-8">
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 lg:max-w-[280px] lg:flex-none">
         {/* Mobile: garage name (sidebar is hidden). Desktop: breadcrumb. */}
         {mobileTitle ? (
           <div className="md:hidden">{mobileTitle}</div>
@@ -65,20 +66,30 @@ export function ShellHeader({
         </nav>
       </div>
 
-      <button
-        type="button"
-        onClick={onOpenPalette}
-        className="hidden h-10 w-72 items-center gap-2.5 rounded-xl border border-border bg-card px-3 text-sm text-muted-foreground transition-colors hover:border-border-strong lg:flex"
-      >
-        <Search className="size-4" />
-        <span className="flex-1 text-left">Search plates, customers, jobs…</span>
-        <kbd className="rounded-md border border-border bg-background px-1.5 py-0.5 font-mono text-[11px]">Ctrl K</kbd>
-      </button>
+      {/* Desktop: a real search field across the header. Typing opens the
+          search panel with the text carried over (plates, customers, pages). */}
+      <div className="hidden min-w-0 flex-1 justify-center lg:flex">
+        <label className="relative flex h-11 w-full max-w-2xl items-center">
+          <span className="sr-only">Search plates, phone numbers, customers and pages</span>
+          <Search className="pointer-events-none absolute left-3.5 size-4 text-muted-foreground" />
+          <input
+            type="search"
+            value=""
+            placeholder="Search plates, phone numbers, customers, pages…"
+            onChange={(e) => onOpenPalette(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") onOpenPalette("")
+            }}
+            className="h-11 w-full rounded-xl border border-border bg-card pl-10 pr-16 text-sm outline-none transition-colors placeholder:text-muted-foreground hover:border-border-strong focus:border-foreground focus:ring-4 focus:ring-[#FF5A1F]/15"
+          />
+          <kbd className="pointer-events-none absolute right-3 rounded-md border border-border bg-background px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">Ctrl K</kbd>
+        </label>
+      </div>
       <Button
         type="button"
         variant="ghost"
         className="min-h-11 min-w-11 px-2.5 lg:hidden"
-        onClick={onOpenPalette}
+        onClick={() => onOpenPalette()}
         aria-label="Search (Ctrl+K)"
       >
         <Search className="size-5" />

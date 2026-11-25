@@ -58,7 +58,7 @@ export default function PartsPage({ searchParams }: { searchParams: Promise<SP> 
   return (
     <main className="min-h-dvh bg-background text-foreground">
       <PageHero
-        image={photos.mechanicEngine}
+        image={photos.partsShop}
         active="Find parts"
         eyebrow="For drivers & garages"
         title={

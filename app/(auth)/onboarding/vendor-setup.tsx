@@ -65,7 +65,7 @@ export function VendorSetup({ defaultPhone, defaultEmail, plans }: { defaultPhon
 
   return (
     <OnboardingFrame
-      photo={photos.oilChange}
+      photo={photos.partsShop}
       badge="Sell to garages & drivers"
       title="Put your parts in front of every garage near you."
       intro="Garages order straight from their job cards. Drivers order for their own cars. You deliver and get paid."

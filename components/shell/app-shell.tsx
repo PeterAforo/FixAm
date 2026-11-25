@@ -134,6 +134,7 @@ export function AppShell({
   const pathname = usePathname()
   const tNav = useTranslations("nav")
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [paletteQuery, setPaletteQuery] = useState("")
   const labelFor = (label: string) => {
     const key = navLabelKey(label)
     return key ? tNav(key) : label
@@ -198,6 +199,7 @@ export function AppShell({
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault()
+        setPaletteQuery("")
         setPaletteOpen((o) => !o)
       }
     }
@@ -260,7 +262,7 @@ export function AppShell({
   return (
     <div className="flex min-h-dvh bg-background">
       {/* Sidebar — desktop */}
-      <aside className="sticky top-0 hidden h-dvh w-[248px] shrink-0 flex-col border-r border-border bg-card md:flex">
+      <aside className="sticky top-0 hidden h-dvh w-[272px] shrink-0 flex-col border-r border-border bg-card md:flex">
         <div className="px-4 pb-3 pt-4">
           <Link href={base} className="flex items-center gap-2.5 px-1">
             <LogoMark className="size-7 rounded-[9px]" />
@@ -344,7 +346,10 @@ export function AppShell({
           garageId={garageId}
           userId={userId}
           notifications={notifications}
-          onOpenPalette={() => setPaletteOpen(true)}
+          onOpenPalette={(q) => {
+            setPaletteQuery(q ?? "")
+            setPaletteOpen(true)
+          }}
           mobileTitle={
             workspaces.length > 1 ? (
               <WorkspaceSwitcher workspaces={workspaces} currentKey={`garage:${garageSlug}`} className="max-w-[240px]" />
@@ -400,7 +405,10 @@ export function AppShell({
             nav section that doesn't fit in the bottom bar. */}
         <button
           type="button"
-          onClick={() => setPaletteOpen(true)}
+          onClick={() => {
+            setPaletteQuery("")
+            setPaletteOpen(true)
+          }}
           className="flex min-h-16 flex-1 items-center justify-center text-muted-foreground"
           aria-label="More navigation"
         >
@@ -417,6 +425,7 @@ export function AppShell({
         role={role}
         garageSlug={garageSlug}
         garageId={garageId}
+        initialQuery={paletteQuery}
       />
     </div>
   )

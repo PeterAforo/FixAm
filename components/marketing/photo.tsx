@@ -31,8 +31,9 @@ export function PhotoImg({
   )
 }
 
-/** Small, unobtrusive photographer credit (Unsplash License doesn't require it, but it's good manners). */
+/** Optional photo credit — renders nothing for FixAm's own photos. */
 export function PhotoCredit({ photo, className }: { photo: Photo; className?: string }) {
+  if (!photo.credit) return null
   return (
     <a
       href={photo.href}
@@ -40,7 +41,7 @@ export function PhotoCredit({ photo, className }: { photo: Photo; className?: st
       rel="noreferrer"
       className={cn("text-[11px] text-white/45 transition-colors hover:text-white/80", className)}
     >
-      Photo: {photo.credit} / Unsplash
+      Photo: {photo.credit}
     </a>
   )
 }

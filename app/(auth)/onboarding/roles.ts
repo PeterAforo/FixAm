@@ -44,7 +44,7 @@ export const ROLE_OPTIONS: RoleOption[] = [
     badge: "14-day free trial",
     pitch: "Your car's whole life, in your pocket.",
     intro: "Live repair updates, one-tap approvals and reminders before oil, insurance or roadworthy run out.",
-    photo: photos.suvGarage,
+    photo: photos.driverTracker,
     steps: [
       { label: "About you", hint: "Name and city" },
       { label: "Your car", hint: "Plate, make and model" },
@@ -78,7 +78,7 @@ export const ROLE_OPTIONS: RoleOption[] = [
     badge: "Sell to garages & drivers",
     pitch: "Put your parts in front of every garage near you.",
     intro: "Garages order straight from their job cards. Drivers order for their own cars. You deliver and get paid.",
-    photo: photos.oilChange,
+    photo: photos.partsShop,
     steps: [
       { label: "Your shop", hint: "Name and what you sell" },
       { label: "Delivery & payouts", hint: "Areas and MoMo" },
@@ -94,7 +94,7 @@ export const ROLE_OPTIONS: RoleOption[] = [
     badge: "For insurance brokers",
     pitch: "Motor renewals, delivered to your inbox.",
     intro: "Garages hand you renewals and drivers request quotes from their phones. You quote, process and get paid.",
-    photo: photos.accraCity,
+    photo: photos.insuranceOffice,
     steps: [
       { label: "Your business", hint: "Name and location" },
       { label: "Services & fees", hint: "NIC licence and insurers" },
@@ -110,7 +110,7 @@ export const ROLE_OPTIONS: RoleOption[] = [
     badge: "For DVLA agents",
     pitch: "Turn DVLA queues into a steady pipeline.",
     intro: "Garages and drivers send you roadworthy and licence renewals. You quote, process and get paid.",
-    photo: photos.accraStreet,
+    photo: photos.insuranceSigning,
     steps: [
       { label: "Your business", hint: "Name and location" },
       { label: "Services & fees", hint: "Agent number and fee" },
@@ -126,7 +126,7 @@ export const ROLE_OPTIONS: RoleOption[] = [
     badge: "For towing & roadside help",
     pitch: "Breakdown calls, straight to your phone.",
     intro: "Drivers press SOS and the nearest available tow trucks get the job by SMS. First to accept gets it. You set the price; MoMo payments are held safely until the job is done.",
-    photo: photos.accraStreet,
+    photo: photos.accraCity,
     steps: [
       { label: "Your business", hint: "Name, phone and base" },
       { label: "Services & rates", hint: "What you do, fees and MoMo" },

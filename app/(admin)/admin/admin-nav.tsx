@@ -47,7 +47,7 @@ export function AdminNav({
   const isOn = (i: Item) => (i.exact ? pathname === i.href : pathname === i.href || pathname.startsWith(`${i.href}/`))
 
   return (
-    <aside className="border-b border-border bg-card md:sticky md:top-0 md:flex md:h-dvh md:w-[256px] md:shrink-0 md:flex-col md:border-b-0 md:border-r">
+    <aside className="border-b border-border bg-card md:sticky md:top-0 md:flex md:h-dvh md:w-[272px] md:shrink-0 md:flex-col md:border-b-0 md:border-r">
       <div className="flex items-center gap-2.5 px-5 pb-3 pt-4">
         <LogoMark className="size-7 rounded-[9px]" />
         <span className="font-display text-[19px] font-bold tracking-[-0.02em]">FixAm</span>

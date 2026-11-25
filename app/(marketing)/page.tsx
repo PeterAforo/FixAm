@@ -14,6 +14,7 @@ import {
 } from "@/components/marketing/mockups"
 import { PhotoCredit, PhotoImg } from "@/components/marketing/photo"
 import { AudienceTabs, PhoneShowMore } from "@/components/marketing/mobile-fold"
+import { HeroCarousel, HeroDots, HeroHeadline } from "@/components/marketing/hero-carousel"
 import { photos } from "@/lib/images"
 import { cn } from "@/lib/utils"
 
@@ -39,14 +40,10 @@ export default function MarketingHome() {
       </Suspense>
 
       {/* ── Hero (dark) ─────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-[#0B0F1A] text-[#F4F2EE]">
+      <HeroCarousel>
         <div
           aria-hidden
-          className="pointer-events-none absolute left-1/2 top-[360px] h-[700px] w-[1100px] -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_50%,rgba(255,90,31,0.28)_0%,rgba(255,90,31,0)_100%)]"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:64px_64px]"
+          className="pointer-events-none absolute left-1/2 top-[420px] h-[700px] w-[1100px] -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_50%,rgba(255,90,31,0.22)_0%,rgba(255,90,31,0)_100%)]"
         />
 
         <SiteHeader tone="dark" />
@@ -60,13 +57,7 @@ export default function MarketingHome() {
             Insurance &amp; DVLA renewals, handled by your garage
             <ChevronRight className="size-3.5" />
           </Link>
-          <h1 className="mx-auto max-w-[940px] font-display text-[40px] sm:mt-7 sm:text-5xl font-bold leading-none tracking-[-0.035em] md:text-[76px]">
-            Run your garage.
-            <br />
-            <span className="bg-[linear-gradient(100deg,#FFB08A_0%,#FF5A1F_55%,#FF7A3D_100%)] bg-clip-text text-transparent">
-              Keep every customer.
-            </span>
-          </h1>
+          <HeroHeadline className="mx-auto max-w-[940px] font-display text-[40px] sm:mt-7 sm:text-5xl font-bold leading-none tracking-[-0.035em] md:text-[76px] min-h-[4em] sm:min-h-[2em]" />
           <p className="mx-auto mt-4 max-w-[640px] text-base leading-relaxed text-[#AEB5C8] sm:mt-6 sm:text-lg md:text-[19px]">
             Check-ins, estimates, parts, MoMo payments and automatic oil, insurance and DVLA reminders — one calm
             system for Ghanaian workshops, and a live tracker their drivers love.
@@ -79,7 +70,8 @@ export default function MarketingHome() {
               <MapPin className="size-4" /> Find a garage near you
             </Link>
           </div>
-          <p className="mt-4 text-[13px] text-[#8A93AB] sm:mt-[18px]">14-day free trial · No card needed · Set up in under 10 minutes</p>
+          <p className="mt-4 text-[13px] text-[#AEB5C8] sm:mt-[18px]">14-day free trial · No card needed · Set up in under 10 minutes</p>
+          <HeroDots className="mt-6" />
         </div>
 
         {/* Product composite */}
@@ -92,7 +84,7 @@ export default function MarketingHome() {
           <TrackerPhone className="absolute -right-2 top-[70px] hidden xl:block" />
           <PaymentToast className="absolute bottom-12 left-0 hidden md:flex" />
         </div>
-      </section>
+      </HeroCarousel>
 
       {/* ── Proof strip ─────────────────────────────────────────────── */}
       <section className="border-b border-border bg-card">
@@ -139,13 +131,13 @@ export default function MarketingHome() {
             <PhotoCredit photo={photos.oilChange} className="absolute bottom-3 right-4" />
           </figure>
           <figure className="group relative h-[340px] w-[86%] shrink-0 snap-center overflow-hidden rounded-[24px] md:col-span-5 md:h-auto md:min-h-[240px] md:w-auto md:rounded-[28px]">
-            <PhotoImg photo={photos.suvGarage} fill sizes="(min-width: 768px) 480px, 100vw" className="transition-transform duration-700 group-hover:scale-[1.03]" />
+            <PhotoImg photo={photos.driverTracker} fill sizes="(min-width: 768px) 480px, 100vw" className="transition-transform duration-700 group-hover:scale-[1.03]" />
             <div aria-hidden className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,15,26,0.8)_0%,rgba(11,15,26,0.1)_75%)]" />
             <figcaption className="absolute inset-y-0 left-6 flex max-w-[260px] flex-col justify-center text-white">
               <span className="flex size-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur"><Smartphone className="size-5" /></span>
               <p className="mt-3 font-display text-xl font-semibold leading-tight">Drivers watch the job live — and approve from WhatsApp.</p>
             </figcaption>
-            <PhotoCredit photo={photos.suvGarage} className="absolute bottom-3 right-4" />
+            <PhotoCredit photo={photos.driverTracker} className="absolute bottom-3 right-4" />
           </figure>
         </div>
       </section>

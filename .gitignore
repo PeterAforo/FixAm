@@ -55,3 +55,6 @@ next-env.d.ts
 .dev-storage/
 
 graphify-out/
+
+# original marketing photo sources (web-sized copies live in public/images)
+docs/images/

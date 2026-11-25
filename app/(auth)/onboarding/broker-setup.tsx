@@ -76,7 +76,7 @@ export function BrokerSetup({ defaultKind, defaultPhone, defaultEmail, plans }: 
 
   return (
     <OnboardingFrame
-      photo={photos.accraCity}
+      photo={photos.insuranceOffice}
       badge={kind === "dvla" ? "For DVLA agents" : kind === "both" ? "For brokers & agents" : "For insurance brokers"}
       title={title}
       intro="Garages hand you renewals they don't process themselves, and drivers request quotes straight from their phones. You quote, process and get paid."
