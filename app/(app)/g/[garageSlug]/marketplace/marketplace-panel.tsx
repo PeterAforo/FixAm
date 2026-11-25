@@ -345,7 +345,7 @@ export function MarketplacePanel(props: {
                           )}
                         </ol>
 
-                        <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
+                        <div className="overflow-x-auto"><table className="table-cards w-full text-sm min-w-[600px]">
                           <tbody>
                             {detail.items.map((i) => (
                               <tr key={i.id} className="border-b last:border-0">

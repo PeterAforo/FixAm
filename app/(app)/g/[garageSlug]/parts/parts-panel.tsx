@@ -229,7 +229,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
 
           <Card>
             <CardContent className="overflow-x-auto p-0">
-              <table className="w-full text-sm">
+              <table className="table-cards w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                     <th className="px-4 py-3">Part</th>
@@ -303,7 +303,7 @@ export function PartsPanel(props: { garageSlug: string; garageId: string; data: 
                   </div>
                 )}
                 <div className="mt-2 max-h-64 overflow-auto rounded-lg border">
-                  <table className="w-full text-xs">
+                  <table className="table-cards w-full text-xs">
                     <thead className="bg-muted"><tr><th className="px-2 py-1 text-left">SKU</th><th className="px-2 py-1 text-left">Name</th><th className="px-2 py-1 text-right">Cost</th><th className="px-2 py-1 text-right">Price</th></tr></thead>
                     <tbody>
                       {csvRows.slice(0, 50).map((r) => (

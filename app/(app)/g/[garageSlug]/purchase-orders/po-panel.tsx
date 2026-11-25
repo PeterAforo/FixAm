@@ -164,7 +164,7 @@ export function PosOrdersPanel(props: { garageSlug: string; garageId: string; da
 
       <Card>
         <CardContent className="overflow-x-auto p-0">
-          <table className="w-full text-sm">
+          <table className="table-cards w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">PO #</th>

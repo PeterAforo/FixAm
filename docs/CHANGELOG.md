@@ -42,6 +42,11 @@
 
 ## Unreleased — RBAC unification for workspace staff (in progress)
 
+### 2026-11-25 — Mobile-first pass: tables become card rows on phones (fix plan step 5)
+- New `table-cards` class (rules at the end of `app/globals.css`): below `md`, each table row stacks as a block — first cell as the title, the rest as "label … value" lines, header hidden. Desktop tables unchanged.
+- New `components/shell/table-card-labels.tsx`, mounted in the root layout, copies each column header onto its cells as `data-label` (and keeps up as tables re-render).
+- Applied to all 32 tables in the garage, portal, vendor and admin screens (print pages excluded).
+
 ### 2026-11-25 — Mobile-first pass: job board and job card (fix plan step 4)
 - Job board on phones: status tabs with counts show one column at a time (opens on the first status with jobs); the four filter dropdowns sit behind a "Filters" button with a dot when any is set. Desktop board unchanged.
 - Job card on phones: the status buttons move to a sticky bar above the bottom nav — the job's next step as the main button, the other moves (incl. cancel) under "More…". Tracker link shows just a Copy button; tabs no longer squash.

@@ -74,7 +74,7 @@ export function AdminPartsPanel({ parts }: { parts: PartTypeView[] }) {
       )}
 
       <div className="max-h-[520px] overflow-auto rounded-[18px] border border-border bg-card">
-        <table className="w-full text-sm">
+        <table className="table-cards w-full text-sm">
           <thead className="sticky top-0 bg-surface-muted text-left text-xs font-medium text-muted-foreground">
             <tr><th className="px-4 py-2.5">Part</th><th className="px-4 py-2.5">Category</th><th className="px-4 py-2.5">Other names</th><th className="px-4 py-2.5" /></tr>
           </thead>

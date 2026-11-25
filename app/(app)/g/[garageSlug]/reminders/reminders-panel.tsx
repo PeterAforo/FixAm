@@ -94,7 +94,7 @@ export function RemindersPanel({ garageId, data }: { garageId: string; data: Dat
 
       {tab === "sent" && (
         <Card><CardContent className="p-0">
-          <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
+          <div className="overflow-x-auto"><table className="table-cards w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">When</th><th className="px-4 py-3">Channel</th>
@@ -130,7 +130,7 @@ export function RemindersPanel({ garageId, data }: { garageId: string; data: Dat
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">Garage overrides replace the platform default. Edits apply to future sends only.</p>
           <Card><CardContent className="p-0">
-            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
+            <div className="overflow-x-auto"><table className="table-cards w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                   <th className="px-4 py-3">Key</th><th className="px-4 py-3">Channel</th>
@@ -197,7 +197,7 @@ function DueTable(props: { items: Data["items"]; canSend: boolean; pending: bool
   }
   return (
     <Card><CardContent className="p-0">
-      <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
+      <div className="overflow-x-auto"><table className="table-cards w-full text-sm min-w-[600px]">
         <thead>
           <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
             <th className="px-4 py-3">Due item</th><th className="px-4 py-3">Customer / vehicle</th>

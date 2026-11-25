@@ -260,7 +260,7 @@ async function ProfileLoader({
               {vehicleRows.length === 0 ? (
                 <p className="px-6 pb-6 text-sm text-muted-foreground">No fleet vehicles yet.</p>
               ) : (
-                <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
+                <div className="overflow-x-auto"><table className="table-cards w-full text-sm min-w-[600px]">
                   <thead>
                     <tr className="border-b border-border text-left text-xs text-muted-foreground">
                       <th className="px-6 py-2">Vehicle</th>

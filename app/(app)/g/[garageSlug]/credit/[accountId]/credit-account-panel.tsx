@@ -143,7 +143,7 @@ export function CreditAccountPanel(p: Props) {
               }}>Record payment</Button>
             )}
           </div>
-          <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
+          <div className="overflow-x-auto"><table className="table-cards w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">Invoice</th>
@@ -196,7 +196,7 @@ export function CreditAccountPanel(p: Props) {
       <Card>
         <CardContent className="p-0">
           <h2 className="border-b px-4 py-3 text-[15px] font-semibold">Statements</h2>
-          <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
+          <div className="overflow-x-auto"><table className="table-cards w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">Period</th>

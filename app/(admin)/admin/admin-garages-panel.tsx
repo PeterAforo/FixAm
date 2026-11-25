@@ -141,7 +141,7 @@ export function AdminGaragesPanel({ garages, compact = false }: { garages: Garag
         <p className="px-5 py-8 text-center text-sm text-muted-foreground">{garages.length === 0 ? "No garages yet." : "No garages match."}</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-sm">
+          <table className="table-cards w-full min-w-[760px] text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-[0.06em] text-muted-foreground">
                 <th className="px-5 py-3 font-semibold">Garage</th>

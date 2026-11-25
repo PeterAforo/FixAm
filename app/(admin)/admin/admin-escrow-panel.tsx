@@ -82,7 +82,7 @@ export function AdminEscrowPanel({ view }: { view: AdminEscrowView }) {
             <p className="mt-2 rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">Nothing here.</p>
           ) : (
             <div className="mt-2 overflow-x-auto rounded-xl border border-border">
-              <table className="w-full text-sm">
+              <table className="table-cards w-full text-sm">
                 <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
                   <tr><th className="px-3 py-2">Order</th><th className="px-3 py-2 text-right">Paid</th><th className="px-3 py-2 text-right">Commission</th><th className="px-3 py-2">Timer</th><th className="px-3 py-2" /></tr>
                 </thead>
@@ -99,7 +99,7 @@ export function AdminEscrowPanel({ view }: { view: AdminEscrowView }) {
           <p className="mt-2 rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">All payouts are settled.</p>
         ) : (
           <div className="mt-2 overflow-x-auto rounded-xl border border-border">
-            <table className="w-full text-sm">
+            <table className="table-cards w-full text-sm">
               <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr><th className="px-3 py-2">Created</th><th className="px-3 py-2">Purpose</th><th className="px-3 py-2 text-right">Amount</th><th className="px-3 py-2">Status</th><th className="px-3 py-2" /></tr>
               </thead>

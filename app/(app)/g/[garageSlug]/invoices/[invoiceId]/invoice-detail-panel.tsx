@@ -246,7 +246,7 @@ export function InvoiceDetailPanel(props: {
 
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
+          <div className="overflow-x-auto"><table className="table-cards w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                 <th className="px-4 py-3">Description</th>
@@ -343,7 +343,7 @@ export function InvoiceDetailPanel(props: {
                 <Button variant="ghost" onClick={cancelPlan}>Cancel plan</Button>
               )}
             </div>
-            <div className="overflow-x-auto"><table className="mt-3 w-full text-sm min-w-[600px]">
+            <div className="overflow-x-auto"><table className="table-cards mt-3 w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="border-b border-border bg-surface-muted/40 text-left text-xs font-medium text-muted-foreground">
                   <th className="py-2">#</th>

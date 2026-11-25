@@ -322,7 +322,7 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
       {tab === "orders" && (
         <Card>
           <CardContent className="p-0">
-            <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
+            <div className="overflow-x-auto"><table className="table-cards w-full text-sm min-w-[600px]">
               <thead>
                 <tr className="border-b text-left bg-surface-muted/50 text-xs font-medium text-muted-foreground">
                   <th className="px-4 py-3">Order</th>
@@ -493,7 +493,7 @@ export function VendorPanel(props: { dashboard: Dash | null; products: Product[]
 
           <Card>
             <CardContent className="overflow-x-auto p-0">
-              <table className="w-full text-sm">
+              <table className="table-cards w-full text-sm">
                 <thead>
                   <tr className="border-b text-left bg-surface-muted/50 text-xs font-medium text-muted-foreground">
                     <th className="px-4 py-3">Product</th>

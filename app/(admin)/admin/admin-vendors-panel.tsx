@@ -51,7 +51,7 @@ export function AdminVendorsPanel({ vendors }: { vendors: VendorRow[] }) {
       {msg && <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{msg}</p>}
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
+          <div className="overflow-x-auto"><table className="table-cards w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-3">Business</th>

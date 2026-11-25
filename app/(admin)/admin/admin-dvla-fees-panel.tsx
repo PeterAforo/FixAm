@@ -66,7 +66,7 @@ export function AdminDvlaFeesPanel({ fees }: { fees: Fee[] }) {
       </CardContent></Card>
 
       <Card><CardContent className="p-0">
-        <div className="overflow-x-auto"><table className="w-full text-sm min-w-[600px]">
+        <div className="overflow-x-auto"><table className="table-cards w-full text-sm min-w-[600px]">
           <thead>
             <tr className="border-b-2 border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
               <th className="px-4 py-3">Type</th><th className="px-4 py-3">Category</th>
