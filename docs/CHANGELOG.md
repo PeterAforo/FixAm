@@ -42,6 +42,10 @@
 
 ## Unreleased — RBAC unification for workspace staff (in progress)
 
+### 2026-11-25 — Mobile-first pass: job board and job card (fix plan step 4)
+- Job board on phones: status tabs with counts show one column at a time (opens on the first status with jobs); the four filter dropdowns sit behind a "Filters" button with a dot when any is set. Desktop board unchanged.
+- Job card on phones: the status buttons move to a sticky bar above the bottom nav — the job's next step as the main button, the other moves (incl. cancel) under "More…". Tracker link shows just a Copy button; tabs no longer squash.
+
 ### 2026-11-25 — Mobile-first pass: Privacy, Terms, Support links (fix plan step 4)
 - Legal pages on phones: each numbered section folds to its heading (new `components/marketing/legal-section.tsx`), so the page reads like a contents list. Desktop and the server render keep every section open; a #section link opens its section.
 - Support on phones: a `#topic` link now shows only that topic instead of the first topic plus the linked one.

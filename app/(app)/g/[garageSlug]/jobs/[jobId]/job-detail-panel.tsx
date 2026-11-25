@@ -254,6 +254,13 @@ export function JobDetailPanel(props: {
     })
   }
 
+  // Phone action bar: the job's one forward move up front, the rest in a menu.
+  const statusLabel = (st: JobStatus) =>
+    st === "ready" && !job.qcSignedOff ? "QC sign-off first" : STATUS_LABEL[st] ?? st.replace(/_/g, " ")
+  const mainNext = nextStatuses.find((st) => st !== "cancelled" && st !== "declined") ?? null
+  const otherNext = nextStatuses.filter((st) => st !== mainNext)
+  const showActionBar = canStatusUpdate && nextStatuses.length > 0
+
   const mediaUrl = (path: string) => `/api/dev-storage/${encodeURIComponent(path)}`
 
   // P8-07 old-part proof
@@ -292,7 +299,7 @@ export function JobDetailPanel(props: {
   const PROOF_LABEL: Record<string, string> = { photo: "Old part photo ✓", customer_took: "Customer took old part ✓", not_replacement: "Not a replacement" }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${showActionBar ? "max-md:pb-20" : ""}`}>
       <input ref={proofRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onProofFile} />
       {/* Header */}
       <header className="flex flex-wrap items-start justify-between gap-4">
@@ -300,7 +307,7 @@ export function JobDetailPanel(props: {
           <Link href={`/g/${garageSlug}/jobs`} className="text-sm font-semibold text-muted-foreground hover:text-foreground">
             ← Job board
           </Link>
-          <h1 className="mt-1 flex flex-wrap items-center gap-3 font-display text-[30px] font-semibold tracking-[-0.025em]">
+          <h1 className="mt-1 flex flex-wrap items-center gap-2 font-display text-2xl font-semibold md:gap-3 md:text-[30px] tracking-[-0.025em]">
             <span className="font-mono">{job.number}</span>
             <StatusPill status={job.status} />
             {job.priority !== "normal" && <StatusPill tone={job.priority === "urgent" ? "danger" : "warning"}>{job.priority}</StatusPill>}
@@ -343,7 +350,7 @@ export function JobDetailPanel(props: {
         )}
 
         {canStatusUpdate && nextStatuses.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="hidden flex-wrap gap-2 md:flex">
             {nextStatuses.map((s) => (
               <Button
                 key={s}
@@ -361,9 +368,9 @@ export function JobDetailPanel(props: {
 
       {trackerUrl && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-info bg-info/10 px-4 py-3">
-          <p className="text-sm font-semibold">Customer tracker link:</p>
-          <code className="break-all text-xs">{trackerUrl}</code>
-          <Button size="sm" variant="secondary" onClick={() => navigator.clipboard.writeText(trackerUrl)}>Copy</Button>
+          <p className="text-sm font-semibold">Customer tracker link<span className="hidden sm:inline">:</span></p>
+          <code className="hidden break-all text-xs sm:inline">{trackerUrl}</code>
+          <Button size="sm" variant="secondary" className="ml-auto sm:ml-0" onClick={() => navigator.clipboard.writeText(trackerUrl)}>Copy</Button>
         </div>
       )}
 
@@ -405,7 +412,7 @@ export function JobDetailPanel(props: {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-semibold capitalize ${tab === t ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+            className={`shrink-0 whitespace-nowrap px-4 py-2 text-sm font-semibold capitalize ${tab === t ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
           >
             {t}
           </button>
@@ -794,6 +801,33 @@ export function JobDetailPanel(props: {
 
       {/* internal notes quick add could go here; kept minimal */}
       <p className="sr-only"><Camera className="size-4" /></p>
+
+      {showActionBar && (
+        <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 flex items-center gap-2 border-t border-border bg-card/95 px-4 py-2.5 backdrop-blur-xl md:hidden">
+          {mainNext && (
+            <Button className="h-11 flex-1" disabled={pending} onClick={() => transition(mainNext)}>
+              {mainNext === "ready" && !job.qcSignedOff ? statusLabel(mainNext) : `→ ${statusLabel(mainNext)}`}
+            </Button>
+          )}
+          {otherNext.length > 0 && (
+            <select
+              aria-label="Other status changes"
+              value=""
+              disabled={pending}
+              onChange={(e) => {
+                const to = e.target.value as JobStatus
+                if (to) transition(to)
+              }}
+              className={`h-11 rounded-lg border border-input bg-surface px-3 text-sm font-semibold ${mainNext ? "w-28" : "flex-1"}`}
+            >
+              <option value="">More…</option>
+              {otherNext.map((st) => (
+                <option key={st} value={st}>{statusLabel(st)}</option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
     </div>
   )
 }

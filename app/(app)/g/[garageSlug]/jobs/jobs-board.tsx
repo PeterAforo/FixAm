@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Car, Clock, Search, User, X } from "lucide-react"
+import { Car, Clock, Search, SlidersHorizontal, User, X } from "lucide-react"
 import { Button } from "@/components/brand/button"
 import { CarAvatar, type VehicleType } from "@/components/brand/car-avatar"
 import { PlateChip } from "@/components/brand/plate-chip"
@@ -103,6 +103,11 @@ export function JobsBoard({
   const [q, setQ] = useState(filters.q)
   const [optimistic, setOptimistic] = useState<Map<string, JobStatus>>(new Map())
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Phones show one status column at a time, opening on the first with work in it.
+  const [phoneStatus, setPhoneStatus] = useState<JobStatus | null>(
+    () => statuses.find((st) => jobs.some((j) => j.status === st)) ?? statuses[0] ?? null
+  )
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   // Realtime: any jobs change for this garage refreshes the board.
   useEffect(() => {
@@ -212,7 +217,7 @@ export function JobsBoard({
       {/* Header + filters */}
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Job board</h1>
+          <h1 className="font-display text-2xl font-semibold tracking-[-0.025em] md:text-[30px]">Job board</h1>
           <p className="text-muted-foreground">{effectiveJobs.length} active jobs</p>
         </div>
         <Button asChild>
@@ -221,7 +226,7 @@ export function JobsBoard({
       </header>
 
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-56 flex-1">
+        <div className="relative min-w-0 flex-1 md:min-w-56">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             className={`${inputCls} w-full pl-9`}
@@ -230,6 +235,18 @@ export function JobsBoard({
             onChange={(e) => onSearch(e.target.value)}
           />
         </div>
+        <button
+          type="button"
+          aria-expanded={filtersOpen}
+          onClick={() => setFiltersOpen((v) => !v)}
+          className={`${inputCls} relative flex items-center gap-1.5 font-semibold md:hidden`}
+        >
+          <SlidersHorizontal className="size-4" /> Filters
+          {(filters.mechanic || filters.priority || filters.branch || filters.swimlane) && (
+            <span className="absolute -right-1 -top-1 size-2.5 rounded-full bg-primary" />
+          )}
+        </button>
+        <div className={`w-full flex-wrap items-center gap-2 md:flex md:w-auto ${filtersOpen ? "grid grid-cols-2" : "hidden"}`}>
         <select className={inputCls} value={filters.mechanic} onChange={(e) => pushParams({ mechanic: e.target.value })} aria-label="Filter by mechanic">
           <option value="">All mechanics</option>
           {mechanics.map((m) => <option key={m.userId} value={m.userId}>{m.name}</option>)}
@@ -255,6 +272,7 @@ export function JobsBoard({
             <X className="size-4" /> Clear
           </Button>
         )}
+        </div>
       </div>
 
       {toast && (
@@ -263,15 +281,38 @@ export function JobsBoard({
         </div>
       )}
 
+      {/* Phone status tabs */}
+      <div className="-mx-5 flex gap-2 overflow-x-auto px-5 [scrollbar-width:none] md:hidden" role="tablist" aria-label="Job status">
+        {statuses.map((status) => {
+          const n = effectiveJobs.filter((j) => j.status === status).length
+          const on = phoneStatus === status
+          return (
+            <button
+              key={status}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => setPhoneStatus(status)}
+              className={`flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3.5 text-sm font-semibold ${
+                on ? "border-foreground bg-foreground text-background" : "border-border bg-card text-muted-foreground"
+              }`}
+            >
+              {COLUMN_LABEL[status]}
+              <span className={`rounded-full px-1.5 text-xs ${on ? "bg-background/20" : "bg-surface-muted"}`}>{n}</span>
+            </button>
+          )
+        })}
+      </div>
+
       {/* Board */}
-      <div className="overflow-x-auto pb-4">
-        <div className="flex min-w-max gap-3">
+      <div className="pb-4 md:overflow-x-auto">
+        <div className="md:flex md:min-w-max md:gap-3">
           {statuses.map((status) => {
             const colJobs = swimlanes.flatMap((l) => l.jobs).filter((j) => j.status === status)
             return (
               <div
                 key={status}
-                className={`flex w-64 shrink-0 flex-col rounded-xl border bg-surface-muted/40 transition-colors ${COLUMN_TINT[status] ?? ""} ${
+                className={`${phoneStatus === status ? "flex" : "hidden md:flex"} w-full shrink-0 flex-col rounded-xl border md:w-64 bg-surface-muted/40 transition-colors ${COLUMN_TINT[status] ?? ""} ${
                   dragOver === status ? "border-primary bg-primary/10 ring-2 ring-primary/30" : "border-transparent"
                 }`}
                 onDragOver={(e) => {
@@ -292,7 +333,7 @@ export function JobsBoard({
                   </span>
                   <span className="rounded-pill bg-surface px-2 py-0.5 text-xs font-semibold">{colJobs.length}</span>
                 </div>
-                <div className="flex-1 space-y-2 overflow-y-auto px-2 pb-2" style={{ maxHeight: "calc(100dvh - 320px)", minHeight: 120 }}>
+                <div className="min-h-[120px] flex-1 space-y-2 px-2 pb-2 md:max-h-[calc(100dvh-320px)] md:overflow-y-auto">
                   {colJobs.map((j) => (
                     <JobCard
                       key={j.id}
@@ -304,7 +345,7 @@ export function JobsBoard({
                     />
                   ))}
                   {colJobs.length === 0 && (
-                    <p className="px-2 py-6 text-center text-xs text-muted-foreground">Drop jobs here</p>
+                    <p className="px-2 py-6 text-center text-xs text-muted-foreground"><span className="md:hidden">No jobs here right now</span><span className="hidden md:inline">Drop jobs here</span></p>
                   )}
                 </div>
               </div>
