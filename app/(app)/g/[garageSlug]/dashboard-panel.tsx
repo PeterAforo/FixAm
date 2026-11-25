@@ -58,7 +58,7 @@ function RevenueBars({ data }: { data: { date: string; total: number }[] }) {
     <div>
       <p className="font-display text-2xl font-semibold tracking-[-0.02em] tabular-nums">{formatGHS(total)}</p>
       <p className="text-xs text-muted-foreground">Collected in the last 7 days</p>
-      <div className="mt-4 flex h-24 items-end gap-2" role="img" aria-label="Revenue for the last 7 days">
+      <div className="mt-4 hidden h-24 items-end gap-2 md:flex" role="img" aria-label="Revenue for the last 7 days">
         {data.map((d, i) => {
           const pct = Math.max(4, (d.total / max) * 100)
           const isToday = i === data.length - 1
@@ -137,17 +137,18 @@ export function DashboardPanel(props: {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-[30px] font-semibold leading-tight tracking-[-0.025em]">
+          <h1 className="font-display text-2xl font-semibold leading-tight md:text-[30px] tracking-[-0.025em]">
             {greeting()}, {userName.split(" ")[0]}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{garageName} · {today}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        {/* Phones: one swipe row of quick actions instead of a wrapped block. */}
+        <div className="-mx-5 flex w-[calc(100%+2.5rem)] gap-2 overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:w-auto sm:flex-wrap sm:overflow-visible sm:px-0">
           {quickActions.map((a) => (
             <Link
               key={a.href}
               href={a.href}
-              className="inline-flex h-10 items-center gap-2 rounded-full border border-border-strong bg-card px-4 text-sm font-medium transition-colors hover:bg-surface-sunken [&>svg]:size-4 [&>svg]:text-muted-foreground"
+              className="inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-border-strong bg-card px-4 text-sm font-medium transition-colors hover:bg-surface-sunken [&>svg]:size-4 [&>svg]:text-muted-foreground"
             >
               {a.icon}
               {a.label}
@@ -159,7 +160,7 @@ export function DashboardPanel(props: {
       <HelpTips />
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
         {canSeeMoney ? (
           <>
             <div className="col-span-2 lg:col-span-1">
@@ -232,7 +233,7 @@ export function DashboardPanel(props: {
               {data.readyJobs.length === 0 ? (
                 <EmptyState compact icon={CircleCheck} title="Nothing waiting for collection" description="Finished jobs show here so you can send a pay link in one tap." />
               ) : (
-                <ul className="divide-y divide-border">
+                <ul className="divide-y divide-border max-md:[&>li:nth-child(n+4)]:hidden">
                   {data.readyJobs.map((j) => (
                     <li key={j.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                       <div className="flex min-w-0 items-center gap-3">
@@ -288,7 +289,7 @@ export function DashboardPanel(props: {
               {data.dueThisWeek.length === 0 ? (
                 <EmptyState compact icon={BellRing} title="All clear" description="No oil, insurance or DVLA reminders due in the next 7 days." />
               ) : (
-                <ul className="divide-y divide-border">
+                <ul className="divide-y divide-border max-md:[&>li:nth-child(n+4)]:hidden">
                   {data.dueThisWeek.map((d) => (
                     <li key={d.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
                       <div className="min-w-0">

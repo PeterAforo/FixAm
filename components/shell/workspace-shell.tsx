@@ -236,7 +236,7 @@ export function WorkspaceShell({
             </Link>
           )
         })}
-        {nav.length > 4 && (
+        {(nav.length > 4 || workspaces.length > 1) && (
           <button
             type="button"
             onClick={() => setMoreOpen((o) => !o)}
@@ -249,7 +249,7 @@ export function WorkspaceShell({
           </button>
         )}
       </nav>
-      {moreOpen && nav.length > 4 && (
+      {moreOpen && (nav.length > 4 || workspaces.length > 1) && (
         <>
           <button className="fixed inset-0 bottom-16 z-40 cursor-default md:hidden" aria-label="Close menu" onClick={() => setMoreOpen(false)} />
           <div className="fixed inset-x-3 bottom-16 z-50 mb-1 max-h-[60dvh] overflow-y-auto rounded-2xl border border-border bg-card p-1.5 shadow-3 md:hidden" role="menu">
@@ -269,6 +269,12 @@ export function WorkspaceShell({
                 </Link>
               )
             })}
+            {/* The sidebar (with other workspaces) is hidden on phones, so they live here. */}
+            {workspaces.length > 1 && (
+              <div className={cn("-mx-1.5 -mb-1.5", nav.length > 4 && "mt-1.5")}>
+                <OtherWorkspaces workspaces={workspaces} currentKey={currentKey} defaultKey={defaultKey} />
+              </div>
+            )}
           </div>
         </>
       )}

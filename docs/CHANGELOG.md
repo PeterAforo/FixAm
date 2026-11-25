@@ -42,6 +42,11 @@
 
 ## Unreleased — RBAC unification for workspace staff (in progress)
 
+### 2026-11-25 — Mobile-first pass: workspaces on phones, dashboard, settings (fix plan steps 6–7)
+- Other workspaces on phones: the garage header shows a workspace switcher in place of the garage name; the driver/vendor/broker/tow/rider "More" sheet lists the other workspaces with their menus; admin shows a switcher under its logo. (The sidebar that held them is hidden below `md`.)
+- Garage dashboard on phones: quick actions in one swipe row, "Ready for pickup" and "Reminders this week" show the first 3 (the card's "View all" opens the rest), 7-day bar chart hidden (total and cash in hand stay).
+- Garage settings on phones: each section folds to its heading (new `components/shell/fold-section.tsx`); always open on desktop. Each section keeps its own Save.
+
 ### 2026-11-25 — Mobile-first pass: tables become card rows on phones (fix plan step 5)
 - New `table-cards` class (rules at the end of `app/globals.css`): below `md`, each table row stacks as a block — first cell as the title, the rest as "label … value" lines, header hidden. Desktop tables unchanged.
 - New `components/shell/table-card-labels.tsx`, mounted in the root layout, copies each column header onto its cells as `data-label` (and keeps up as tables re-render).

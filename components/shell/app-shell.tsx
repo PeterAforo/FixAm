@@ -318,6 +318,11 @@ export function AppShell({
           userId={userId}
           notifications={notifications}
           onOpenPalette={() => setPaletteOpen(true)}
+          mobileTitle={
+            workspaces.length > 1 ? (
+              <WorkspaceSwitcher workspaces={workspaces} currentKey={`garage:${garageSlug}`} className="max-w-[240px]" />
+            ) : undefined
+          }
         />
         {impersonating && (
           <div className="flex items-center justify-between gap-3 border-b border-warning/40 bg-warning-subtle px-4 py-2 text-sm">

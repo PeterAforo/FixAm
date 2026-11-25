@@ -3,6 +3,7 @@ import { connection } from "next/server"
 import { notFound, redirect } from "next/navigation"
 import { and, desc, eq } from "drizzle-orm"
 import Link from "next/link"
+import { FoldSection } from "@/components/shell/fold-section"
 import { db } from "@/lib/db"
 import { garageReviews, garageVehicleCoverage, garages } from "@/lib/db/schema"
 import { getSessionUserId, ensureUser } from "@/lib/auth/ensure-user"
@@ -72,23 +73,23 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
     : []
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-3xl md:space-y-8">
       <div>
-        <h1 className="font-display text-[30px] font-semibold tracking-[-0.025em]">Settings</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-[-0.025em] md:text-[30px]">Settings</h1>
         <p className="text-sm text-muted-foreground">{garage.name}</p>
+        <p className="mt-1 text-xs text-muted-foreground md:hidden">Tap a section to open it.</p>
       </div>
+      <div className="mt-4 border-t border-border md:hidden" aria-hidden />
 
-      <section>
-        <h2 className="text-[15px] font-semibold">Team &amp; templates</h2>
+      <FoldSection title={<>Team &amp; templates</>}>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <Link href={`/g/${garageSlug}/settings/staff`} className="rounded-xl border border-border bg-card p-4 text-sm font-semibold hover:bg-surface-muted">Staff &amp; invites →</Link>
           <Link href={`/g/${garageSlug}/settings/templates`} className="rounded-xl border border-border bg-card p-4 text-sm font-semibold hover:bg-surface-muted">Message templates →</Link>
         </div>
-      </section>
+      </FoldSection>
 
       {canManageSettings && (
-        <section>
-          <h2 className="text-[15px] font-semibold">Directory &amp; vehicle coverage</h2>
+        <FoldSection title={<>Directory &amp; vehicle coverage</>}>
           <p className="mt-1 text-sm text-muted-foreground">
             Appear in the public garage directory and tell customers which vehicles you service.
           </p>
@@ -102,26 +103,23 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
             garageId={garage.id}
             reviews={reviews.map((r) => ({ ...r, createdAt: r.createdAt.toISOString().slice(0, 10) }))}
           />
-        </section>
+        </FoldSection>
       )}
 
       {canManageSettings && (
-        <section>
-          <h2 className="text-[15px] font-semibold">Workshop rules</h2>
+        <FoldSection title={<>Workshop rules</>}>
           <WorkshopRulesPanel garageId={garage.id} requireOldPartProof={settingsRow?.requireOldPartProof ?? true} />
-        </section>
+        </FoldSection>
       )}
 
       {pickup && (
-        <section>
-          <h2 className="text-[15px] font-semibold">Pickup &amp; drop-off</h2>
+        <FoldSection title={<>Pickup &amp; drop-off</>}>
           <PickupPanel garageId={garage.id} initial={pickup} />
-        </section>
+        </FoldSection>
       )}
 
       {canManageSettings && (
-        <section>
-          <h2 className="text-[15px] font-semibold">WhatsApp</h2>
+        <FoldSection title={<>WhatsApp</>}>
           <p className="mt-1 text-sm text-muted-foreground">Customers message you on WhatsApp. The AI assistant answers first; staff take over in the inbox.</p>
           <WhatsAppPanel
             garageId={garage.id}
@@ -129,54 +127,49 @@ async function Loader({ params }: { params: Promise<{ garageSlug: string }> }) {
             phoneNumberId={settingsRow?.whatsappPhoneNumberId ?? null}
             aiEnabled={settingsRow?.whatsappAiEnabled ?? false}
           />
-        </section>
+        </FoldSection>
       )}
 
       {canManageSettings && (
-        <section>
-          <h2 className="text-[15px] font-semibold">Pre-purchase inspections</h2>
+        <FoldSection title={<>Pre-purchase inspections</>}>
           <p className="mt-1 text-sm text-muted-foreground">Drivers booking a used car pay upfront; your inspectors run the checklist from the Inspections screen.</p>
           <InspectionSettingsPanel
             garageId={garage.id}
             offers={settingsRow?.offersInspections ?? false}
             pricePesewas={Number(settingsRow?.inspectionPrice ?? 0)}
           />
-        </section>
+        </FoldSection>
       )}
 
       {seasonal && (
-        <section>
-          <h2 className="text-[15px] font-semibold">Seasonal reminders</h2>
+        <FoldSection title={<>Seasonal reminders</>}>
           <SeasonalPanel garageId={garage.id} overview={seasonal} />
-        </section>
+        </FoldSection>
       )}
 
       {canManageSettings && (
-        <section>
-          <h2 className="text-[15px] font-semibold">Repair leads — what you specialise in</h2>
+        <FoldSection title={<>Repair leads — what you specialise in</>}>
           <p className="mt-1 text-sm text-muted-foreground">Drivers post problems before choosing a garage. Pick your specialties so the right leads reach you.</p>
           <SpecialtiesPanel garageId={garage.id} initial={settingsRow?.specialties ?? []} />
-        </section>
+        </FoldSection>
       )}
 
       {partsSettings && (
-        <section>
-          <h2 className="text-[15px] font-semibold">Customer parts &amp; payouts</h2>
+        <FoldSection title={<>Customer parts &amp; payouts</>}>
           <p className="mt-1 text-sm text-muted-foreground">
             Customers can buy parts on FixAm and have them delivered to you for fitting. Their money is held until you confirm the part arrived.
           </p>
           <CustomerPartsPanel garageId={garage.id} settings={partsSettings} />
-        </section>
+        </FoldSection>
       )}
 
-      <section>
-        <h2 className="text-[15px] font-semibold">Billing &amp; plan</h2>
+      <FoldSection title={<>Billing &amp; plan</>}>
         {billing.ok && billing.data ? (
           <BillingPanel garageId={garage.id} billing={billing.data} />
         ) : (
           <p className="mt-2 text-sm text-muted-foreground">No subscription found for this garage.</p>
         )}
-      </section>
+      </FoldSection>
     </div>
   )
 }

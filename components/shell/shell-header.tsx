@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/auth/supabase/client"
 import { Button } from "@/components/brand/button"
@@ -19,6 +19,7 @@ export function ShellHeader({
   userId,
   notifications,
   onOpenPalette,
+  mobileTitle,
 }: {
   garageName: string
   pageTitle?: string
@@ -29,6 +30,8 @@ export function ShellHeader({
   userId: string
   notifications: ShellNotification[]
   onOpenPalette: () => void
+  /** Replaces the garage name on phones, e.g. a workspace switcher. */
+  mobileTitle?: ReactNode
 }) {
   const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -50,7 +53,11 @@ export function ShellHeader({
     <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-xl md:gap-3 md:px-8">
       <div className="min-w-0 flex-1">
         {/* Mobile: garage name (sidebar is hidden). Desktop: breadcrumb. */}
-        <p className="truncate text-[15px] font-semibold md:hidden">{garageName}</p>
+        {mobileTitle ? (
+          <div className="md:hidden">{mobileTitle}</div>
+        ) : (
+          <p className="truncate text-[15px] font-semibold md:hidden">{garageName}</p>
+        )}
         <nav aria-label="Breadcrumb" className="hidden items-center gap-2 text-sm md:flex">
           <span className="truncate text-muted-foreground">{garageName}</span>
           <span className="text-border-strong" aria-hidden>/</span>

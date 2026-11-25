@@ -19,6 +19,7 @@ import { ThemeToggle } from "@/components/brand/theme-toggle"
 import { cn } from "@/lib/utils"
 import type { Workspace } from "@/lib/accounts/workspaces"
 import { OtherWorkspaces } from "@/components/shell/other-workspaces"
+import { WorkspaceSwitcher } from "@/components/shell/workspace-switcher"
 
 type Item = { label: string; href: string; icon: LucideIcon; badge?: number; exact?: boolean }
 
@@ -52,6 +53,12 @@ export function AdminNav({
         <span className="font-display text-[19px] font-bold tracking-[-0.02em]">FixAm</span>
         <span className="ml-auto rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold text-secondary-foreground">Admin</span>
       </div>
+      {/* Phones: the sidebar's "other workspaces" block is hidden, so offer a switcher here. */}
+      {workspaces.length > 1 && (
+        <div className="px-4 pb-3 md:hidden">
+          <WorkspaceSwitcher workspaces={workspaces} currentKey="platform" />
+        </div>
+      )}
       <nav aria-label="Admin" className="overflow-x-auto px-3 pb-3 md:flex-1 md:overflow-y-auto">
         <ul className="flex gap-1 md:mt-1 md:flex-col md:gap-0.5">
           {items.map((i) => {
